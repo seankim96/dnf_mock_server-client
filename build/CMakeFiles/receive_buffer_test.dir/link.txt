@@ -1,0 +1,1 @@
+/usr/bin/c++  -arch arm64 -Wl,-search_paths_first -Wl,-headerpad_max_install_names CMakeFiles/receive_buffer_test.dir/tests/ReceiveBufferTest.cpp.o -o receive_buffer_test  libdnf_core.a

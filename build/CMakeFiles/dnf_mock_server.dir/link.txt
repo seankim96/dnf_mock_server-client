@@ -1,0 +1,1 @@
+/usr/bin/c++  -arch arm64 -Wl,-search_paths_first -Wl,-headerpad_max_install_names CMakeFiles/dnf_mock_server.dir/src/main.cpp.o -o dnf_mock_server  libdnf_core.a
