@@ -9,9 +9,10 @@ namespace
 {
 void TestDungeonInformation()
 {
-    const dnf::DungeonInstance dungeon(10, 20, {100, 200});
+    const dnf::DungeonInstance dungeon(10, 1001, 20, {100, 200});
 
     assert(dungeon.Id() == 10);
+    assert(dungeon.TemplateId() == 1001);
     assert(dungeon.Party() == 20);
     assert(dungeon.Participants() == std::vector<dnf::SessionId>({100, 200}));
     assert(dungeon.HasParticipant(100));
@@ -20,7 +21,7 @@ void TestDungeonInformation()
 
 void TestDungeonState()
 {
-    dnf::DungeonInstance dungeon(10, 20, {100});
+    dnf::DungeonInstance dungeon(10, 1001, 20, {100});
 
     assert(dungeon.State() == dnf::DungeonState::Waiting);
     assert(!dungeon.Finish());
@@ -40,7 +41,7 @@ void TestInvalidParticipantCount()
 
     try
     {
-        dnf::DungeonInstance dungeon(10, 20, {});
+        dnf::DungeonInstance dungeon(10, 1001, 20, {});
     }
     catch (const std::invalid_argument&)
     {

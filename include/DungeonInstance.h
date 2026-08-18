@@ -1,5 +1,6 @@
 #pragma once
 
+#include "DungeonCatalog.h"
 #include "PartyManager.h"
 #include "SessionId.h"
 
@@ -23,10 +24,12 @@ class DungeonInstance
 public:
     DungeonInstance(
         DungeonId dungeonId,
+        DungeonTemplateId templateId,
         PartyId partyId,
         std::vector<SessionId> participants);
 
     DungeonId Id() const;
+    DungeonTemplateId TemplateId() const;
     PartyId Party() const;
     const std::vector<SessionId>& Participants() const;
     DungeonState State() const;
@@ -37,6 +40,7 @@ public:
 
 private:
     DungeonId dungeonId_;
+    DungeonTemplateId templateId_;
     PartyId partyId_;
     std::vector<SessionId> participants_;
 

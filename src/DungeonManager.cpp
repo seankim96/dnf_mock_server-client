@@ -2,17 +2,27 @@
 
 namespace dnf
 {
-DungeonManager::DungeonManager(PartyManager& partyManager)
-    : partyManager_(partyManager)
+DungeonManager::DungeonManager(
+    PartyManager& partyManager,
+    DungeonCatalog& dungeonCatalog)
+    : partyManager_(partyManager),
+      dungeonCatalog_(dungeonCatalog)
 {
 }
 
-CreateDungeonResult DungeonManager::CreateDungeon(PartyId partyId)
+CreateDungeonResult DungeonManager::CreateDungeon(
+    PartyId partyId,
+    DungeonTemplateId templateId)
 {
     const auto party = partyManager_.GetParty(partyId);
     if (!party.has_value())
     {
         return {CreateDungeonStatus::PartyNotFound, nullptr};
+    }
+
+    if (!dungeonCatalog_.GetDungeon(templateId).has_value())
+    {
+        return {CreateDungeonStatus::DungeonTemplateNotFound, nullptr};
     }
 
     std::lock_guard lock(mutex_);
@@ -25,6 +35,7 @@ CreateDungeonResult DungeonManager::CreateDungeon(PartyId partyId)
     const DungeonId dungeonId = nextDungeonId_++;
     auto dungeon = std::make_shared<DungeonInstance>(
         dungeonId,
+        templateId,
         partyId,
         party->members);
 

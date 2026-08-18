@@ -8,15 +8,17 @@ namespace dnf
 {
 DungeonInstance::DungeonInstance(
     DungeonId dungeonId,
+    DungeonTemplateId templateId,
     PartyId partyId,
     std::vector<SessionId> participants)
     : dungeonId_(dungeonId),
+      templateId_(templateId),
       partyId_(partyId),
       participants_(std::move(participants))
 {
-    if (dungeonId_ == 0 || partyId_ == 0)
+    if (dungeonId_ == 0 || templateId_ == 0 || partyId_ == 0)
     {
-        throw std::invalid_argument("Dungeon and party ID must not be zero");
+        throw std::invalid_argument("Dungeon IDs must not be zero");
     }
 
     if (participants_.empty() || participants_.size() > MAX_PARTY_MEMBERS)
@@ -28,6 +30,11 @@ DungeonInstance::DungeonInstance(
 DungeonId DungeonInstance::Id() const
 {
     return dungeonId_;
+}
+
+DungeonTemplateId DungeonInstance::TemplateId() const
+{
+    return templateId_;
 }
 
 PartyId DungeonInstance::Party() const

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "DungeonCatalog.h"
 #include "DungeonInstance.h"
 #include "PartyManager.h"
 
@@ -14,6 +15,7 @@ enum class CreateDungeonStatus
 {
     Success,
     PartyNotFound,
+    DungeonTemplateNotFound,
     PartyAlreadyInDungeon
 };
 
@@ -26,9 +28,13 @@ struct CreateDungeonResult
 class DungeonManager
 {
 public:
-    explicit DungeonManager(PartyManager& partyManager);
+    DungeonManager(
+        PartyManager& partyManager,
+        DungeonCatalog& dungeonCatalog);
 
-    CreateDungeonResult CreateDungeon(PartyId partyId);
+    CreateDungeonResult CreateDungeon(
+        PartyId partyId,
+        DungeonTemplateId templateId);
     std::shared_ptr<DungeonInstance> FindDungeon(DungeonId dungeonId) const;
     std::shared_ptr<DungeonInstance> FindDungeonByParty(PartyId partyId) const;
 
@@ -38,6 +44,7 @@ public:
 
 private:
     PartyManager& partyManager_;
+    DungeonCatalog& dungeonCatalog_;
 
     mutable std::mutex mutex_;
     DungeonId nextDungeonId_ = 1;

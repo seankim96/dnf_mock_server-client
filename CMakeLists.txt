@@ -15,6 +15,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_library(dnf_core
     src/ChannelManager.cpp
     src/ChannelProtocol.cpp
+    src/DungeonCatalog.cpp
     src/DungeonInstance.cpp
     src/DungeonManager.cpp
     src/LoginValidator.cpp
@@ -81,3 +82,8 @@ add_executable(dungeon_manager_test tests/DungeonManagerTest.cpp)
 target_link_libraries(dungeon_manager_test PRIVATE dnf_core)
 
 add_test(NAME dungeon_manager_test COMMAND dungeon_manager_test)
+
+add_executable(dungeon_catalog_test tests/DungeonCatalogTest.cpp)
+target_link_libraries(dungeon_catalog_test PRIVATE dnf_core)
+
+add_test(NAME dungeon_catalog_test COMMAND dungeon_catalog_test)
