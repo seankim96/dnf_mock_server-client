@@ -1,5 +1,7 @@
 #include "SessionManager.h"
 
+#include "ChannelManager.h"
+#include "PartyManager.h"
 #include "TcpSession.h"
 
 #include <iostream>
@@ -7,11 +9,19 @@
 
 namespace dnf
 {
+SessionManager::SessionManager(
+    ChannelManager& channelManager,
+    PartyManager& partyManager)
+    : channelManager_(channelManager),
+      partyManager_(partyManager)
+{
+}
+
 SessionId SessionManager::StartSession(boost::asio::ip::tcp::socket socket)
 {
     const SessionId sessionId = nextSessionId_.fetch_add(1);
     auto session = std::make_shared<TcpSession>(
-        sessionId, std::move(socket), *this);
+        sessionId, std::move(socket), *this, channelManager_);
 
     std::size_t activeSessionCount = 0;
 
@@ -30,6 +40,9 @@ SessionId SessionManager::StartSession(boost::asio::ip::tcp::socket socket)
 
 void SessionManager::RemoveSession(SessionId sessionId)
 {
+    channelManager_.LeaveChannel(sessionId);
+    partyManager_.LeaveParty(sessionId);
+
     std::size_t activeSessionCount = 0;
 
     {

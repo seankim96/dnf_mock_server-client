@@ -13,9 +13,13 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_library(dnf_core
+    src/ChannelManager.cpp
+    src/ChannelProtocol.cpp
+    src/DungeonInstance.cpp
     src/LoginValidator.cpp
     src/Packet.cpp
     src/PacketDispatcher.cpp
+    src/PartyManager.cpp
     src/ReceiveBuffer.cpp
     src/ServerApplication.cpp
     src/SessionManager.cpp
@@ -56,3 +60,18 @@ add_executable(login_validator_test tests/LoginValidatorTest.cpp)
 target_link_libraries(login_validator_test PRIVATE dnf_core)
 
 add_test(NAME login_validator_test COMMAND login_validator_test)
+
+add_executable(channel_manager_test tests/ChannelManagerTest.cpp)
+target_link_libraries(channel_manager_test PRIVATE dnf_core)
+
+add_test(NAME channel_manager_test COMMAND channel_manager_test)
+
+add_executable(party_manager_test tests/PartyManagerTest.cpp)
+target_link_libraries(party_manager_test PRIVATE dnf_core)
+
+add_test(NAME party_manager_test COMMAND party_manager_test)
+
+add_executable(dungeon_instance_test tests/DungeonInstanceTest.cpp)
+target_link_libraries(dungeon_instance_test PRIVATE dnf_core)
+
+add_test(NAME dungeon_instance_test COMMAND dungeon_instance_test)

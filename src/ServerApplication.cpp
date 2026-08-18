@@ -13,8 +13,12 @@ constexpr std::size_t IO_THREAD_COUNT = 4;
 }
 
 ServerApplication::ServerApplication(std::uint16_t port)
-    : tcpServer_(ioContext_, port, sessionManager_)
+    : sessionManager_(channelManager_, partyManager_),
+      tcpServer_(ioContext_, port, sessionManager_)
 {
+    channelManager_.AddChannel(1, "Channel 1", 100);
+    channelManager_.AddChannel(2, "Channel 2", 100);
+    channelManager_.AddChannel(3, "Channel 3", 100);
 }
 
 void ServerApplication::Run()
@@ -23,6 +27,14 @@ void ServerApplication::Run()
 
     std::cout << "Boost.Asio TCP server started"
               << " ioThreads=" << IO_THREAD_COUNT << '\n';
+
+    for (const ChannelInfo& channel : channelManager_.GetChannelList())
+    {
+        std::cout << "Channel ready"
+                  << " id=" << channel.id
+                  << " name=" << channel.name
+                  << " capacity=" << channel.maxPlayers << '\n';
+    }
 
     std::vector<std::thread> ioThreads;
     ioThreads.reserve(IO_THREAD_COUNT);

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "ChannelManager.h"
+#include "PartyManager.h"
 #include "SessionManager.h"
 #include "TcpServer.h"
 
@@ -18,6 +20,8 @@ public:
 
 private:
     boost::asio::io_context ioContext_;
+    ChannelManager channelManager_;
+    PartyManager partyManager_;
     SessionManager sessionManager_;
     TcpServer tcpServer_;
 };

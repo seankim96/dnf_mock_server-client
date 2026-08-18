@@ -1,5 +1,6 @@
 #include "TcpSession.h"
 
+#include "ChannelManager.h"
 #include "SessionManager.h"
 
 #include <boost/asio/bind_executor.hpp>
@@ -17,11 +18,13 @@ namespace dnf
 TcpSession::TcpSession(
     SessionId sessionId,
     boost::asio::ip::tcp::socket socket,
-    SessionManager& sessionManager)
+    SessionManager& sessionManager,
+    ChannelManager& channelManager)
     : sessionId_(sessionId),
       socket_(std::move(socket)),
       strand_(boost::asio::make_strand(socket_.get_executor())),
-      sessionManager_(sessionManager)
+      sessionManager_(sessionManager),
+      dispatcher_(channelManager, sessionId)
 {
 }
 
