@@ -1,0 +1,47 @@
+#pragma once
+
+#include "DungeonInstance.h"
+#include "PartyManager.h"
+
+#include <cstddef>
+#include <memory>
+#include <mutex>
+#include <unordered_map>
+
+namespace dnf
+{
+enum class CreateDungeonStatus
+{
+    Success,
+    PartyNotFound,
+    PartyAlreadyInDungeon
+};
+
+struct CreateDungeonResult
+{
+    CreateDungeonStatus status = CreateDungeonStatus::PartyNotFound;
+    std::shared_ptr<DungeonInstance> dungeon;
+};
+
+class DungeonManager
+{
+public:
+    explicit DungeonManager(PartyManager& partyManager);
+
+    CreateDungeonResult CreateDungeon(PartyId partyId);
+    std::shared_ptr<DungeonInstance> FindDungeon(DungeonId dungeonId) const;
+    std::shared_ptr<DungeonInstance> FindDungeonByParty(PartyId partyId) const;
+
+    bool StartDungeon(DungeonId dungeonId);
+    bool FinishDungeon(DungeonId dungeonId);
+    std::size_t ActiveDungeonCount() const;
+
+private:
+    PartyManager& partyManager_;
+
+    mutable std::mutex mutex_;
+    DungeonId nextDungeonId_ = 1;
+    std::unordered_map<DungeonId, std::shared_ptr<DungeonInstance>> dungeons_;
+    std::unordered_map<PartyId, DungeonId> partyDungeons_;
+};
+} // namespace dnf

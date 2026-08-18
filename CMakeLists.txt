@@ -16,6 +16,7 @@ add_library(dnf_core
     src/ChannelManager.cpp
     src/ChannelProtocol.cpp
     src/DungeonInstance.cpp
+    src/DungeonManager.cpp
     src/LoginValidator.cpp
     src/Packet.cpp
     src/PacketDispatcher.cpp
@@ -75,3 +76,8 @@ add_executable(dungeon_instance_test tests/DungeonInstanceTest.cpp)
 target_link_libraries(dungeon_instance_test PRIVATE dnf_core)
 
 add_test(NAME dungeon_instance_test COMMAND dungeon_instance_test)
+
+add_executable(dungeon_manager_test tests/DungeonManagerTest.cpp)
+target_link_libraries(dungeon_manager_test PRIVATE dnf_core)
+
+add_test(NAME dungeon_manager_test COMMAND dungeon_manager_test)
