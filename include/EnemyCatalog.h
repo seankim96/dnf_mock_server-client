@@ -1,6 +1,7 @@
 #pragma once
 
 #include "DungeonRoom.h"
+#include "EnemyTypes.h"
 
 #include <cstdint>
 #include <mutex>
@@ -10,8 +11,6 @@
 
 namespace dnf
 {
-using EnemyTemplateId = std::uint32_t;
-
 enum class EnemyAiType
 {
     Melee,

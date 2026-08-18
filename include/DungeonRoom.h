@@ -1,5 +1,7 @@
 #pragma once
 
+#include "EnemyTypes.h"
+
 #include <cstdint>
 #include <vector>
 
@@ -44,6 +46,16 @@ struct ObstacleTemplate
     std::uint32_t maxHp = 0;
 };
 
+using EnemySpawnId = std::uint32_t;
+
+struct EnemySpawnTemplate
+{
+    EnemySpawnId id = 0;
+    EnemyTemplateId enemyTemplateId = 0;
+    Position position;
+    std::uint32_t wave = 1;
+};
+
 struct RoomTemplate
 {
     RoomId id = 0;
@@ -57,6 +69,7 @@ struct RoomTemplate
     Position playerSpawn;
     std::vector<PortalTemplate> portals;
     std::vector<ObstacleTemplate> obstacles;
+    std::vector<EnemySpawnTemplate> enemySpawns;
 };
 
 bool IsInsideRoom(const RoomTemplate& room, const Position& position);

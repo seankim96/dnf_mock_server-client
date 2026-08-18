@@ -1,4 +1,5 @@
 #include "DungeonManager.h"
+#include "EnemyCatalog.h"
 
 #include <cassert>
 #include <iostream>
@@ -18,7 +19,8 @@ void TestCreateDungeonFromParty()
     const dnf::PartyId partyId = partyManager.CreateParty(100).value();
     partyManager.JoinParty(partyId, 200);
 
-    dnf::DungeonCatalog dungeonCatalog;
+    dnf::EnemyCatalog enemyCatalog;
+    dnf::DungeonCatalog dungeonCatalog(enemyCatalog);
     AddTestDungeon(dungeonCatalog);
 
     dnf::DungeonManager dungeonManager(partyManager, dungeonCatalog);
@@ -36,7 +38,8 @@ void TestCreateDungeonFromParty()
 void TestCreationFailure()
 {
     dnf::PartyManager partyManager;
-    dnf::DungeonCatalog dungeonCatalog;
+    dnf::EnemyCatalog enemyCatalog;
+    dnf::DungeonCatalog dungeonCatalog(enemyCatalog);
     AddTestDungeon(dungeonCatalog);
     dnf::DungeonManager dungeonManager(partyManager, dungeonCatalog);
 
@@ -62,7 +65,8 @@ void TestDungeonLifecycle()
     dnf::PartyManager partyManager;
     const dnf::PartyId partyId = partyManager.CreateParty(100).value();
 
-    dnf::DungeonCatalog dungeonCatalog;
+    dnf::EnemyCatalog enemyCatalog;
+    dnf::DungeonCatalog dungeonCatalog(enemyCatalog);
     AddTestDungeon(dungeonCatalog);
     dnf::DungeonManager dungeonManager(partyManager, dungeonCatalog);
     const auto created = dungeonManager.CreateDungeon(partyId, 1001);
@@ -91,7 +95,8 @@ void TestParticipantSnapshot()
     const dnf::PartyId partyId = partyManager.CreateParty(100).value();
     partyManager.JoinParty(partyId, 200);
 
-    dnf::DungeonCatalog dungeonCatalog;
+    dnf::EnemyCatalog enemyCatalog;
+    dnf::DungeonCatalog dungeonCatalog(enemyCatalog);
     AddTestDungeon(dungeonCatalog);
     dnf::DungeonManager dungeonManager(partyManager, dungeonCatalog);
     const auto created = dungeonManager.CreateDungeon(partyId, 1001);

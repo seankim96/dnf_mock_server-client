@@ -1,13 +1,29 @@
 #include "DungeonCatalog.h"
+#include "EnemyCatalog.h"
 
 #include <cassert>
 #include <iostream>
 
 namespace
 {
+void AddTestEnemy(dnf::EnemyCatalog& catalog)
+{
+    dnf::EnemyTemplate enemy;
+    enemy.id = 2001;
+    enemy.name = "Goblin";
+    enemy.maxHp = 100;
+    enemy.moveSpeed = 120.0f;
+    enemy.collision = {
+        {-20.0f, -15.0f, 0.0f},
+        {20.0f, 15.0f, 80.0f}};
+    catalog.AddEnemy(enemy);
+}
+
 void TestAddAndGetDungeon()
 {
-    dnf::DungeonCatalog catalog;
+    dnf::EnemyCatalog enemyCatalog;
+    AddTestEnemy(enemyCatalog);
+    dnf::DungeonCatalog catalog(enemyCatalog);
 
     dnf::RoomTemplate firstRoom{
         1, 1200.0f, 500.0f, {100.0f, 250.0f, 0.0f}};
@@ -40,6 +56,13 @@ void TestAddAndGetDungeon()
     crate.maxHp = 100;
     firstRoom.obstacles.push_back(crate);
 
+    dnf::EnemySpawnTemplate enemySpawn;
+    enemySpawn.id = 1;
+    enemySpawn.enemyTemplateId = 2001;
+    enemySpawn.position = {800.0f, 250.0f, 0.0f};
+    enemySpawn.wave = 1;
+    firstRoom.enemySpawns.push_back(enemySpawn);
+
     assert(catalog.AddDungeon(1001, "Forest", {firstRoom, secondRoom}));
     assert(!catalog.AddDungeon(1001, "Duplicate", {firstRoom}));
 
@@ -52,12 +75,15 @@ void TestAddAndGetDungeon()
     assert(dungeon->rooms[0].portals[0].targetRoomId == 2);
     assert(dungeon->rooms[0].obstacles.size() == 2);
     assert(dungeon->rooms[0].obstacles[1].maxHp == 100);
+    assert(dungeon->rooms[0].enemySpawns[0].enemyTemplateId == 2001);
     assert(dungeon->rooms[1].playerSpawn.y == 300.0f);
 }
 
 void TestInvalidDungeon()
 {
-    dnf::DungeonCatalog catalog;
+    dnf::EnemyCatalog enemyCatalog;
+    AddTestEnemy(enemyCatalog);
+    dnf::DungeonCatalog catalog(enemyCatalog);
 
     const dnf::RoomTemplate validRoom{
         1, 1200.0f, 500.0f, {100.0f, 250.0f, 0.0f}};
@@ -84,6 +110,14 @@ void TestInvalidDungeon()
     invalidObstacle.maxHp = 0;
     invalidObstacleRoom.obstacles.push_back(invalidObstacle);
 
+    dnf::RoomTemplate invalidEnemyRoom = validRoom;
+    dnf::EnemySpawnTemplate invalidEnemySpawn;
+    invalidEnemySpawn.id = 1;
+    invalidEnemySpawn.enemyTemplateId = 9999;
+    invalidEnemySpawn.position = {800.0f, 250.0f, 0.0f};
+    invalidEnemySpawn.wave = 1;
+    invalidEnemyRoom.enemySpawns.push_back(invalidEnemySpawn);
+
     assert(!catalog.AddDungeon(0, "Forest", {validRoom}));
     assert(!catalog.AddDungeon(1001, "", {validRoom}));
     assert(!catalog.AddDungeon(1001, "Forest", {}));
@@ -91,6 +125,7 @@ void TestInvalidDungeon()
     assert(!catalog.AddDungeon(1001, "Forest", {validRoom, validRoom}));
     assert(!catalog.AddDungeon(1001, "Forest", {invalidPortalRoom}));
     assert(!catalog.AddDungeon(1001, "Forest", {invalidObstacleRoom}));
+    assert(!catalog.AddDungeon(1001, "Forest", {invalidEnemyRoom}));
     assert(!catalog.GetDungeon(9999).has_value());
 }
 } // namespace

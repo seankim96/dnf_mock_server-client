@@ -13,6 +13,8 @@ namespace dnf
 {
 using DungeonTemplateId = std::uint32_t;
 
+class EnemyCatalog;
+
 struct DungeonTemplate
 {
     DungeonTemplateId id = 0;
@@ -23,6 +25,8 @@ struct DungeonTemplate
 class DungeonCatalog
 {
 public:
+    explicit DungeonCatalog(const EnemyCatalog& enemyCatalog);
+
     bool AddDungeon(
         DungeonTemplateId templateId,
         std::string name,
@@ -32,6 +36,8 @@ public:
         DungeonTemplateId templateId) const;
 
 private:
+    const EnemyCatalog& enemyCatalog_;
+
     mutable std::mutex mutex_;
     std::unordered_map<DungeonTemplateId, DungeonTemplate> dungeons_;
 };

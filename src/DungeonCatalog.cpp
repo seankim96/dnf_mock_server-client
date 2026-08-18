@@ -1,11 +1,18 @@
 #include "DungeonCatalog.h"
 
+#include "EnemyCatalog.h"
+
 #include <algorithm>
 #include <unordered_set>
 #include <utility>
 
 namespace dnf
 {
+DungeonCatalog::DungeonCatalog(const EnemyCatalog& enemyCatalog)
+    : enemyCatalog_(enemyCatalog)
+{
+}
+
 bool DungeonCatalog::AddDungeon(
     DungeonTemplateId templateId,
     std::string name,
@@ -79,6 +86,21 @@ bool DungeonCatalog::AddDungeon(
                 !IsInsideRoom(room, obstacle.collision.minimum) ||
                 !IsInsideRoom(room, obstacle.collision.maximum) ||
                 invalidHp)
+            {
+                return false;
+            }
+        }
+
+        std::unordered_set<EnemySpawnId> enemySpawnIds;
+
+        for (const EnemySpawnTemplate& spawn : room.enemySpawns)
+        {
+            if (spawn.id == 0 ||
+                !enemySpawnIds.insert(spawn.id).second ||
+                !enemyCatalog_.GetEnemy(spawn.enemyTemplateId).has_value() ||
+                spawn.position.z < 0.0f ||
+                !IsInsideRoom(room, spawn.position) ||
+                spawn.wave == 0)
             {
                 return false;
             }
