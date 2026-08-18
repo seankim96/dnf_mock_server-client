@@ -7,10 +7,20 @@ endif()
 project(DNFMockServer LANGUAGES CXX)
 
 find_package(Boost 1.82 REQUIRED COMPONENTS system)
+find_package(flatbuffers CONFIG REQUIRED)
 find_package(Threads REQUIRED)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+set(DNF_FLATBUFFER_SCHEMAS
+    ${CMAKE_CURRENT_SOURCE_DIR}/schemas/DungeonMessage.fbs
+)
+
+flatbuffers_generate_headers(
+    TARGET dnf_protocol_generated
+    SCHEMAS ${DNF_FLATBUFFER_SCHEMAS}
+)
 
 add_library(dnf_core
     src/ChannelManager.cpp
@@ -33,7 +43,12 @@ add_library(dnf_core
     src/TcpSession.cpp
 )
 target_include_directories(dnf_core PUBLIC include)
-target_link_libraries(dnf_core PUBLIC Boost::system Threads::Threads)
+target_link_libraries(dnf_core PUBLIC
+    Boost::system
+    Threads::Threads
+    flatbuffers::flatbuffers
+    dnf_protocol_generated
+)
 
 if(WIN32)
     target_compile_definitions(dnf_core PUBLIC WIN32_LEAN_AND_MEAN NOMINMAX)
@@ -111,3 +126,8 @@ add_executable(dungeon_player_state_test tests/DungeonPlayerStateTest.cpp)
 target_link_libraries(dungeon_player_state_test PRIVATE dnf_core)
 
 add_test(NAME dungeon_player_state_test COMMAND dungeon_player_state_test)
+
+add_executable(flatbuffer_protocol_test tests/FlatBufferProtocolTest.cpp)
+target_link_libraries(flatbuffer_protocol_test PRIVATE dnf_core)
+
+add_test(NAME flatbuffer_protocol_test COMMAND flatbuffer_protocol_test)

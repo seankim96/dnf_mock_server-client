@@ -1,0 +1,39 @@
+namespace Dnf.Protocol;
+
+struct Vec3 {
+  x:float;
+  y:float;
+  z:float;
+}
+
+table PlayerInput {
+  sequence:uint;
+  move_x:float;
+  move_y:float;
+  jump:bool = false;
+}
+
+table PlayerSnapshot {
+  session_id:ulong;
+  room_id:uint;
+  position:Vec3;
+}
+
+table DungeonSnapshot {
+  server_tick:uint;
+  players:[PlayerSnapshot];
+}
+
+union DungeonPayload {
+  PlayerInput,
+  DungeonSnapshot
+}
+
+table DungeonMessage {
+  protocol_version:ushort = 1;
+  dungeon_id:ulong;
+  payload:DungeonPayload;
+}
+
+root_type DungeonMessage;
+file_identifier "DNFD";
