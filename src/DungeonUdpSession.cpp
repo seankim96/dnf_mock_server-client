@@ -88,6 +88,27 @@ std::optional<udp::endpoint> DungeonUdpSession::FindEndpoint(
     return endpointIt->second;
 }
 
+bool DungeonUdpSession::SendSnapshot(std::vector<std::uint8_t> bytes)
+{
+    if (bytes.empty() || bytes.size() > MAX_DUNGEON_DATAGRAM_SIZE)
+    {
+        return false;
+    }
+
+    const auto sharedBytes =
+        std::make_shared<const std::vector<std::uint8_t>>(std::move(bytes));
+    const auto self = shared_from_this();
+
+    boost::asio::dispatch(
+        strand_,
+        [self, sharedBytes]
+        {
+            self->SendSnapshotOnStrand(sharedBytes);
+        });
+
+    return true;
+}
+
 bool DungeonUdpSession::TryPopInput(AuthenticatedPlayerInput& output)
 {
     std::lock_guard lock(stateMutex_);
@@ -210,5 +231,45 @@ void DungeonUdpSession::HandlePlayerInput(
 
     lastSequences_[sessionId] = input.sequence;
     pendingInputs_.push_back({sessionId, input});
+}
+
+void DungeonUdpSession::SendSnapshotOnStrand(
+    std::shared_ptr<const std::vector<std::uint8_t>> bytes)
+{
+    if (stopped_)
+    {
+        return;
+    }
+
+    std::vector<udp::endpoint> destinations;
+
+    {
+        std::lock_guard lock(stateMutex_);
+        destinations.reserve(endpoints_.size());
+
+        for (const auto& entry : endpoints_)
+        {
+            destinations.push_back(entry.second);
+        }
+    }
+
+    const auto self = shared_from_this();
+
+    for (const udp::endpoint& destination : destinations)
+    {
+        const auto sharedDestination =
+            std::make_shared<const udp::endpoint>(destination);
+
+        socket_.async_send_to(
+            boost::asio::buffer(*bytes),
+            *sharedDestination,
+            boost::asio::bind_executor(
+                strand_,
+                [self, bytes, sharedDestination](
+                    const boost::system::error_code&,
+                    std::size_t)
+                {
+                }));
+    }
 }
 } // namespace dnf

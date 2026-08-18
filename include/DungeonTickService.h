@@ -32,6 +32,7 @@ private:
 
     boost::asio::steady_timer timer_;
     DungeonManager& dungeonManager_;
+    DungeonUdpManager& udpManager_;
     DungeonInputProcessor inputProcessor_;
 
     bool running_ = false;

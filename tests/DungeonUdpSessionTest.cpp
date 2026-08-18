@@ -2,12 +2,14 @@
 #include "DungeonUdpManager.h"
 
 #include <boost/asio/buffer.hpp>
+#include <boost/asio/error.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/address_v4.hpp>
 #include <boost/asio/ip/udp.hpp>
 #include <boost/system/error_code.hpp>
 
 #include <cassert>
+#include <array>
 #include <chrono>
 #include <iostream>
 #include <thread>
@@ -178,6 +180,43 @@ void TestUdpHelloRegistersEndpoint()
     const bool poppedUnexpected =
         manager.TryPopInput(5001, unexpectedInput);
 
+    const std::vector<std::uint8_t> snapshotBytes = {1, 2, 3, 4};
+    assert(manager.BroadcastSnapshot(5001, snapshotBytes));
+    assert(!manager.BroadcastSnapshot(9999, snapshotBytes));
+    assert(!manager.BroadcastSnapshot(
+        5001,
+        std::vector<std::uint8_t>(
+            dnf::MAX_DUNGEON_DATAGRAM_SIZE + 1,
+            0)));
+
+    firstClient.non_blocking(true);
+    std::array<std::uint8_t, dnf::MAX_DUNGEON_DATAGRAM_SIZE> receiveBuffer{};
+    udp::endpoint snapshotSender;
+    boost::system::error_code snapshotReceiveError;
+    std::size_t snapshotSize = 0;
+
+    for (int attempt = 0; attempt < 100; ++attempt)
+    {
+        snapshotSize = firstClient.receive_from(
+            boost::asio::buffer(receiveBuffer),
+            snapshotSender,
+            0,
+            snapshotReceiveError);
+
+        if (!snapshotReceiveError)
+        {
+            break;
+        }
+
+        assert(snapshotReceiveError == boost::asio::error::would_block ||
+               snapshotReceiveError == boost::asio::error::try_again);
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    }
+
+    const std::vector<std::uint8_t> receivedSnapshot(
+        receiveBuffer.begin(),
+        receiveBuffer.begin() + snapshotSize);
+
     manager.Release(5001);
     serverThread.join();
 
@@ -204,6 +243,9 @@ void TestUdpHelloRegistersEndpoint()
     assert(receivedFirstInput.input.sequence == 1);
     assert(receivedSecondInput.sessionId == 100);
     assert(receivedSecondInput.input.sequence == 2);
+    assert(!snapshotReceiveError);
+    assert(snapshotSender.port() == port.value());
+    assert(receivedSnapshot == snapshotBytes);
 }
 } // namespace
 

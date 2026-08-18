@@ -132,6 +132,27 @@ std::optional<udp::endpoint> DungeonUdpManager::FindEndpoint(
     return sessionIt->second->FindEndpoint(sessionId);
 }
 
+bool DungeonUdpManager::BroadcastSnapshot(
+    DungeonId dungeonId,
+    std::vector<std::uint8_t> bytes)
+{
+    std::shared_ptr<DungeonUdpSession> session;
+
+    {
+        std::lock_guard lock(mutex_);
+
+        const auto sessionIt = sessions_.find(dungeonId);
+        if (sessionIt == sessions_.end())
+        {
+            return false;
+        }
+
+        session = sessionIt->second;
+    }
+
+    return session->SendSnapshot(std::move(bytes));
+}
+
 bool DungeonUdpManager::TryPopInput(
     DungeonId dungeonId,
     AuthenticatedPlayerInput& output)

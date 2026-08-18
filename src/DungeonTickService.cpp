@@ -1,5 +1,7 @@
 #include "DungeonTickService.h"
 
+#include "DungeonProtocol.h"
+
 #include <boost/asio/error.hpp>
 
 #include <chrono>
@@ -20,6 +22,7 @@ DungeonTickService::DungeonTickService(
     DungeonUdpManager& udpManager)
     : timer_(ioContext),
       dungeonManager_(dungeonManager),
+      udpManager_(udpManager),
       inputProcessor_(dungeonManager, udpManager)
 {
 }
@@ -85,6 +88,16 @@ void DungeonTickService::HandleTick(
     for (DungeonId dungeonId : dungeonManager_.RunningDungeonIds())
     {
         inputProcessor_.Process(dungeonId, TICK_SECONDS);
+
+        const auto dungeon = dungeonManager_.FindDungeon(dungeonId);
+        if (dungeon != nullptr)
+        {
+            udpManager_.BroadcastSnapshot(
+                dungeonId,
+                EncodeDungeonSnapshot(
+                    *dungeon,
+                    static_cast<std::uint32_t>(tickCount_)));
+        }
     }
 
     ScheduleNextTick();

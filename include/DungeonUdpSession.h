@@ -17,9 +17,11 @@
 #include <mutex>
 #include <optional>
 #include <unordered_map>
+#include <vector>
 
 namespace dnf
 {
+constexpr std::size_t MAX_DUNGEON_DATAGRAM_SIZE = 1200;
 constexpr std::size_t MAX_PENDING_DUNGEON_INPUTS = 256;
 
 struct AuthenticatedPlayerInput
@@ -46,6 +48,7 @@ public:
     std::optional<DungeonUdpToken> FindToken(SessionId sessionId) const;
     std::optional<boost::asio::ip::udp::endpoint> FindEndpoint(
         SessionId sessionId) const;
+    bool SendSnapshot(std::vector<std::uint8_t> bytes);
     bool TryPopInput(AuthenticatedPlayerInput& output);
     std::size_t PendingInputCount() const;
 
@@ -56,13 +59,15 @@ private:
         std::size_t receivedSize);
     void HandleHello(const UdpHelloMessage& hello);
     void HandlePlayerInput(const PlayerInputMessage& input);
+    void SendSnapshotOnStrand(
+        std::shared_ptr<const std::vector<std::uint8_t>> bytes);
 
     DungeonId dungeonId_;
     boost::asio::ip::udp::socket socket_;
     boost::asio::strand<boost::asio::any_io_executor> strand_;
     std::uint16_t port_;
 
-    std::array<std::uint8_t, 1200> receiveBuffer_{};
+    std::array<std::uint8_t, MAX_DUNGEON_DATAGRAM_SIZE> receiveBuffer_{};
     boost::asio::ip::udp::endpoint senderEndpoint_;
     bool stopped_ = false;
 
