@@ -14,7 +14,8 @@ constexpr std::size_t IO_THREAD_COUNT = 4;
 }
 
 ServerApplication::ServerApplication(std::uint16_t port)
-    : dungeonCatalog_(enemyCatalog_),
+    : dungeonUdpManager_(ioContext_),
+      dungeonCatalog_(enemyCatalog_),
       dungeonManager_(partyManager_, dungeonCatalog_, enemyCatalog_),
       sessionManager_(channelManager_, partyManager_, dungeonManager_),
       tcpServer_(ioContext_, port, sessionManager_)
@@ -140,5 +141,10 @@ const DungeonCatalog& ServerApplication::DungeonTemplates() const
 const DungeonManager& ServerApplication::DungeonInstances() const
 {
     return dungeonManager_;
+}
+
+const DungeonUdpManager& ServerApplication::DungeonUdpSockets() const
+{
+    return dungeonUdpManager_;
 }
 } // namespace dnf

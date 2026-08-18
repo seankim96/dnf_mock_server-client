@@ -3,6 +3,7 @@
 #include "ChannelManager.h"
 #include "DungeonCatalog.h"
 #include "DungeonManager.h"
+#include "DungeonUdpManager.h"
 #include "EnemyCatalog.h"
 #include "PartyManager.h"
 #include "SessionManager.h"
@@ -24,11 +25,13 @@ public:
     const EnemyCatalog& Enemies() const;
     const DungeonCatalog& DungeonTemplates() const;
     const DungeonManager& DungeonInstances() const;
+    const DungeonUdpManager& DungeonUdpSockets() const;
 
 private:
     void LoadGameData();
 
     boost::asio::io_context ioContext_;
+    DungeonUdpManager dungeonUdpManager_;
     ChannelManager channelManager_;
     PartyManager partyManager_;
     EnemyCatalog enemyCatalog_;

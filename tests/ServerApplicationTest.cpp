@@ -22,6 +22,7 @@ void TestGameDataIsLoaded()
     assert(forest->rooms[0].enemySpawns[0].enemyTemplateId == 2001);
 
     assert(application.DungeonInstances().ActiveDungeonCount() == 0);
+    assert(application.DungeonUdpSockets().AllocationCount() == 0);
 }
 } // namespace
 
