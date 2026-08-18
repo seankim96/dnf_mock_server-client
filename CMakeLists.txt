@@ -28,6 +28,7 @@ add_library(dnf_core
     src/DungeonAdmissionProtocol.cpp
     src/DungeonCatalog.cpp
     src/DungeonConnectionProtocol.cpp
+    src/DungeonInputProcessor.cpp
     src/DungeonInstance.cpp
     src/DungeonManager.cpp
     src/DungeonPlayerState.cpp
@@ -178,3 +179,14 @@ add_executable(dungeon_udp_session_test tests/DungeonUdpSessionTest.cpp)
 target_link_libraries(dungeon_udp_session_test PRIVATE dnf_core)
 
 add_test(NAME dungeon_udp_session_test COMMAND dungeon_udp_session_test)
+
+add_executable(
+    dungeon_input_processor_test
+    tests/DungeonInputProcessorTest.cpp
+)
+target_link_libraries(dungeon_input_processor_test PRIVATE dnf_core)
+
+add_test(
+    NAME dungeon_input_processor_test
+    COMMAND dungeon_input_processor_test
+)
