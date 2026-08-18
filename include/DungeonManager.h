@@ -8,6 +8,7 @@
 #include <memory>
 #include <mutex>
 #include <unordered_map>
+#include <vector>
 
 namespace dnf
 {
@@ -42,6 +43,7 @@ public:
     bool StartDungeon(DungeonId dungeonId);
     bool CancelDungeon(DungeonId dungeonId);
     bool FinishDungeon(DungeonId dungeonId);
+    std::vector<DungeonId> RunningDungeonIds() const;
     std::size_t ActiveDungeonCount() const;
 
 private:

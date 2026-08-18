@@ -3,6 +3,7 @@
 #include "ChannelManager.h"
 #include "DungeonCatalog.h"
 #include "DungeonManager.h"
+#include "DungeonTickService.h"
 #include "DungeonUdpManager.h"
 #include "EnemyCatalog.h"
 #include "PartyManager.h"
@@ -37,6 +38,7 @@ private:
     EnemyCatalog enemyCatalog_;
     DungeonCatalog dungeonCatalog_;
     DungeonManager dungeonManager_;
+    DungeonTickService dungeonTickService_;
     SessionManager sessionManager_;
     TcpServer tcpServer_;
 };

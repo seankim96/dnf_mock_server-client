@@ -256,7 +256,10 @@ void TestPartyLeaderEntersDungeon()
            response.udpPort);
     assert(context.dungeonUdpManager.FindToken(response.dungeonId, 700) ==
            response.udpToken);
-    assert(context.dungeonManager.FindDungeonByParty(partyId) != nullptr);
+    const auto dungeon =
+        context.dungeonManager.FindDungeonByParty(partyId);
+    assert(dungeon != nullptr);
+    assert(dungeon->State() == dnf::DungeonState::Running);
 }
 
 void TestDungeonEntryPermission()

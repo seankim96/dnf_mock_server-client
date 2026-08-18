@@ -17,6 +17,10 @@ ServerApplication::ServerApplication(std::uint16_t port)
     : dungeonUdpManager_(ioContext_),
       dungeonCatalog_(enemyCatalog_),
       dungeonManager_(partyManager_, dungeonCatalog_, enemyCatalog_),
+      dungeonTickService_(
+          ioContext_,
+          dungeonManager_,
+          dungeonUdpManager_),
       sessionManager_(
           channelManager_,
           partyManager_,
@@ -89,6 +93,7 @@ void ServerApplication::LoadGameData()
 
 void ServerApplication::Run()
 {
+    dungeonTickService_.Start();
     tcpServer_.Start();
 
     std::cout << "Boost.Asio TCP server started"

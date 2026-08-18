@@ -121,6 +121,24 @@ bool DungeonManager::FinishDungeon(DungeonId dungeonId)
     return true;
 }
 
+std::vector<DungeonId> DungeonManager::RunningDungeonIds() const
+{
+    std::lock_guard lock(mutex_);
+
+    std::vector<DungeonId> dungeonIds;
+    dungeonIds.reserve(dungeons_.size());
+
+    for (const auto& [dungeonId, dungeon] : dungeons_)
+    {
+        if (dungeon->State() == DungeonState::Running)
+        {
+            dungeonIds.push_back(dungeonId);
+        }
+    }
+
+    return dungeonIds;
+}
+
 std::size_t DungeonManager::ActiveDungeonCount() const
 {
     std::lock_guard lock(mutex_);

@@ -34,6 +34,7 @@ add_library(dnf_core
     src/DungeonPlayerState.cpp
     src/DungeonProtocol.cpp
     src/DungeonRoom.cpp
+    src/DungeonTickService.cpp
     src/DungeonUdpManager.cpp
     src/DungeonUdpSession.cpp
     src/EnemyCatalog.cpp
@@ -189,4 +190,15 @@ target_link_libraries(dungeon_input_processor_test PRIVATE dnf_core)
 add_test(
     NAME dungeon_input_processor_test
     COMMAND dungeon_input_processor_test
+)
+
+add_executable(
+    dungeon_tick_service_test
+    tests/DungeonTickServiceTest.cpp
+)
+target_link_libraries(dungeon_tick_service_test PRIVATE dnf_core)
+
+add_test(
+    NAME dungeon_tick_service_test
+    COMMAND dungeon_tick_service_test
 )

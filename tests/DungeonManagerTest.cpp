@@ -79,9 +79,12 @@ void TestDungeonLifecycle()
 
     assert(dungeonManager.FindDungeon(dungeonId) == created.dungeon);
     assert(dungeonManager.FindDungeonByParty(partyId) == created.dungeon);
+    assert(dungeonManager.RunningDungeonIds().empty());
     assert(!dungeonManager.FinishDungeon(dungeonId));
 
     assert(dungeonManager.StartDungeon(dungeonId));
+    assert(dungeonManager.RunningDungeonIds() ==
+           std::vector<dnf::DungeonId>({dungeonId}));
     assert(!dungeonManager.StartDungeon(dungeonId));
     assert(dungeonManager.FinishDungeon(dungeonId));
 
