@@ -12,10 +12,12 @@ bool IsValidPacketType(std::uint16_t type)
            type == ChannelListRequest ||
            type == JoinChannelRequest ||
            type == EnterDungeonRequest ||
+           type == DungeonConnectionInfoRequest ||
            type == LoginResponse ||
            type == ChannelListResponse ||
            type == JoinChannelResponse ||
-           type == EnterDungeonResponse;
+           type == EnterDungeonResponse ||
+           type == DungeonConnectionInfoResponse;
 }
 
 void ValidateHeader(std::uint16_t packetSize, std::uint16_t type)

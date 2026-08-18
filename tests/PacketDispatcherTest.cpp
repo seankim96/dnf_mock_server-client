@@ -1,5 +1,6 @@
 #include "ChannelProtocol.h"
 #include "DungeonAdmissionProtocol.h"
+#include "DungeonConnectionProtocol.h"
 #include "DungeonManager.h"
 #include "DungeonUdpManager.h"
 #include "EnemyCatalog.h"
@@ -212,6 +213,33 @@ dnf::EnterDungeonResponseData SendEnterDungeonRequest(
     return dnf::DecodeEnterDungeonResponsePayload(response.payload);
 }
 
+dnf::DungeonConnectionInfoData SendConnectionInfoRequest(
+    TestContext& context,
+    dnf::SessionId sessionId)
+{
+    dnf::Packet request;
+    request.header.type = dnf::DungeonConnectionInfoRequest;
+    request.header.requestId = 61;
+
+    dnf::PacketDispatcher dispatcher(
+        context.channelManager,
+        context.partyManager,
+        context.dungeonManager,
+        context.dungeonUdpManager,
+        sessionId);
+    const auto responseBytes = dispatcher.Dispatch(request);
+
+    dnf::ReceiveBuffer buffer;
+    buffer.Append(responseBytes);
+
+    dnf::Packet response;
+    assert(buffer.TryPop(response));
+    assert(response.header.type == dnf::DungeonConnectionInfoResponse);
+    assert(response.header.requestId == 61);
+    return dnf::DecodeDungeonConnectionInfoResponsePayload(
+        response.payload);
+}
+
 void TestPartyLeaderEntersDungeon()
 {
     TestContext context;
@@ -284,6 +312,61 @@ void TestUdpAllocationRollback()
     assert(response.udpToken == 0);
     assert(context.dungeonManager.ActiveDungeonCount() == 0);
 }
+
+void TestPartyMemberGetsConnectionInfo()
+{
+    TestContext context;
+    const dnf::PartyId partyId =
+        context.partyManager.CreateParty(700).value();
+    assert(context.partyManager.JoinParty(partyId, 701) ==
+           dnf::JoinPartyResult::Success);
+
+    const auto leaderInfo = SendEnterDungeonRequest(context, 700, 1001);
+    const auto memberInfo = SendConnectionInfoRequest(context, 701);
+
+    assert(memberInfo.result ==
+           dnf::DungeonConnectionInfoResult::Success);
+    assert(memberInfo.dungeonId == leaderInfo.dungeonId);
+    assert(memberInfo.udpPort == leaderInfo.udpPort);
+    assert(memberInfo.udpToken != 0);
+    assert(memberInfo.udpToken != leaderInfo.udpToken);
+}
+
+void TestConnectionInfoFailures()
+{
+    TestContext context;
+
+    const auto noParty = SendConnectionInfoRequest(context, 700);
+    assert(noParty.result ==
+           dnf::DungeonConnectionInfoResult::NotInParty);
+
+    const dnf::PartyId partyId =
+        context.partyManager.CreateParty(700).value();
+    const auto noDungeon = SendConnectionInfoRequest(context, 700);
+    assert(noDungeon.result ==
+           dnf::DungeonConnectionInfoResult::DungeonNotFound);
+
+    SendEnterDungeonRequest(context, 700, 1001);
+    assert(context.partyManager.JoinParty(partyId, 702) ==
+           dnf::JoinPartyResult::Success);
+
+    const auto lateMember = SendConnectionInfoRequest(context, 702);
+    assert(lateMember.result ==
+           dnf::DungeonConnectionInfoResult::NotDungeonParticipant);
+
+    TestContext udpMissingContext;
+    const dnf::PartyId udpMissingPartyId =
+        udpMissingContext.partyManager.CreateParty(800).value();
+    const auto created = udpMissingContext.dungeonManager.CreateDungeon(
+        udpMissingPartyId,
+        1001);
+    assert(created.status == dnf::CreateDungeonStatus::Success);
+
+    const auto udpNotReady =
+        SendConnectionInfoRequest(udpMissingContext, 800);
+    assert(udpNotReady.result ==
+           dnf::DungeonConnectionInfoResult::UdpNotReady);
+}
 } // namespace
 
 int main()
@@ -296,6 +379,8 @@ int main()
     TestDungeonEntryPermission();
     TestDungeonEntryFailures();
     TestUdpAllocationRollback();
+    TestPartyMemberGetsConnectionInfo();
+    TestConnectionInfoFailures();
     TestMissingHandler();
 
     std::cout << "All packet dispatcher tests passed.\n";

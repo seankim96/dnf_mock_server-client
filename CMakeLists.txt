@@ -27,6 +27,7 @@ add_library(dnf_core
     src/ChannelProtocol.cpp
     src/DungeonAdmissionProtocol.cpp
     src/DungeonCatalog.cpp
+    src/DungeonConnectionProtocol.cpp
     src/DungeonInstance.cpp
     src/DungeonManager.cpp
     src/DungeonPlayerState.cpp
@@ -160,3 +161,14 @@ add_executable(dungeon_udp_manager_test tests/DungeonUdpManagerTest.cpp)
 target_link_libraries(dungeon_udp_manager_test PRIVATE dnf_core)
 
 add_test(NAME dungeon_udp_manager_test COMMAND dungeon_udp_manager_test)
+
+add_executable(
+    dungeon_connection_protocol_test
+    tests/DungeonConnectionProtocolTest.cpp
+)
+target_link_libraries(dungeon_connection_protocol_test PRIVATE dnf_core)
+
+add_test(
+    NAME dungeon_connection_protocol_test
+    COMMAND dungeon_connection_protocol_test
+)

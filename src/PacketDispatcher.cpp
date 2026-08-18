@@ -2,6 +2,7 @@
 
 #include "ChannelProtocol.h"
 #include "DungeonAdmissionProtocol.h"
+#include "DungeonConnectionProtocol.h"
 #include "DungeonManager.h"
 #include "DungeonUdpManager.h"
 #include "LoginValidator.h"
@@ -41,6 +42,9 @@ std::vector<std::uint8_t> PacketDispatcher::Dispatch(
 
     case EnterDungeonRequest:
         return HandleEnterDungeonRequest(request);
+
+    case DungeonConnectionInfoRequest:
+        return HandleDungeonConnectionInfoRequest(request);
 
     default:
         throw std::runtime_error("No handler for packet type");
@@ -206,6 +210,62 @@ std::vector<std::uint8_t> PacketDispatcher::HandleEnterDungeonRequest(
         EnterDungeonResponse,
         request.header.requestId,
         EncodeEnterDungeonResponsePayload(
+            result,
+            dungeonId,
+            udpPort,
+            udpToken));
+}
+
+std::vector<std::uint8_t>
+PacketDispatcher::HandleDungeonConnectionInfoRequest(
+    const Packet& request) const
+{
+    ValidateDungeonConnectionInfoRequestPayload(request.payload);
+
+    DungeonConnectionInfoResult result =
+        DungeonConnectionInfoResult::NotInParty;
+    DungeonId dungeonId = 0;
+    std::uint16_t udpPort = 0;
+    DungeonUdpToken udpToken = 0;
+
+    const auto partyId = partyManager_.GetJoinedParty(sessionId_);
+    if (partyId.has_value())
+    {
+        const auto dungeon =
+            dungeonManager_.FindDungeonByParty(partyId.value());
+
+        if (dungeon == nullptr)
+        {
+            result = DungeonConnectionInfoResult::DungeonNotFound;
+        }
+        else if (!dungeon->HasParticipant(sessionId_))
+        {
+            result = DungeonConnectionInfoResult::NotDungeonParticipant;
+        }
+        else
+        {
+            const auto port = dungeonUdpManager_.FindPort(dungeon->Id());
+            const auto token =
+                dungeonUdpManager_.FindToken(dungeon->Id(), sessionId_);
+
+            if (port.has_value() && token.has_value())
+            {
+                result = DungeonConnectionInfoResult::Success;
+                dungeonId = dungeon->Id();
+                udpPort = port.value();
+                udpToken = token.value();
+            }
+            else
+            {
+                result = DungeonConnectionInfoResult::UdpNotReady;
+            }
+        }
+    }
+
+    return EncodePacket(
+        DungeonConnectionInfoResponse,
+        request.header.requestId,
+        EncodeDungeonConnectionInfoResponsePayload(
             result,
             dungeonId,
             udpPort,
