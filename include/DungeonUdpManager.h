@@ -1,10 +1,10 @@
 #pragma once
 
 #include "DungeonInstance.h"
+#include "DungeonUdpSession.h"
 #include "DungeonUdpTypes.h"
 
 #include <boost/asio/io_context.hpp>
-#include <boost/asio/ip/udp.hpp>
 
 #include <cstddef>
 #include <cstdint>
@@ -29,20 +29,17 @@ public:
     std::optional<DungeonUdpToken> FindToken(
         DungeonId dungeonId,
         SessionId sessionId) const;
+    std::optional<boost::asio::ip::udp::endpoint> FindEndpoint(
+        DungeonId dungeonId,
+        SessionId sessionId) const;
     bool Release(DungeonId dungeonId);
     std::size_t AllocationCount() const;
 
 private:
-    struct Allocation
-    {
-        std::unique_ptr<boost::asio::ip::udp::socket> socket;
-        std::unordered_map<SessionId, DungeonUdpToken> tokens;
-    };
-
     boost::asio::io_context& ioContext_;
     std::random_device randomDevice_;
 
     mutable std::mutex mutex_;
-    std::unordered_map<DungeonId, Allocation> allocations_;
+    std::unordered_map<DungeonId, std::shared_ptr<DungeonUdpSession>> sessions_;
 };
 } // namespace dnf

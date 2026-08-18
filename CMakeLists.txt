@@ -34,6 +34,7 @@ add_library(dnf_core
     src/DungeonProtocol.cpp
     src/DungeonRoom.cpp
     src/DungeonUdpManager.cpp
+    src/DungeonUdpSession.cpp
     src/EnemyCatalog.cpp
     src/LoginValidator.cpp
     src/Packet.cpp
@@ -172,3 +173,8 @@ add_test(
     NAME dungeon_connection_protocol_test
     COMMAND dungeon_connection_protocol_test
 )
+
+add_executable(dungeon_udp_session_test tests/DungeonUdpSessionTest.cpp)
+target_link_libraries(dungeon_udp_session_test PRIVATE dnf_core)
+
+add_test(NAME dungeon_udp_session_test COMMAND dungeon_udp_session_test)
