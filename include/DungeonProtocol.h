@@ -24,4 +24,8 @@ std::vector<std::uint8_t> EncodePlayerInput(
 bool DecodePlayerInput(
     const std::vector<std::uint8_t>& bytes,
     PlayerInputMessage& output);
+
+std::vector<std::uint8_t> EncodeDungeonSnapshot(
+    const DungeonInstance& dungeon,
+    std::uint32_t serverTick);
 } // namespace dnf

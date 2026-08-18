@@ -7,6 +7,7 @@
 
 #include <cmath>
 #include <stdexcept>
+#include <vector>
 
 namespace dnf
 {
@@ -99,5 +100,55 @@ bool DecodePlayerInput(
 
     output = decoded;
     return true;
+}
+
+std::vector<std::uint8_t> EncodeDungeonSnapshot(
+    const DungeonInstance& dungeon,
+    std::uint32_t serverTick)
+{
+    flatbuffers::FlatBufferBuilder builder;
+
+    std::vector<flatbuffers::Offset<Dnf::Protocol::PlayerSnapshot>> players;
+    players.reserve(dungeon.Participants().size());
+
+    for (SessionId sessionId : dungeon.Participants())
+    {
+        const auto player = dungeon.FindPlayer(sessionId);
+        if (player == nullptr)
+        {
+            throw std::runtime_error("Dungeon player state not found");
+        }
+
+        const DungeonPlayerSnapshot snapshot = player->Snapshot();
+        const Dnf::Protocol::Vec3 position(
+            snapshot.position.x,
+            snapshot.position.y,
+            snapshot.position.z);
+
+        players.push_back(Dnf::Protocol::CreatePlayerSnapshot(
+            builder,
+            sessionId,
+            snapshot.roomId,
+            &position));
+    }
+
+    const auto playerVector = builder.CreateVector(players);
+    const auto snapshot = Dnf::Protocol::CreateDungeonSnapshot(
+        builder,
+        serverTick,
+        playerVector);
+
+    const auto message = Dnf::Protocol::CreateDungeonMessage(
+        builder,
+        DUNGEON_PROTOCOL_VERSION,
+        dungeon.Id(),
+        Dnf::Protocol::DungeonPayload_DungeonSnapshot,
+        snapshot.Union());
+
+    Dnf::Protocol::FinishDungeonMessageBuffer(builder, message);
+
+    return std::vector<std::uint8_t>(
+        builder.GetBufferPointer(),
+        builder.GetBufferPointer() + builder.GetSize());
 }
 } // namespace dnf

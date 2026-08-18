@@ -53,6 +53,12 @@ Position DungeonPlayerState::CurrentPosition() const
     return position_;
 }
 
+DungeonPlayerSnapshot DungeonPlayerState::Snapshot() const
+{
+    std::lock_guard lock(mutex_);
+    return {roomId_, position_};
+}
+
 MovePlayerResult DungeonPlayerState::MoveTo(
     const RoomState& room,
     const Position& nextPosition)

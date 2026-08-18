@@ -1,4 +1,7 @@
 #include "DungeonProtocol.h"
+#include "DungeonMessage_generated.h"
+
+#include <flatbuffers/verifier.h>
 
 #include <cassert>
 #include <iostream>
@@ -7,6 +10,16 @@
 
 namespace
 {
+dnf::DungeonTemplate MakeDungeonTemplate()
+{
+    dnf::DungeonTemplate dungeon;
+    dungeon.id = 1001;
+    dungeon.name = "Forest";
+    dungeon.rooms.push_back(
+        {1, 1200.0f, 500.0f, {100.0f, 250.0f, 0.0f}});
+    return dungeon;
+}
+
 void TestPlayerInputRoundTrip()
 {
     dnf::PlayerInputMessage sent;
@@ -57,6 +70,50 @@ void TestInvalidMovementIsRejected()
 
     assert(threw);
 }
+
+void TestDungeonSnapshotEncoding()
+{
+    dnf::EnemyCatalog enemyCatalog;
+    dnf::DungeonInstance dungeon(
+        5001,
+        MakeDungeonTemplate(),
+        20,
+        {100, 200},
+        enemyCatalog);
+
+    const auto player = dungeon.FindPlayer(100);
+    const auto room = dungeon.FindRoom(1);
+    assert(player != nullptr);
+    assert(room != nullptr);
+    assert(player->MoveTo(*room, {300.0f, 200.0f, 0.0f}) ==
+           dnf::MovePlayerResult::Success);
+
+    const std::vector<std::uint8_t> bytes =
+        dnf::EncodeDungeonSnapshot(dungeon, 77);
+
+    flatbuffers::Verifier verifier(bytes.data(), bytes.size());
+    assert(Dnf::Protocol::VerifyDungeonMessageBuffer(verifier));
+
+    const Dnf::Protocol::DungeonMessage* message =
+        Dnf::Protocol::GetDungeonMessage(bytes.data());
+    assert(message->protocol_version() == dnf::DUNGEON_PROTOCOL_VERSION);
+    assert(message->dungeon_id() == 5001);
+    assert(message->payload_type() ==
+           Dnf::Protocol::DungeonPayload_DungeonSnapshot);
+
+    const Dnf::Protocol::DungeonSnapshot* snapshot =
+        message->payload_as_DungeonSnapshot();
+    assert(snapshot != nullptr);
+    assert(snapshot->server_tick() == 77);
+    assert(snapshot->players()->size() == 2);
+
+    const Dnf::Protocol::PlayerSnapshot* firstPlayer =
+        snapshot->players()->Get(0);
+    assert(firstPlayer->session_id() == 100);
+    assert(firstPlayer->room_id() == 1);
+    assert(firstPlayer->position()->x() == 300.0f);
+    assert(firstPlayer->position()->y() == 200.0f);
+}
 } // namespace
 
 int main()
@@ -64,6 +121,7 @@ int main()
     TestPlayerInputRoundTrip();
     TestBrokenBufferIsRejected();
     TestInvalidMovementIsRejected();
+    TestDungeonSnapshotEncoding();
 
     std::cout << "All dungeon protocol tests passed.\n";
     return 0;

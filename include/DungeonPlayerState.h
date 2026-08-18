@@ -16,6 +16,12 @@ enum class MovePlayerResult
     BlockedByObstacle
 };
 
+struct DungeonPlayerSnapshot
+{
+    RoomId roomId = 0;
+    Position position;
+};
+
 class DungeonPlayerState
 {
 public:
@@ -27,6 +33,7 @@ public:
     SessionId Session() const;
     RoomId CurrentRoom() const;
     Position CurrentPosition() const;
+    DungeonPlayerSnapshot Snapshot() const;
 
     MovePlayerResult MoveTo(
         const RoomState& room,
