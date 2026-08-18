@@ -111,6 +111,17 @@ void TestInvalidUdpHelloIsRejected()
     assert(threw);
 }
 
+void TestUdpHeartbeatRoundTrip()
+{
+    const dnf::UdpHeartbeatMessage sent{5001, 100};
+    const auto bytes = dnf::EncodeUdpHeartbeat(sent);
+
+    dnf::UdpHeartbeatMessage received;
+    assert(dnf::DecodeUdpHeartbeat(bytes, received));
+    assert(received.dungeonId == sent.dungeonId);
+    assert(received.sessionId == sent.sessionId);
+}
+
 void TestDungeonSnapshotEncoding()
 {
     dnf::EnemyCatalog enemyCatalog;
@@ -163,6 +174,7 @@ int main()
     TestInvalidMovementIsRejected();
     TestUdpHelloRoundTrip();
     TestInvalidUdpHelloIsRejected();
+    TestUdpHeartbeatRoundTrip();
     TestDungeonSnapshotEncoding();
 
     std::cout << "All dungeon protocol tests passed.\n";

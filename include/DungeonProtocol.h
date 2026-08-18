@@ -26,6 +26,12 @@ struct UdpHelloMessage
     DungeonUdpToken token = 0;
 };
 
+struct UdpHeartbeatMessage
+{
+    DungeonId dungeonId = 0;
+    SessionId sessionId = 0;
+};
+
 std::vector<std::uint8_t> EncodePlayerInput(
     const PlayerInputMessage& input);
 
@@ -39,6 +45,13 @@ std::vector<std::uint8_t> EncodeUdpHello(
 bool DecodeUdpHello(
     const std::vector<std::uint8_t>& bytes,
     UdpHelloMessage& output);
+
+std::vector<std::uint8_t> EncodeUdpHeartbeat(
+    const UdpHeartbeatMessage& heartbeat);
+
+bool DecodeUdpHeartbeat(
+    const std::vector<std::uint8_t>& bytes,
+    UdpHeartbeatMessage& output);
 
 std::vector<std::uint8_t> EncodeDungeonSnapshot(
     const DungeonInstance& dungeon,

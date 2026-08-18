@@ -22,16 +22,19 @@ DungeonTickService::DungeonTickService(
     boost::asio::io_context& ioContext,
     DungeonManager& dungeonManager,
     DungeonUdpManager& udpManager,
-    std::chrono::milliseconds readyTimeout)
+    std::chrono::milliseconds readyTimeout,
+    std::chrono::milliseconds udpIdleTimeout)
     : timer_(ioContext),
       dungeonManager_(dungeonManager),
       udpManager_(udpManager),
       inputProcessor_(dungeonManager, udpManager),
-      readyTimeout_(readyTimeout)
+      readyTimeout_(readyTimeout),
+      udpIdleTimeout_(udpIdleTimeout)
 {
-    if (readyTimeout_ <= std::chrono::milliseconds::zero())
+    if (readyTimeout_ <= std::chrono::milliseconds::zero() ||
+        udpIdleTimeout_ <= std::chrono::milliseconds::zero())
     {
-        throw std::invalid_argument("Dungeon ready timeout must be positive");
+        throw std::invalid_argument("Dungeon timeouts must be positive");
     }
 }
 
@@ -104,7 +107,11 @@ void DungeonTickService::HandleTick(
     {
         if (udpManager_.AllParticipantsAuthenticated(dungeonId))
         {
-            dungeonManager_.StartDungeon(dungeonId);
+            if (dungeonManager_.StartDungeon(dungeonId))
+            {
+                udpManager_.RefreshAllActivity(dungeonId);
+            }
+
             waitingSince_.erase(dungeonId);
             continue;
         }
@@ -138,6 +145,9 @@ void DungeonTickService::HandleTick(
 
     for (DungeonId dungeonId : dungeonManager_.RunningDungeonIds())
     {
+        udpManager_.RemoveInactiveEndpoints(
+            dungeonId,
+            udpIdleTimeout_);
         inputProcessor_.Process(dungeonId, TICK_SECONDS);
 
         const auto dungeon = dungeonManager_.FindDungeon(dungeonId);

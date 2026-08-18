@@ -146,6 +146,32 @@ bool DungeonUdpManager::AllParticipantsAuthenticated(
     return sessionIt->second->AllParticipantsAuthenticated();
 }
 
+void DungeonUdpManager::RefreshAllActivity(DungeonId dungeonId)
+{
+    std::lock_guard lock(mutex_);
+
+    const auto sessionIt = sessions_.find(dungeonId);
+    if (sessionIt != sessions_.end())
+    {
+        sessionIt->second->RefreshAllActivity();
+    }
+}
+
+std::vector<SessionId> DungeonUdpManager::RemoveInactiveEndpoints(
+    DungeonId dungeonId,
+    std::chrono::milliseconds idleTimeout)
+{
+    std::lock_guard lock(mutex_);
+
+    const auto sessionIt = sessions_.find(dungeonId);
+    if (sessionIt == sessions_.end())
+    {
+        return {};
+    }
+
+    return sessionIt->second->RemoveInactiveEndpoints(idleTimeout);
+}
+
 bool DungeonUdpManager::BroadcastSnapshot(
     DungeonId dungeonId,
     std::vector<std::uint8_t> bytes)

@@ -221,9 +221,6 @@ void TestUdpHelloRegistersEndpoint()
         receiveBuffer.begin(),
         receiveBuffer.begin() + snapshotSize);
 
-    manager.Release(5001);
-    serverThread.join();
-
     assert(!preAuthenticationInputError);
     assert(!firstSendError);
     assert(!validSendError);
@@ -251,6 +248,40 @@ void TestUdpHelloRegistersEndpoint()
     assert(!snapshotReceiveError);
     assert(snapshotSender.port() == port.value());
     assert(receivedSnapshot == snapshotBytes);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(120));
+    const auto heartbeat = dnf::EncodeUdpHeartbeat({5001, 100});
+    firstClient.send_to(boost::asio::buffer(heartbeat), serverEndpoint);
+    std::this_thread::sleep_for(std::chrono::milliseconds(30));
+
+    const auto keptActive = manager.RemoveInactiveEndpoints(
+        5001,
+        std::chrono::milliseconds(80));
+    assert(keptActive.empty());
+    assert(manager.FindEndpoint(5001, 100).has_value());
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(70));
+    const auto removedInactive = manager.RemoveInactiveEndpoints(
+        5001,
+        std::chrono::milliseconds(80));
+    assert(removedInactive == std::vector<dnf::SessionId>({100}));
+    assert(!manager.FindEndpoint(5001, 100).has_value());
+    assert(manager.FindToken(5001, 100).has_value());
+
+    firstClient.send_to(boost::asio::buffer(validHello), serverEndpoint);
+    for (int attempt = 0; attempt < 100; ++attempt)
+    {
+        if (manager.FindEndpoint(5001, 100).has_value())
+        {
+            break;
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    }
+    assert(manager.FindEndpoint(5001, 100).has_value());
+
+    manager.Release(5001);
+    serverThread.join();
 }
 } // namespace
 

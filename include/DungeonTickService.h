@@ -14,6 +14,7 @@ namespace dnf
 {
 constexpr int DUNGEON_TICKS_PER_SECOND = 30;
 constexpr auto DEFAULT_DUNGEON_READY_TIMEOUT = std::chrono::seconds(10);
+constexpr auto DEFAULT_UDP_IDLE_TIMEOUT = std::chrono::seconds(5);
 
 class DungeonTickService
 {
@@ -23,7 +24,9 @@ public:
         DungeonManager& dungeonManager,
         DungeonUdpManager& udpManager,
         std::chrono::milliseconds readyTimeout =
-            DEFAULT_DUNGEON_READY_TIMEOUT);
+            DEFAULT_DUNGEON_READY_TIMEOUT,
+        std::chrono::milliseconds udpIdleTimeout =
+            DEFAULT_UDP_IDLE_TIMEOUT);
 
     void Start();
     void Stop();
@@ -40,6 +43,7 @@ private:
     DungeonUdpManager& udpManager_;
     DungeonInputProcessor inputProcessor_;
     std::chrono::milliseconds readyTimeout_;
+    std::chrono::milliseconds udpIdleTimeout_;
     std::unordered_map<
         DungeonId,
         std::chrono::steady_clock::time_point> waitingSince_;

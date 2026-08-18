@@ -6,6 +6,7 @@
 
 #include <boost/asio/io_context.hpp>
 
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -33,6 +34,10 @@ public:
         DungeonId dungeonId,
         SessionId sessionId) const;
     bool AllParticipantsAuthenticated(DungeonId dungeonId) const;
+    void RefreshAllActivity(DungeonId dungeonId);
+    std::vector<SessionId> RemoveInactiveEndpoints(
+        DungeonId dungeonId,
+        std::chrono::milliseconds idleTimeout);
     bool BroadcastSnapshot(
         DungeonId dungeonId,
         std::vector<std::uint8_t> bytes);

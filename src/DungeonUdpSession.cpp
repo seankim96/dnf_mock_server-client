@@ -7,6 +7,8 @@
 #include <boost/asio/dispatch.hpp>
 #include <boost/asio/error.hpp>
 
+#include <algorithm>
+#include <chrono>
 #include <utility>
 #include <vector>
 
@@ -92,6 +94,58 @@ bool DungeonUdpSession::AllParticipantsAuthenticated() const
 {
     std::lock_guard lock(stateMutex_);
     return endpoints_.size() == tokens_.size();
+}
+
+void DungeonUdpSession::RefreshAllActivity()
+{
+    std::lock_guard lock(stateMutex_);
+    const auto now = std::chrono::steady_clock::now();
+
+    for (const auto& entry : endpoints_)
+    {
+        lastActivity_[entry.first] = now;
+    }
+}
+
+std::vector<SessionId> DungeonUdpSession::RemoveInactiveEndpoints(
+    std::chrono::milliseconds idleTimeout)
+{
+    std::vector<SessionId> removedSessions;
+    if (idleTimeout <= std::chrono::milliseconds::zero())
+    {
+        return removedSessions;
+    }
+
+    std::lock_guard lock(stateMutex_);
+    const auto now = std::chrono::steady_clock::now();
+
+    for (auto activityIt = lastActivity_.begin();
+         activityIt != lastActivity_.end();)
+    {
+        if (now - activityIt->second < idleTimeout)
+        {
+            ++activityIt;
+            continue;
+        }
+
+        const SessionId sessionId = activityIt->first;
+        endpoints_.erase(sessionId);
+        lastSequences_.erase(sessionId);
+        pendingInputs_.erase(
+            std::remove_if(
+                pendingInputs_.begin(),
+                pendingInputs_.end(),
+                [sessionId](const AuthenticatedPlayerInput& input)
+                {
+                    return input.sessionId == sessionId;
+                }),
+            pendingInputs_.end());
+
+        removedSessions.push_back(sessionId);
+        activityIt = lastActivity_.erase(activityIt);
+    }
+
+    return removedSessions;
 }
 
 bool DungeonUdpSession::SendSnapshot(std::vector<std::uint8_t> bytes)
@@ -185,6 +239,15 @@ void DungeonUdpSession::HandleReceive(
             {
                 HandlePlayerInput(input);
             }
+            else
+            {
+                UdpHeartbeatMessage heartbeat;
+                if (DecodeUdpHeartbeat(bytes, heartbeat) &&
+                    heartbeat.dungeonId == dungeonId_)
+                {
+                    HandleHeartbeat(heartbeat);
+                }
+            }
         }
     }
 
@@ -201,10 +264,32 @@ void DungeonUdpSession::HandleHello(const UdpHelloMessage& hello)
         return;
     }
 
-    if (!endpoints_.contains(hello.sessionId))
+    const auto endpointIt = endpoints_.find(hello.sessionId);
+    if (endpointIt == endpoints_.end())
     {
         endpoints_.emplace(hello.sessionId, senderEndpoint_);
+        lastActivity_[hello.sessionId] = std::chrono::steady_clock::now();
     }
+    else if (endpointIt->second == senderEndpoint_)
+    {
+        lastActivity_[hello.sessionId] = std::chrono::steady_clock::now();
+    }
+}
+
+void DungeonUdpSession::HandleHeartbeat(
+    const UdpHeartbeatMessage& heartbeat)
+{
+    std::lock_guard lock(stateMutex_);
+
+    const auto endpointIt = endpoints_.find(heartbeat.sessionId);
+    if (endpointIt == endpoints_.end() ||
+        endpointIt->second != senderEndpoint_)
+    {
+        return;
+    }
+
+    lastActivity_[heartbeat.sessionId] =
+        std::chrono::steady_clock::now();
 }
 
 void DungeonUdpSession::HandlePlayerInput(
@@ -222,8 +307,14 @@ void DungeonUdpSession::HandlePlayerInput(
         }
     }
 
-    if (sessionId == 0 ||
-        pendingInputs_.size() >= MAX_PENDING_DUNGEON_INPUTS)
+    if (sessionId == 0)
+    {
+        return;
+    }
+
+    lastActivity_[sessionId] = std::chrono::steady_clock::now();
+
+    if (pendingInputs_.size() >= MAX_PENDING_DUNGEON_INPUTS)
     {
         return;
     }

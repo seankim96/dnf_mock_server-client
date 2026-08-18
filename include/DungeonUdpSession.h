@@ -10,6 +10,7 @@
 #include <boost/system/error_code.hpp>
 
 #include <array>
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <deque>
@@ -49,6 +50,9 @@ public:
     std::optional<boost::asio::ip::udp::endpoint> FindEndpoint(
         SessionId sessionId) const;
     bool AllParticipantsAuthenticated() const;
+    void RefreshAllActivity();
+    std::vector<SessionId> RemoveInactiveEndpoints(
+        std::chrono::milliseconds idleTimeout);
     bool SendSnapshot(std::vector<std::uint8_t> bytes);
     bool TryPopInput(AuthenticatedPlayerInput& output);
     std::size_t PendingInputCount() const;
@@ -59,6 +63,7 @@ private:
         const boost::system::error_code& error,
         std::size_t receivedSize);
     void HandleHello(const UdpHelloMessage& hello);
+    void HandleHeartbeat(const UdpHeartbeatMessage& heartbeat);
     void HandlePlayerInput(const PlayerInputMessage& input);
     void SendSnapshotOnStrand(
         std::shared_ptr<const std::vector<std::uint8_t>> bytes);
@@ -75,6 +80,9 @@ private:
     mutable std::mutex stateMutex_;
     TokenMap tokens_;
     std::unordered_map<SessionId, boost::asio::ip::udp::endpoint> endpoints_;
+    std::unordered_map<
+        SessionId,
+        std::chrono::steady_clock::time_point> lastActivity_;
     std::unordered_map<SessionId, std::uint32_t> lastSequences_;
     std::deque<AuthenticatedPlayerInput> pendingInputs_;
 };

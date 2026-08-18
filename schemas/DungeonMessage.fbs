@@ -29,10 +29,15 @@ table UdpHello {
   token:ulong;
 }
 
+table UdpHeartbeat {
+  session_id:ulong;
+}
+
 union DungeonPayload {
   PlayerInput,
   DungeonSnapshot,
-  UdpHello
+  UdpHello,
+  UdpHeartbeat
 }
 
 table DungeonMessage {

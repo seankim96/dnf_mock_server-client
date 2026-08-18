@@ -28,6 +28,12 @@ bool IsValid(const UdpHelloMessage& hello)
            hello.sessionId != 0 &&
            hello.token != 0;
 }
+
+bool IsValid(const UdpHeartbeatMessage& heartbeat)
+{
+    return heartbeat.dungeonId != 0 &&
+           heartbeat.sessionId != 0;
+}
 } // namespace
 
 std::vector<std::uint8_t> EncodePlayerInput(
@@ -173,6 +179,79 @@ bool DecodeUdpHello(
     decoded.dungeonId = message->dungeon_id();
     decoded.sessionId = udpHello->session_id();
     decoded.token = udpHello->token();
+
+    if (!IsValid(decoded))
+    {
+        return false;
+    }
+
+    output = decoded;
+    return true;
+}
+
+std::vector<std::uint8_t> EncodeUdpHeartbeat(
+    const UdpHeartbeatMessage& heartbeat)
+{
+    if (!IsValid(heartbeat))
+    {
+        throw std::invalid_argument("Invalid UDP heartbeat");
+    }
+
+    flatbuffers::FlatBufferBuilder builder;
+
+    const auto udpHeartbeat = Dnf::Protocol::CreateUdpHeartbeat(
+        builder,
+        heartbeat.sessionId);
+
+    const auto message = Dnf::Protocol::CreateDungeonMessage(
+        builder,
+        DUNGEON_PROTOCOL_VERSION,
+        heartbeat.dungeonId,
+        Dnf::Protocol::DungeonPayload_UdpHeartbeat,
+        udpHeartbeat.Union());
+
+    Dnf::Protocol::FinishDungeonMessageBuffer(builder, message);
+
+    return std::vector<std::uint8_t>(
+        builder.GetBufferPointer(),
+        builder.GetBufferPointer() + builder.GetSize());
+}
+
+bool DecodeUdpHeartbeat(
+    const std::vector<std::uint8_t>& bytes,
+    UdpHeartbeatMessage& output)
+{
+    if (bytes.empty())
+    {
+        return false;
+    }
+
+    flatbuffers::Verifier verifier(bytes.data(), bytes.size());
+    if (!Dnf::Protocol::VerifyDungeonMessageBuffer(verifier))
+    {
+        return false;
+    }
+
+    const Dnf::Protocol::DungeonMessage* message =
+        Dnf::Protocol::GetDungeonMessage(bytes.data());
+
+    if (message->protocol_version() != DUNGEON_PROTOCOL_VERSION ||
+        message->payload_type() !=
+            Dnf::Protocol::DungeonPayload_UdpHeartbeat)
+    {
+        return false;
+    }
+
+    const Dnf::Protocol::UdpHeartbeat* udpHeartbeat =
+        message->payload_as_UdpHeartbeat();
+    if (udpHeartbeat == nullptr)
+    {
+        return false;
+    }
+
+    UdpHeartbeatMessage decoded;
+    decoded.dungeonId = message->dungeon_id();
+    decoded.sessionId = udpHeartbeat->session_id();
 
     if (!IsValid(decoded))
     {
