@@ -25,6 +25,7 @@ add_library(dnf_core
     src/PacketDispatcher.cpp
     src/PartyManager.cpp
     src/ReceiveBuffer.cpp
+    src/RoomState.cpp
     src/ServerApplication.cpp
     src/SessionManager.cpp
     src/TcpServer.cpp
@@ -99,3 +100,8 @@ add_executable(enemy_catalog_test tests/EnemyCatalogTest.cpp)
 target_link_libraries(enemy_catalog_test PRIVATE dnf_core)
 
 add_test(NAME enemy_catalog_test COMMAND enemy_catalog_test)
+
+add_executable(room_state_test tests/RoomStateTest.cpp)
+target_link_libraries(room_state_test PRIVATE dnf_core)
+
+add_test(NAME room_state_test COMMAND room_state_test)
