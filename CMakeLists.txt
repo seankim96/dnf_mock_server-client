@@ -29,6 +29,7 @@ add_library(dnf_core
     src/DungeonInstance.cpp
     src/DungeonManager.cpp
     src/DungeonPlayerState.cpp
+    src/DungeonProtocol.cpp
     src/DungeonRoom.cpp
     src/EnemyCatalog.cpp
     src/LoginValidator.cpp
@@ -131,3 +132,8 @@ add_executable(flatbuffer_protocol_test tests/FlatBufferProtocolTest.cpp)
 target_link_libraries(flatbuffer_protocol_test PRIVATE dnf_core)
 
 add_test(NAME flatbuffer_protocol_test COMMAND flatbuffer_protocol_test)
+
+add_executable(dungeon_protocol_test tests/DungeonProtocolTest.cpp)
+target_link_libraries(dungeon_protocol_test PRIVATE dnf_core)
+
+add_test(NAME dungeon_protocol_test COMMAND dungeon_protocol_test)
