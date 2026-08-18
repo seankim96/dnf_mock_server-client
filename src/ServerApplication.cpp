@@ -17,7 +17,11 @@ ServerApplication::ServerApplication(std::uint16_t port)
     : dungeonUdpManager_(ioContext_),
       dungeonCatalog_(enemyCatalog_),
       dungeonManager_(partyManager_, dungeonCatalog_, enemyCatalog_),
-      sessionManager_(channelManager_, partyManager_, dungeonManager_),
+      sessionManager_(
+          channelManager_,
+          partyManager_,
+          dungeonManager_,
+          dungeonUdpManager_),
       tcpServer_(ioContext_, port, sessionManager_)
 {
     channelManager_.AddChannel(1, "Channel 1", 100);

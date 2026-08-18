@@ -3,6 +3,7 @@
 #include "ChannelProtocol.h"
 #include "DungeonAdmissionProtocol.h"
 #include "DungeonManager.h"
+#include "DungeonUdpManager.h"
 #include "LoginValidator.h"
 #include "PartyManager.h"
 
@@ -14,10 +15,12 @@ PacketDispatcher::PacketDispatcher(
     ChannelManager& channelManager,
     PartyManager& partyManager,
     DungeonManager& dungeonManager,
+    DungeonUdpManager& dungeonUdpManager,
     SessionId sessionId)
     : channelManager_(channelManager),
       partyManager_(partyManager),
       dungeonManager_(dungeonManager),
+      dungeonUdpManager_(dungeonUdpManager),
       sessionId_(sessionId)
 {
 }
@@ -106,6 +109,7 @@ std::vector<std::uint8_t> PacketDispatcher::HandleEnterDungeonRequest(
             request.header.requestId,
             EncodeEnterDungeonResponsePayload(
                 EnterDungeonResult::NotInParty,
+                0,
                 0));
     }
 
@@ -117,6 +121,7 @@ std::vector<std::uint8_t> PacketDispatcher::HandleEnterDungeonRequest(
             request.header.requestId,
             EncodeEnterDungeonResponsePayload(
                 EnterDungeonResult::NotInParty,
+                0,
                 0));
     }
 
@@ -127,6 +132,7 @@ std::vector<std::uint8_t> PacketDispatcher::HandleEnterDungeonRequest(
             request.header.requestId,
             EncodeEnterDungeonResponsePayload(
                 EnterDungeonResult::NotPartyLeader,
+                0,
                 0));
     }
 
@@ -135,6 +141,7 @@ std::vector<std::uint8_t> PacketDispatcher::HandleEnterDungeonRequest(
 
     EnterDungeonResult result = EnterDungeonResult::Success;
     DungeonId dungeonId = 0;
+    std::uint16_t udpPort = 0;
 
     switch (creation.status)
     {
@@ -152,9 +159,29 @@ std::vector<std::uint8_t> PacketDispatcher::HandleEnterDungeonRequest(
         break;
     }
 
+    if (result == EnterDungeonResult::Success)
+    {
+        const auto allocatedPort = dungeonUdpManager_.Allocate(dungeonId);
+        if (allocatedPort.has_value())
+        {
+            udpPort = allocatedPort.value();
+        }
+        else
+        {
+            if (!dungeonManager_.CancelDungeon(dungeonId))
+            {
+                throw std::runtime_error(
+                    "Failed to cancel dungeon after UDP allocation error");
+            }
+
+            result = EnterDungeonResult::UdpAllocationFailed;
+            dungeonId = 0;
+        }
+    }
+
     return EncodePacket(
         EnterDungeonResponse,
         request.header.requestId,
-        EncodeEnterDungeonResponsePayload(result, dungeonId));
+        EncodeEnterDungeonResponsePayload(result, dungeonId, udpPort));
 }
 } // namespace dnf

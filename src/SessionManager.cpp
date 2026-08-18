@@ -2,6 +2,7 @@
 
 #include "ChannelManager.h"
 #include "DungeonManager.h"
+#include "DungeonUdpManager.h"
 #include "PartyManager.h"
 #include "TcpSession.h"
 
@@ -13,10 +14,12 @@ namespace dnf
 SessionManager::SessionManager(
     ChannelManager& channelManager,
     PartyManager& partyManager,
-    DungeonManager& dungeonManager)
+    DungeonManager& dungeonManager,
+    DungeonUdpManager& dungeonUdpManager)
     : channelManager_(channelManager),
       partyManager_(partyManager),
-      dungeonManager_(dungeonManager)
+      dungeonManager_(dungeonManager),
+      dungeonUdpManager_(dungeonUdpManager)
 {
 }
 
@@ -29,7 +32,8 @@ SessionId SessionManager::StartSession(boost::asio::ip::tcp::socket socket)
         *this,
         channelManager_,
         partyManager_,
-        dungeonManager_);
+        dungeonManager_,
+        dungeonUdpManager_);
 
     std::size_t activeSessionCount = 0;
 

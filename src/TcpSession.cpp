@@ -2,6 +2,7 @@
 
 #include "ChannelManager.h"
 #include "DungeonManager.h"
+#include "DungeonUdpManager.h"
 #include "PartyManager.h"
 #include "SessionManager.h"
 
@@ -23,7 +24,8 @@ TcpSession::TcpSession(
     SessionManager& sessionManager,
     ChannelManager& channelManager,
     PartyManager& partyManager,
-    DungeonManager& dungeonManager)
+    DungeonManager& dungeonManager,
+    DungeonUdpManager& dungeonUdpManager)
     : sessionId_(sessionId),
       socket_(std::move(socket)),
       strand_(boost::asio::make_strand(socket_.get_executor())),
@@ -32,6 +34,7 @@ TcpSession::TcpSession(
           channelManager,
           partyManager,
           dungeonManager,
+          dungeonUdpManager,
           sessionId)
 {
 }

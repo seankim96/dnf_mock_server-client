@@ -1,10 +1,13 @@
 #include "ChannelProtocol.h"
 #include "DungeonAdmissionProtocol.h"
 #include "DungeonManager.h"
+#include "DungeonUdpManager.h"
 #include "EnemyCatalog.h"
 #include "PacketDispatcher.h"
 #include "PartyManager.h"
 #include "ReceiveBuffer.h"
+
+#include <boost/asio/io_context.hpp>
 
 #include <cassert>
 #include <cstdint>
@@ -17,7 +20,8 @@ namespace
 struct TestContext
 {
     TestContext()
-        : dungeonCatalog(enemyCatalog),
+        : dungeonUdpManager(ioContext),
+          dungeonCatalog(enemyCatalog),
           dungeonManager(partyManager, dungeonCatalog, enemyCatalog)
     {
         const dnf::RoomTemplate room{
@@ -25,6 +29,8 @@ struct TestContext
         assert(dungeonCatalog.AddDungeon(1001, "Forest", {room}));
     }
 
+    boost::asio::io_context ioContext;
+    dnf::DungeonUdpManager dungeonUdpManager;
     dnf::ChannelManager channelManager;
     dnf::PartyManager partyManager;
     dnf::EnemyCatalog enemyCatalog;
@@ -44,6 +50,7 @@ void TestLoginRequest()
         context.channelManager,
         context.partyManager,
         context.dungeonManager,
+        context.dungeonUdpManager,
         100);
     const auto responseBytes = dispatcher.Dispatch(request);
 
@@ -72,6 +79,7 @@ void TestChannelListRequest()
         context.channelManager,
         context.partyManager,
         context.dungeonManager,
+        context.dungeonUdpManager,
         100);
     const auto responseBytes = dispatcher.Dispatch(request);
 
@@ -103,6 +111,7 @@ void TestMissingHandler()
         context.channelManager,
         context.partyManager,
         context.dungeonManager,
+        context.dungeonUdpManager,
         100);
     bool errorOccurred = false;
 
@@ -132,6 +141,7 @@ void TestJoinChannelRequest()
         context.channelManager,
         context.partyManager,
         context.dungeonManager,
+        context.dungeonUdpManager,
         700);
     const auto responseBytes = dispatcher.Dispatch(request);
 
@@ -162,6 +172,7 @@ void TestInvalidLoginRequest()
         context.channelManager,
         context.partyManager,
         context.dungeonManager,
+        context.dungeonUdpManager,
         100);
     const auto responseBytes = dispatcher.Dispatch(request);
 
@@ -187,6 +198,7 @@ dnf::EnterDungeonResponseData SendEnterDungeonRequest(
         context.channelManager,
         context.partyManager,
         context.dungeonManager,
+        context.dungeonUdpManager,
         sessionId);
     const auto responseBytes = dispatcher.Dispatch(request);
 
@@ -210,6 +222,9 @@ void TestPartyLeaderEntersDungeon()
 
     assert(response.result == dnf::EnterDungeonResult::Success);
     assert(response.dungeonId != 0);
+    assert(response.udpPort != 0);
+    assert(context.dungeonUdpManager.FindPort(response.dungeonId) ==
+           response.udpPort);
     assert(context.dungeonManager.FindDungeonByParty(partyId) != nullptr);
 }
 
@@ -250,6 +265,21 @@ void TestDungeonEntryFailures()
     assert(duplicateEntry.result ==
            dnf::EnterDungeonResult::PartyAlreadyInDungeon);
 }
+
+void TestUdpAllocationRollback()
+{
+    TestContext context;
+    context.partyManager.CreateParty(700);
+
+    // 다음에 생성될 DungeonId 1을 미리 점유해 할당 실패를 만든다.
+    assert(context.dungeonUdpManager.Allocate(1).has_value());
+
+    const auto response = SendEnterDungeonRequest(context, 700, 1001);
+    assert(response.result == dnf::EnterDungeonResult::UdpAllocationFailed);
+    assert(response.dungeonId == 0);
+    assert(response.udpPort == 0);
+    assert(context.dungeonManager.ActiveDungeonCount() == 0);
+}
 } // namespace
 
 int main()
@@ -261,6 +291,7 @@ int main()
     TestPartyLeaderEntersDungeon();
     TestDungeonEntryPermission();
     TestDungeonEntryFailures();
+    TestUdpAllocationRollback();
     TestMissingHandler();
 
     std::cout << "All packet dispatcher tests passed.\n";

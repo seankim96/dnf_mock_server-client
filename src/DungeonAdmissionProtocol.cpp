@@ -14,6 +14,12 @@ void AppendUint32(std::vector<std::uint8_t>& bytes, std::uint32_t value)
     bytes.push_back(static_cast<std::uint8_t>(value));
 }
 
+void AppendUint16(std::vector<std::uint8_t>& bytes, std::uint16_t value)
+{
+    bytes.push_back(static_cast<std::uint8_t>(value >> 8));
+    bytes.push_back(static_cast<std::uint8_t>(value));
+}
+
 void AppendUint64(std::vector<std::uint8_t>& bytes, std::uint64_t value)
 {
     for (int shift = 56; shift >= 0; shift -= 8)
@@ -44,13 +50,25 @@ std::uint64_t ReadUint64(
     return value;
 }
 
+std::uint16_t ReadUint16(
+    const std::vector<std::uint8_t>& bytes,
+    std::size_t offset)
+{
+    return static_cast<std::uint16_t>(
+        (static_cast<std::uint16_t>(bytes[offset]) << 8) |
+        bytes[offset + 1]);
+}
+
 bool IsValidResult(EnterDungeonResult result)
 {
     return result >= EnterDungeonResult::Success &&
-           result <= EnterDungeonResult::PartyAlreadyInDungeon;
+           result <= EnterDungeonResult::UdpAllocationFailed;
 }
 
-bool IsValidResponse(EnterDungeonResult result, DungeonId dungeonId)
+bool IsValidResponse(
+    EnterDungeonResult result,
+    DungeonId dungeonId,
+    std::uint16_t udpPort)
 {
     if (!IsValidResult(result))
     {
@@ -58,7 +76,8 @@ bool IsValidResponse(EnterDungeonResult result, DungeonId dungeonId)
     }
 
     const bool succeeded = result == EnterDungeonResult::Success;
-    return succeeded == (dungeonId != 0);
+    return succeeded == (dungeonId != 0) &&
+           succeeded == (udpPort != 0);
 }
 } // namespace
 
@@ -95,36 +114,39 @@ DungeonTemplateId DecodeEnterDungeonRequestPayload(
 
 std::vector<std::uint8_t> EncodeEnterDungeonResponsePayload(
     EnterDungeonResult result,
-    DungeonId dungeonId)
+    DungeonId dungeonId,
+    std::uint16_t udpPort)
 {
-    if (!IsValidResponse(result, dungeonId))
+    if (!IsValidResponse(result, dungeonId, udpPort))
     {
         throw std::invalid_argument("Invalid enter dungeon response");
     }
 
     std::vector<std::uint8_t> payload;
-    payload.reserve(9);
+    payload.reserve(11);
     payload.push_back(static_cast<std::uint8_t>(result));
     AppendUint64(payload, dungeonId);
+    AppendUint16(payload, udpPort);
     return payload;
 }
 
 EnterDungeonResponseData DecodeEnterDungeonResponsePayload(
     const std::vector<std::uint8_t>& payload)
 {
-    if (payload.size() != 9)
+    if (payload.size() != 11)
     {
         throw std::runtime_error("Invalid enter dungeon response payload");
     }
 
     const auto result = static_cast<EnterDungeonResult>(payload[0]);
     const DungeonId dungeonId = ReadUint64(payload, 1);
+    const std::uint16_t udpPort = ReadUint16(payload, 9);
 
-    if (!IsValidResponse(result, dungeonId))
+    if (!IsValidResponse(result, dungeonId, udpPort))
     {
         throw std::runtime_error("Invalid enter dungeon response data");
     }
 
-    return {result, dungeonId};
+    return {result, dungeonId, udpPort};
 }
 } // namespace dnf

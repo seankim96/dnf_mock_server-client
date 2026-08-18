@@ -14,13 +14,15 @@ enum class EnterDungeonResult : std::uint8_t
     NotInParty,
     NotPartyLeader,
     DungeonTemplateNotFound,
-    PartyAlreadyInDungeon
+    PartyAlreadyInDungeon,
+    UdpAllocationFailed
 };
 
 struct EnterDungeonResponseData
 {
     EnterDungeonResult result = EnterDungeonResult::NotInParty;
     DungeonId dungeonId = 0;
+    std::uint16_t udpPort = 0;
 };
 
 std::vector<std::uint8_t> EncodeEnterDungeonRequestPayload(
@@ -31,7 +33,8 @@ DungeonTemplateId DecodeEnterDungeonRequestPayload(
 
 std::vector<std::uint8_t> EncodeEnterDungeonResponsePayload(
     EnterDungeonResult result,
-    DungeonId dungeonId);
+    DungeonId dungeonId,
+    std::uint16_t udpPort);
 
 EnterDungeonResponseData DecodeEnterDungeonResponsePayload(
     const std::vector<std::uint8_t>& payload);

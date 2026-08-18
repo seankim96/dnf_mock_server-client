@@ -24,14 +24,28 @@ std::optional<std::uint16_t> DungeonUdpManager::Allocate(
     }
 
     auto socket = std::make_unique<udp::socket>(ioContext_);
-    socket->open(udp::v4());
+    boost::system::error_code error;
+    socket->open(udp::v4(), error);
+    if (error)
+    {
+        return std::nullopt;
+    }
 
     // 포트 0을 사용하면 운영체제가 현재 비어 있는 포트를 선택한다.
-    socket->bind(udp::endpoint(udp::v4(), 0));
-    const std::uint16_t port = socket->local_endpoint().port();
+    socket->bind(udp::endpoint(udp::v4(), 0), error);
+    if (error)
+    {
+        return std::nullopt;
+    }
+
+    const udp::endpoint localEndpoint = socket->local_endpoint(error);
+    if (error)
+    {
+        return std::nullopt;
+    }
 
     sockets_.emplace(dungeonId, std::move(socket));
-    return port;
+    return localEndpoint.port();
 }
 
 std::optional<std::uint16_t> DungeonUdpManager::FindPort(

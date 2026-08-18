@@ -19,6 +19,7 @@ namespace dnf
 {
 class ChannelManager;
 class DungeonManager;
+class DungeonUdpManager;
 class PartyManager;
 class SessionManager;
 
@@ -31,7 +32,8 @@ public:
         SessionManager& sessionManager,
         ChannelManager& channelManager,
         PartyManager& partyManager,
-        DungeonManager& dungeonManager);
+        DungeonManager& dungeonManager,
+        DungeonUdpManager& dungeonUdpManager);
 
     void Start();
     SessionId Id() const;

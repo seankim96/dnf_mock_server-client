@@ -40,6 +40,7 @@ public:
     std::shared_ptr<DungeonInstance> FindDungeonByParty(PartyId partyId) const;
 
     bool StartDungeon(DungeonId dungeonId);
+    bool CancelDungeon(DungeonId dungeonId);
     bool FinishDungeon(DungeonId dungeonId);
     std::size_t ActiveDungeonCount() const;
 

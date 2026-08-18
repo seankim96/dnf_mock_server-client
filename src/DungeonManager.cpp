@@ -90,6 +90,22 @@ bool DungeonManager::StartDungeon(DungeonId dungeonId)
     return dungeonIt->second->Start();
 }
 
+bool DungeonManager::CancelDungeon(DungeonId dungeonId)
+{
+    std::lock_guard lock(mutex_);
+
+    auto dungeonIt = dungeons_.find(dungeonId);
+    if (dungeonIt == dungeons_.end() ||
+        dungeonIt->second->State() != DungeonState::Waiting)
+    {
+        return false;
+    }
+
+    partyDungeons_.erase(dungeonIt->second->Party());
+    dungeons_.erase(dungeonIt);
+    return true;
+}
+
 bool DungeonManager::FinishDungeon(DungeonId dungeonId)
 {
     std::lock_guard lock(mutex_);

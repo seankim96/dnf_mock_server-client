@@ -10,6 +10,7 @@
 namespace dnf
 {
 class DungeonManager;
+class DungeonUdpManager;
 class PartyManager;
 
 class PacketDispatcher
@@ -19,6 +20,7 @@ public:
         ChannelManager& channelManager,
         PartyManager& partyManager,
         DungeonManager& dungeonManager,
+        DungeonUdpManager& dungeonUdpManager,
         SessionId sessionId);
 
     // 요청 타입에 맞는 핸들러를 실행하고 응답 패킷을 반환한다.
@@ -37,6 +39,7 @@ private:
     ChannelManager& channelManager_;
     PartyManager& partyManager_;
     DungeonManager& dungeonManager_;
+    DungeonUdpManager& dungeonUdpManager_;
     SessionId sessionId_;
 };
 } // namespace dnf
