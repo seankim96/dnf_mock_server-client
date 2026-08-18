@@ -5,6 +5,8 @@
 #include <boost/asio/error.hpp>
 
 #include <chrono>
+#include <stdexcept>
+#include <unordered_set>
 
 namespace dnf
 {
@@ -19,12 +21,18 @@ constexpr float TICK_SECONDS =
 DungeonTickService::DungeonTickService(
     boost::asio::io_context& ioContext,
     DungeonManager& dungeonManager,
-    DungeonUdpManager& udpManager)
+    DungeonUdpManager& udpManager,
+    std::chrono::milliseconds readyTimeout)
     : timer_(ioContext),
       dungeonManager_(dungeonManager),
       udpManager_(udpManager),
-      inputProcessor_(dungeonManager, udpManager)
+      inputProcessor_(dungeonManager, udpManager),
+      readyTimeout_(readyTimeout)
 {
+    if (readyTimeout_ <= std::chrono::milliseconds::zero())
+    {
+        throw std::invalid_argument("Dungeon ready timeout must be positive");
+    }
 }
 
 void DungeonTickService::Start()
@@ -85,11 +93,46 @@ void DungeonTickService::HandleTick(
 
     ++tickCount_;
 
-    for (DungeonId dungeonId : dungeonManager_.WaitingDungeonIds())
+    const auto now = std::chrono::steady_clock::now();
+    const std::vector<DungeonId> waitingDungeonIds =
+        dungeonManager_.WaitingDungeonIds();
+    const std::unordered_set<DungeonId> waitingDungeonSet(
+        waitingDungeonIds.begin(),
+        waitingDungeonIds.end());
+
+    for (DungeonId dungeonId : waitingDungeonIds)
     {
         if (udpManager_.AllParticipantsAuthenticated(dungeonId))
         {
             dungeonManager_.StartDungeon(dungeonId);
+            waitingSince_.erase(dungeonId);
+            continue;
+        }
+
+        const auto [waitingIt, inserted] =
+            waitingSince_.try_emplace(dungeonId, now);
+
+        if (!inserted && now - waitingIt->second >= readyTimeout_)
+        {
+            if (dungeonManager_.CancelDungeon(dungeonId))
+            {
+                udpManager_.Release(dungeonId);
+            }
+
+            waitingSince_.erase(waitingIt);
+        }
+    }
+
+    for (auto waitingIt = waitingSince_.begin();
+         waitingIt != waitingSince_.end();)
+    {
+        if (!waitingDungeonSet.contains(waitingIt->first))
+        {
+            waitingIt = waitingSince_.erase(waitingIt);
+        }
+        else
+        {
+            ++waitingIt;
         }
     }
 

@@ -128,12 +128,64 @@ void TestDungeonStartsAfterAllUdpHelloMessages()
     assert(stayedWaitingForFirstPlayer);
     assert(created.dungeon->State() == dnf::DungeonState::Running);
 }
+
+void TestWaitingDungeonTimesOut()
+{
+    boost::asio::io_context ioContext;
+    dnf::DungeonUdpManager udpManager(ioContext);
+    dnf::PartyManager partyManager;
+    const dnf::PartyId partyId = partyManager.CreateParty(100).value();
+
+    dnf::EnemyCatalog enemyCatalog;
+    dnf::DungeonCatalog dungeonCatalog(enemyCatalog);
+    const dnf::RoomTemplate room{
+        1, 1200.0f, 500.0f, {100.0f, 250.0f, 0.0f}};
+    assert(dungeonCatalog.AddDungeon(1001, "Forest", {room}));
+
+    dnf::DungeonManager dungeonManager(
+        partyManager,
+        dungeonCatalog,
+        enemyCatalog);
+    const auto created = dungeonManager.CreateDungeon(partyId, 1001);
+    const dnf::DungeonId dungeonId = created.dungeon->Id();
+    assert(udpManager.Allocate(dungeonId, {100}).has_value());
+
+    dnf::DungeonTickService tickService(
+        ioContext,
+        dungeonManager,
+        udpManager,
+        std::chrono::milliseconds(90));
+    tickService.Start();
+
+    boost::asio::steady_timer stopTimer(
+        ioContext,
+        std::chrono::milliseconds(250));
+    stopTimer.async_wait(
+        [&](const boost::system::error_code&)
+        {
+            tickService.Stop();
+
+            if (udpManager.FindPort(dungeonId).has_value())
+            {
+                udpManager.Release(dungeonId);
+            }
+        });
+
+    ioContext.run();
+
+    assert(dungeonManager.FindDungeon(dungeonId) == nullptr);
+    assert(udpManager.AllocationCount() == 0);
+
+    const auto retry = dungeonManager.CreateDungeon(partyId, 1001);
+    assert(retry.status == dnf::CreateDungeonStatus::Success);
+}
 } // namespace
 
 int main()
 {
     TestTickTimerRunsAndStops();
     TestDungeonStartsAfterAllUdpHelloMessages();
+    TestWaitingDungeonTimesOut();
 
     std::cout << "All dungeon tick service tests passed.\n";
     return 0;
