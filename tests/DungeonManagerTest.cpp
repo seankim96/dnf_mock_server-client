@@ -5,6 +5,13 @@
 
 namespace
 {
+void AddTestDungeon(dnf::DungeonCatalog& catalog)
+{
+    const dnf::RoomTemplate room{
+        1, 1200.0f, 500.0f, {100.0f, 250.0f, 0.0f}};
+    catalog.AddDungeon(1001, "Forest", {room});
+}
+
 void TestCreateDungeonFromParty()
 {
     dnf::PartyManager partyManager;
@@ -12,7 +19,7 @@ void TestCreateDungeonFromParty()
     partyManager.JoinParty(partyId, 200);
 
     dnf::DungeonCatalog dungeonCatalog;
-    dungeonCatalog.AddDungeon(1001, "Forest", 3);
+    AddTestDungeon(dungeonCatalog);
 
     dnf::DungeonManager dungeonManager(partyManager, dungeonCatalog);
     const auto result = dungeonManager.CreateDungeon(partyId, 1001);
@@ -30,7 +37,7 @@ void TestCreationFailure()
 {
     dnf::PartyManager partyManager;
     dnf::DungeonCatalog dungeonCatalog;
-    dungeonCatalog.AddDungeon(1001, "Forest", 3);
+    AddTestDungeon(dungeonCatalog);
     dnf::DungeonManager dungeonManager(partyManager, dungeonCatalog);
 
     const auto missingParty = dungeonManager.CreateDungeon(999, 1001);
@@ -56,7 +63,7 @@ void TestDungeonLifecycle()
     const dnf::PartyId partyId = partyManager.CreateParty(100).value();
 
     dnf::DungeonCatalog dungeonCatalog;
-    dungeonCatalog.AddDungeon(1001, "Forest", 3);
+    AddTestDungeon(dungeonCatalog);
     dnf::DungeonManager dungeonManager(partyManager, dungeonCatalog);
     const auto created = dungeonManager.CreateDungeon(partyId, 1001);
     const dnf::DungeonId dungeonId = created.dungeon->Id();
@@ -85,7 +92,7 @@ void TestParticipantSnapshot()
     partyManager.JoinParty(partyId, 200);
 
     dnf::DungeonCatalog dungeonCatalog;
-    dungeonCatalog.AddDungeon(1001, "Forest", 3);
+    AddTestDungeon(dungeonCatalog);
     dnf::DungeonManager dungeonManager(partyManager, dungeonCatalog);
     const auto created = dungeonManager.CreateDungeon(partyId, 1001);
 

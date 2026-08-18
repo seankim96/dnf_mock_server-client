@@ -1,10 +1,13 @@
 #pragma once
 
+#include "DungeonRoom.h"
+
 #include <cstdint>
 #include <mutex>
 #include <optional>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 namespace dnf
 {
@@ -14,7 +17,7 @@ struct DungeonTemplate
 {
     DungeonTemplateId id = 0;
     std::string name;
-    std::uint32_t roomCount = 0;
+    std::vector<RoomTemplate> rooms;
 };
 
 class DungeonCatalog
@@ -23,7 +26,7 @@ public:
     bool AddDungeon(
         DungeonTemplateId templateId,
         std::string name,
-        std::uint32_t roomCount);
+        std::vector<RoomTemplate> rooms);
 
     std::optional<DungeonTemplate> GetDungeon(
         DungeonTemplateId templateId) const;
