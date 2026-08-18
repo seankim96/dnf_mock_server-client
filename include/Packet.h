@@ -15,10 +15,12 @@ enum PacketType : std::uint16_t
     LoginRequest = 1,
     ChannelListRequest = 2,
     JoinChannelRequest = 3,
+    EnterDungeonRequest = 4,
 
     LoginResponse = 101,
     ChannelListResponse = 102,
-    JoinChannelResponse = 103
+    JoinChannelResponse = 103,
+    EnterDungeonResponse = 104
 };
 
 // 모든 TCP 패킷 앞에 붙는 공통 정보다.

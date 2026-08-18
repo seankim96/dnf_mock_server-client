@@ -25,6 +25,7 @@ flatbuffers_generate_headers(
 add_library(dnf_core
     src/ChannelManager.cpp
     src/ChannelProtocol.cpp
+    src/DungeonAdmissionProtocol.cpp
     src/DungeonCatalog.cpp
     src/DungeonInstance.cpp
     src/DungeonManager.cpp
@@ -142,3 +143,14 @@ add_executable(server_application_test tests/ServerApplicationTest.cpp)
 target_link_libraries(server_application_test PRIVATE dnf_core)
 
 add_test(NAME server_application_test COMMAND server_application_test)
+
+add_executable(
+    dungeon_admission_protocol_test
+    tests/DungeonAdmissionProtocolTest.cpp
+)
+target_link_libraries(dungeon_admission_protocol_test PRIVATE dnf_core)
+
+add_test(
+    NAME dungeon_admission_protocol_test
+    COMMAND dungeon_admission_protocol_test
+)
