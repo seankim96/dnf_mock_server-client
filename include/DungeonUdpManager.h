@@ -32,6 +32,7 @@ public:
     std::optional<boost::asio::ip::udp::endpoint> FindEndpoint(
         DungeonId dungeonId,
         SessionId sessionId) const;
+    bool AllParticipantsAuthenticated(DungeonId dungeonId) const;
     bool BroadcastSnapshot(
         DungeonId dungeonId,
         std::vector<std::uint8_t> bytes);

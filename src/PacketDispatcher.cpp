@@ -187,11 +187,6 @@ std::vector<std::uint8_t> PacketDispatcher::HandleEnterDungeonRequest(
             }
         }
 
-        if (udpReady && !dungeonManager_.StartDungeon(dungeonId))
-        {
-            throw std::runtime_error("Failed to start dungeon");
-        }
-
         if (!udpReady)
         {
             if (allocatedPort.has_value())

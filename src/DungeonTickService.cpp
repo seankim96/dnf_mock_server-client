@@ -85,6 +85,14 @@ void DungeonTickService::HandleTick(
 
     ++tickCount_;
 
+    for (DungeonId dungeonId : dungeonManager_.WaitingDungeonIds())
+    {
+        if (udpManager_.AllParticipantsAuthenticated(dungeonId))
+        {
+            dungeonManager_.StartDungeon(dungeonId);
+        }
+    }
+
     for (DungeonId dungeonId : dungeonManager_.RunningDungeonIds())
     {
         inputProcessor_.Process(dungeonId, TICK_SECONDS);

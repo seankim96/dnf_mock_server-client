@@ -88,6 +88,12 @@ std::optional<udp::endpoint> DungeonUdpSession::FindEndpoint(
     return endpointIt->second;
 }
 
+bool DungeonUdpSession::AllParticipantsAuthenticated() const
+{
+    std::lock_guard lock(stateMutex_);
+    return endpoints_.size() == tokens_.size();
+}
+
 bool DungeonUdpSession::SendSnapshot(std::vector<std::uint8_t> bytes)
 {
     if (bytes.empty() || bytes.size() > MAX_DUNGEON_DATAGRAM_SIZE)

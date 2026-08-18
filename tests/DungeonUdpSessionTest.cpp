@@ -27,6 +27,8 @@ void TestUdpHelloRegistersEndpoint()
     const auto token = manager.FindToken(5001, 100);
     assert(port.has_value());
     assert(token.has_value());
+    assert(!manager.AllParticipantsAuthenticated(5001));
+    assert(!manager.AllParticipantsAuthenticated(9999));
 
     boost::asio::io_context clientIoContext;
     udp::socket firstClient(clientIoContext);
@@ -167,6 +169,8 @@ void TestUdpHelloRegistersEndpoint()
         foreignInputError);
     std::this_thread::sleep_for(std::chrono::milliseconds(30));
     const auto endpointAfterReplay = manager.FindEndpoint(5001, 100);
+    const bool allParticipantsAuthenticated =
+        manager.AllParticipantsAuthenticated(5001);
     const std::size_t pendingCountAfterForeignInput =
         manager.PendingInputCount(5001);
 
@@ -235,6 +239,7 @@ void TestUdpHelloRegistersEndpoint()
            boost::asio::ip::address_v4::loopback());
     assert(registeredEndpoint->port() == firstClient.local_endpoint().port());
     assert(endpointAfterReplay == registeredEndpoint);
+    assert(allParticipantsAuthenticated);
     assert(pendingCountAfterForeignInput == 2);
     assert(poppedFirst);
     assert(poppedSecond);

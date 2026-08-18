@@ -48,6 +48,7 @@ public:
     std::optional<DungeonUdpToken> FindToken(SessionId sessionId) const;
     std::optional<boost::asio::ip::udp::endpoint> FindEndpoint(
         SessionId sessionId) const;
+    bool AllParticipantsAuthenticated() const;
     bool SendSnapshot(std::vector<std::uint8_t> bytes);
     bool TryPopInput(AuthenticatedPlayerInput& output);
     std::size_t PendingInputCount() const;
