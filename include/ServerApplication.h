@@ -1,6 +1,9 @@
 #pragma once
 
 #include "ChannelManager.h"
+#include "DungeonCatalog.h"
+#include "DungeonManager.h"
+#include "EnemyCatalog.h"
 #include "PartyManager.h"
 #include "SessionManager.h"
 #include "TcpServer.h"
@@ -18,10 +21,19 @@ public:
 
     void Run();
 
+    const EnemyCatalog& Enemies() const;
+    const DungeonCatalog& DungeonTemplates() const;
+    const DungeonManager& DungeonInstances() const;
+
 private:
+    void LoadGameData();
+
     boost::asio::io_context ioContext_;
     ChannelManager channelManager_;
     PartyManager partyManager_;
+    EnemyCatalog enemyCatalog_;
+    DungeonCatalog dungeonCatalog_;
+    DungeonManager dungeonManager_;
     SessionManager sessionManager_;
     TcpServer tcpServer_;
 };

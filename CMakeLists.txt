@@ -137,3 +137,8 @@ add_executable(dungeon_protocol_test tests/DungeonProtocolTest.cpp)
 target_link_libraries(dungeon_protocol_test PRIVATE dnf_core)
 
 add_test(NAME dungeon_protocol_test COMMAND dungeon_protocol_test)
+
+add_executable(server_application_test tests/ServerApplicationTest.cpp)
+target_link_libraries(server_application_test PRIVATE dnf_core)
+
+add_test(NAME server_application_test COMMAND server_application_test)
