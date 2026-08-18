@@ -33,6 +33,17 @@ struct PortalTemplate
     bool requiresRoomClear = true;
 };
 
+using ObstacleId = std::uint32_t;
+
+struct ObstacleTemplate
+{
+    ObstacleId id = 0;
+    CollisionBox collision;
+
+    bool destructible = false;
+    std::uint32_t maxHp = 0;
+};
+
 struct RoomTemplate
 {
     RoomId id = 0;
@@ -45,6 +56,7 @@ struct RoomTemplate
 
     Position playerSpawn;
     std::vector<PortalTemplate> portals;
+    std::vector<ObstacleTemplate> obstacles;
 };
 
 bool IsInsideRoom(const RoomTemplate& room, const Position& position);

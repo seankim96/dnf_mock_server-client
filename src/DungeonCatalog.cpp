@@ -63,6 +63,26 @@ bool DungeonCatalog::AddDungeon(
                 return false;
             }
         }
+
+        std::unordered_set<ObstacleId> obstacleIds;
+
+        for (const ObstacleTemplate& obstacle : room.obstacles)
+        {
+            const bool invalidHp =
+                (obstacle.destructible && obstacle.maxHp == 0) ||
+                (!obstacle.destructible && obstacle.maxHp != 0);
+
+            if (obstacle.id == 0 ||
+                !obstacleIds.insert(obstacle.id).second ||
+                !IsValidCollisionBox(obstacle.collision) ||
+                obstacle.collision.minimum.z < 0.0f ||
+                !IsInsideRoom(room, obstacle.collision.minimum) ||
+                !IsInsideRoom(room, obstacle.collision.maximum) ||
+                invalidHp)
+            {
+                return false;
+            }
+        }
     }
 
     DungeonTemplate dungeon;

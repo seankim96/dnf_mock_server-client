@@ -24,6 +24,22 @@ void TestAddAndGetDungeon()
     portal.requiresRoomClear = true;
     firstRoom.portals.push_back(portal);
 
+    dnf::ObstacleTemplate wall;
+    wall.id = 1;
+    wall.collision = {
+        {400.0f, 100.0f, 0.0f},
+        {500.0f, 200.0f, 200.0f}};
+    firstRoom.obstacles.push_back(wall);
+
+    dnf::ObstacleTemplate crate;
+    crate.id = 2;
+    crate.collision = {
+        {700.0f, 300.0f, 0.0f},
+        {780.0f, 380.0f, 100.0f}};
+    crate.destructible = true;
+    crate.maxHp = 100;
+    firstRoom.obstacles.push_back(crate);
+
     assert(catalog.AddDungeon(1001, "Forest", {firstRoom, secondRoom}));
     assert(!catalog.AddDungeon(1001, "Duplicate", {firstRoom}));
 
@@ -34,6 +50,8 @@ void TestAddAndGetDungeon()
     assert(dungeon->rooms.size() == 2);
     assert(dungeon->rooms[0].id == 1);
     assert(dungeon->rooms[0].portals[0].targetRoomId == 2);
+    assert(dungeon->rooms[0].obstacles.size() == 2);
+    assert(dungeon->rooms[0].obstacles[1].maxHp == 100);
     assert(dungeon->rooms[1].playerSpawn.y == 300.0f);
 }
 
@@ -56,12 +74,23 @@ void TestInvalidDungeon()
     invalidPortal.targetPosition = {100.0f, 250.0f, 0.0f};
     invalidPortalRoom.portals.push_back(invalidPortal);
 
+    dnf::RoomTemplate invalidObstacleRoom = validRoom;
+    dnf::ObstacleTemplate invalidObstacle;
+    invalidObstacle.id = 1;
+    invalidObstacle.collision = {
+        {400.0f, 100.0f, 0.0f},
+        {500.0f, 200.0f, 200.0f}};
+    invalidObstacle.destructible = true;
+    invalidObstacle.maxHp = 0;
+    invalidObstacleRoom.obstacles.push_back(invalidObstacle);
+
     assert(!catalog.AddDungeon(0, "Forest", {validRoom}));
     assert(!catalog.AddDungeon(1001, "", {validRoom}));
     assert(!catalog.AddDungeon(1001, "Forest", {}));
     assert(!catalog.AddDungeon(1001, "Forest", {invalidSpawn}));
     assert(!catalog.AddDungeon(1001, "Forest", {validRoom, validRoom}));
     assert(!catalog.AddDungeon(1001, "Forest", {invalidPortalRoom}));
+    assert(!catalog.AddDungeon(1001, "Forest", {invalidObstacleRoom}));
     assert(!catalog.GetDungeon(9999).has_value());
 }
 } // namespace
