@@ -32,16 +32,19 @@ void TestEnterDungeonResponse()
     const auto successPayload = dnf::EncodeEnterDungeonResponsePayload(
         dnf::EnterDungeonResult::Success,
         5001,
-        40000);
+        40000,
+        90001);
     const auto success =
         dnf::DecodeEnterDungeonResponsePayload(successPayload);
 
     assert(success.result == dnf::EnterDungeonResult::Success);
     assert(success.dungeonId == 5001);
     assert(success.udpPort == 40000);
+    assert(success.udpToken == 90001);
 
     const auto failurePayload = dnf::EncodeEnterDungeonResponsePayload(
         dnf::EnterDungeonResult::NotPartyLeader,
+        0,
         0,
         0);
     const auto failure =
@@ -50,6 +53,7 @@ void TestEnterDungeonResponse()
     assert(failure.result == dnf::EnterDungeonResult::NotPartyLeader);
     assert(failure.dungeonId == 0);
     assert(failure.udpPort == 0);
+    assert(failure.udpToken == 0);
 }
 
 void TestInvalidPayloads()
@@ -71,7 +75,8 @@ void TestInvalidPayloads()
         dnf::EncodeEnterDungeonResponsePayload(
             dnf::EnterDungeonResult::Success,
             0,
-            40000);
+            40000,
+            90001);
     }
     catch (const std::invalid_argument&)
     {

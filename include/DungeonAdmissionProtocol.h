@@ -2,6 +2,7 @@
 
 #include "DungeonCatalog.h"
 #include "DungeonInstance.h"
+#include "DungeonUdpTypes.h"
 
 #include <cstdint>
 #include <vector>
@@ -23,6 +24,7 @@ struct EnterDungeonResponseData
     EnterDungeonResult result = EnterDungeonResult::NotInParty;
     DungeonId dungeonId = 0;
     std::uint16_t udpPort = 0;
+    DungeonUdpToken udpToken = 0;
 };
 
 std::vector<std::uint8_t> EncodeEnterDungeonRequestPayload(
@@ -34,7 +36,8 @@ DungeonTemplateId DecodeEnterDungeonRequestPayload(
 std::vector<std::uint8_t> EncodeEnterDungeonResponsePayload(
     EnterDungeonResult result,
     DungeonId dungeonId,
-    std::uint16_t udpPort);
+    std::uint16_t udpPort,
+    DungeonUdpToken udpToken);
 
 EnterDungeonResponseData DecodeEnterDungeonResponsePayload(
     const std::vector<std::uint8_t>& payload);

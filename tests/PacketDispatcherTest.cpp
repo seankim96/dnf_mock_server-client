@@ -223,8 +223,11 @@ void TestPartyLeaderEntersDungeon()
     assert(response.result == dnf::EnterDungeonResult::Success);
     assert(response.dungeonId != 0);
     assert(response.udpPort != 0);
+    assert(response.udpToken != 0);
     assert(context.dungeonUdpManager.FindPort(response.dungeonId) ==
            response.udpPort);
+    assert(context.dungeonUdpManager.FindToken(response.dungeonId, 700) ==
+           response.udpToken);
     assert(context.dungeonManager.FindDungeonByParty(partyId) != nullptr);
 }
 
@@ -272,12 +275,13 @@ void TestUdpAllocationRollback()
     context.partyManager.CreateParty(700);
 
     // 다음에 생성될 DungeonId 1을 미리 점유해 할당 실패를 만든다.
-    assert(context.dungeonUdpManager.Allocate(1).has_value());
+    assert(context.dungeonUdpManager.Allocate(1, {999}).has_value());
 
     const auto response = SendEnterDungeonRequest(context, 700, 1001);
     assert(response.result == dnf::EnterDungeonResult::UdpAllocationFailed);
     assert(response.dungeonId == 0);
     assert(response.udpPort == 0);
+    assert(response.udpToken == 0);
     assert(context.dungeonManager.ActiveDungeonCount() == 0);
 }
 } // namespace

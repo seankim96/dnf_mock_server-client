@@ -110,6 +110,7 @@ std::vector<std::uint8_t> PacketDispatcher::HandleEnterDungeonRequest(
             EncodeEnterDungeonResponsePayload(
                 EnterDungeonResult::NotInParty,
                 0,
+                0,
                 0));
     }
 
@@ -122,6 +123,7 @@ std::vector<std::uint8_t> PacketDispatcher::HandleEnterDungeonRequest(
             EncodeEnterDungeonResponsePayload(
                 EnterDungeonResult::NotInParty,
                 0,
+                0,
                 0));
     }
 
@@ -133,6 +135,7 @@ std::vector<std::uint8_t> PacketDispatcher::HandleEnterDungeonRequest(
             EncodeEnterDungeonResponsePayload(
                 EnterDungeonResult::NotPartyLeader,
                 0,
+                0,
                 0));
     }
 
@@ -142,6 +145,7 @@ std::vector<std::uint8_t> PacketDispatcher::HandleEnterDungeonRequest(
     EnterDungeonResult result = EnterDungeonResult::Success;
     DungeonId dungeonId = 0;
     std::uint16_t udpPort = 0;
+    DungeonUdpToken udpToken = 0;
 
     switch (creation.status)
     {
@@ -161,13 +165,31 @@ std::vector<std::uint8_t> PacketDispatcher::HandleEnterDungeonRequest(
 
     if (result == EnterDungeonResult::Success)
     {
-        const auto allocatedPort = dungeonUdpManager_.Allocate(dungeonId);
+        const auto allocatedPort = dungeonUdpManager_.Allocate(
+            dungeonId,
+            creation.dungeon->Participants());
+
+        bool udpReady = false;
         if (allocatedPort.has_value())
         {
             udpPort = allocatedPort.value();
+            const auto allocatedToken =
+                dungeonUdpManager_.FindToken(dungeonId, sessionId_);
+
+            if (allocatedToken.has_value())
+            {
+                udpToken = allocatedToken.value();
+                udpReady = true;
+            }
         }
-        else
+
+        if (!udpReady)
         {
+            if (allocatedPort.has_value())
+            {
+                dungeonUdpManager_.Release(dungeonId);
+            }
+
             if (!dungeonManager_.CancelDungeon(dungeonId))
             {
                 throw std::runtime_error(
@@ -176,12 +198,17 @@ std::vector<std::uint8_t> PacketDispatcher::HandleEnterDungeonRequest(
 
             result = EnterDungeonResult::UdpAllocationFailed;
             dungeonId = 0;
+            udpPort = 0;
         }
     }
 
     return EncodePacket(
         EnterDungeonResponse,
         request.header.requestId,
-        EncodeEnterDungeonResponsePayload(result, dungeonId, udpPort));
+        EncodeEnterDungeonResponsePayload(
+            result,
+            dungeonId,
+            udpPort,
+            udpToken));
 }
 } // namespace dnf

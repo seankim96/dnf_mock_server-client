@@ -68,7 +68,8 @@ bool IsValidResult(EnterDungeonResult result)
 bool IsValidResponse(
     EnterDungeonResult result,
     DungeonId dungeonId,
-    std::uint16_t udpPort)
+    std::uint16_t udpPort,
+    DungeonUdpToken udpToken)
 {
     if (!IsValidResult(result))
     {
@@ -77,7 +78,8 @@ bool IsValidResponse(
 
     const bool succeeded = result == EnterDungeonResult::Success;
     return succeeded == (dungeonId != 0) &&
-           succeeded == (udpPort != 0);
+           succeeded == (udpPort != 0) &&
+           succeeded == (udpToken != 0);
 }
 } // namespace
 
@@ -115,25 +117,27 @@ DungeonTemplateId DecodeEnterDungeonRequestPayload(
 std::vector<std::uint8_t> EncodeEnterDungeonResponsePayload(
     EnterDungeonResult result,
     DungeonId dungeonId,
-    std::uint16_t udpPort)
+    std::uint16_t udpPort,
+    DungeonUdpToken udpToken)
 {
-    if (!IsValidResponse(result, dungeonId, udpPort))
+    if (!IsValidResponse(result, dungeonId, udpPort, udpToken))
     {
         throw std::invalid_argument("Invalid enter dungeon response");
     }
 
     std::vector<std::uint8_t> payload;
-    payload.reserve(11);
+    payload.reserve(19);
     payload.push_back(static_cast<std::uint8_t>(result));
     AppendUint64(payload, dungeonId);
     AppendUint16(payload, udpPort);
+    AppendUint64(payload, udpToken);
     return payload;
 }
 
 EnterDungeonResponseData DecodeEnterDungeonResponsePayload(
     const std::vector<std::uint8_t>& payload)
 {
-    if (payload.size() != 11)
+    if (payload.size() != 19)
     {
         throw std::runtime_error("Invalid enter dungeon response payload");
     }
@@ -141,12 +145,13 @@ EnterDungeonResponseData DecodeEnterDungeonResponsePayload(
     const auto result = static_cast<EnterDungeonResult>(payload[0]);
     const DungeonId dungeonId = ReadUint64(payload, 1);
     const std::uint16_t udpPort = ReadUint16(payload, 9);
+    const DungeonUdpToken udpToken = ReadUint64(payload, 11);
 
-    if (!IsValidResponse(result, dungeonId, udpPort))
+    if (!IsValidResponse(result, dungeonId, udpPort, udpToken))
     {
         throw std::runtime_error("Invalid enter dungeon response data");
     }
 
-    return {result, dungeonId, udpPort};
+    return {result, dungeonId, udpPort, udpToken};
 }
 } // namespace dnf
