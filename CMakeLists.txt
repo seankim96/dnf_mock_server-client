@@ -19,6 +19,7 @@ add_library(dnf_core
     src/DungeonInstance.cpp
     src/DungeonManager.cpp
     src/DungeonRoom.cpp
+    src/EnemyCatalog.cpp
     src/LoginValidator.cpp
     src/Packet.cpp
     src/PacketDispatcher.cpp
@@ -93,3 +94,8 @@ add_executable(dungeon_room_test tests/DungeonRoomTest.cpp)
 target_link_libraries(dungeon_room_test PRIVATE dnf_core)
 
 add_test(NAME dungeon_room_test COMMAND dungeon_room_test)
+
+add_executable(enemy_catalog_test tests/EnemyCatalogTest.cpp)
+target_link_libraries(enemy_catalog_test PRIVATE dnf_core)
+
+add_test(NAME enemy_catalog_test COMMAND enemy_catalog_test)
