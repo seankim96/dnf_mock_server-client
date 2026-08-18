@@ -1,5 +1,6 @@
 #include "DungeonCatalog.h"
 
+#include <algorithm>
 #include <unordered_set>
 #include <utility>
 
@@ -28,6 +29,39 @@ bool DungeonCatalog::AddDungeon(
             !roomIds.insert(room.id).second)
         {
             return false;
+        }
+    }
+
+    for (const RoomTemplate& room : rooms)
+    {
+        std::unordered_set<PortalId> portalIds;
+
+        for (const PortalTemplate& portal : room.portals)
+        {
+            if (portal.id == 0 ||
+                !portalIds.insert(portal.id).second ||
+                !IsValidCollisionBox(portal.triggerArea) ||
+                portal.triggerArea.minimum.z < 0.0f ||
+                !IsInsideRoom(room, portal.triggerArea.minimum) ||
+                !IsInsideRoom(room, portal.triggerArea.maximum) ||
+                !roomIds.contains(portal.targetRoomId))
+            {
+                return false;
+            }
+
+            const auto targetRoomIt = std::find_if(
+                rooms.begin(),
+                rooms.end(),
+                [&portal](const RoomTemplate& targetRoom)
+                {
+                    return targetRoom.id == portal.targetRoomId;
+                });
+
+            if (portal.targetPosition.z < 0.0f ||
+                !IsInsideRoom(*targetRoomIt, portal.targetPosition))
+            {
+                return false;
+            }
         }
     }
 

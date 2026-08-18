@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <vector>
 
 namespace dnf
 {
@@ -11,6 +12,25 @@ struct Position
     float x = 0.0f;
     float y = 0.0f;
     float z = 0.0f;
+};
+
+struct CollisionBox
+{
+    Position minimum;
+    Position maximum;
+};
+
+using PortalId = std::uint32_t;
+
+struct PortalTemplate
+{
+    PortalId id = 0;
+    CollisionBox triggerArea;
+
+    RoomId targetRoomId = 0;
+    Position targetPosition;
+
+    bool requiresRoomClear = true;
 };
 
 struct RoomTemplate
@@ -24,7 +44,10 @@ struct RoomTemplate
     float depth = 0.0f;
 
     Position playerSpawn;
+    std::vector<PortalTemplate> portals;
 };
 
 bool IsInsideRoom(const RoomTemplate& room, const Position& position);
+bool IsValidCollisionBox(const CollisionBox& box);
+bool IsInsideCollisionBox(const CollisionBox& box, const Position& position);
 } // namespace dnf
