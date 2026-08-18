@@ -1,6 +1,7 @@
 #pragma once
 
 #include "DungeonInstance.h"
+#include "DungeonUdpTypes.h"
 
 #include <cstdint>
 #include <vector>
@@ -18,12 +19,26 @@ struct PlayerInputMessage
     bool jump = false;
 };
 
+struct UdpHelloMessage
+{
+    DungeonId dungeonId = 0;
+    SessionId sessionId = 0;
+    DungeonUdpToken token = 0;
+};
+
 std::vector<std::uint8_t> EncodePlayerInput(
     const PlayerInputMessage& input);
 
 bool DecodePlayerInput(
     const std::vector<std::uint8_t>& bytes,
     PlayerInputMessage& output);
+
+std::vector<std::uint8_t> EncodeUdpHello(
+    const UdpHelloMessage& hello);
+
+bool DecodeUdpHello(
+    const std::vector<std::uint8_t>& bytes,
+    UdpHelloMessage& output);
 
 std::vector<std::uint8_t> EncodeDungeonSnapshot(
     const DungeonInstance& dungeon,

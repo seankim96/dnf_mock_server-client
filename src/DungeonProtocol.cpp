@@ -21,6 +21,13 @@ bool IsValid(const PlayerInputMessage& input)
            input.moveX >= -1.0f && input.moveX <= 1.0f &&
            input.moveY >= -1.0f && input.moveY <= 1.0f;
 }
+
+bool IsValid(const UdpHelloMessage& hello)
+{
+    return hello.dungeonId != 0 &&
+           hello.sessionId != 0 &&
+           hello.token != 0;
+}
 } // namespace
 
 std::vector<std::uint8_t> EncodePlayerInput(
@@ -92,6 +99,80 @@ bool DecodePlayerInput(
     decoded.moveX = playerInput->move_x();
     decoded.moveY = playerInput->move_y();
     decoded.jump = playerInput->jump();
+
+    if (!IsValid(decoded))
+    {
+        return false;
+    }
+
+    output = decoded;
+    return true;
+}
+
+std::vector<std::uint8_t> EncodeUdpHello(
+    const UdpHelloMessage& hello)
+{
+    if (!IsValid(hello))
+    {
+        throw std::invalid_argument("Invalid UDP hello");
+    }
+
+    flatbuffers::FlatBufferBuilder builder;
+
+    const auto udpHello = Dnf::Protocol::CreateUdpHello(
+        builder,
+        hello.sessionId,
+        hello.token);
+
+    const auto message = Dnf::Protocol::CreateDungeonMessage(
+        builder,
+        DUNGEON_PROTOCOL_VERSION,
+        hello.dungeonId,
+        Dnf::Protocol::DungeonPayload_UdpHello,
+        udpHello.Union());
+
+    Dnf::Protocol::FinishDungeonMessageBuffer(builder, message);
+
+    return std::vector<std::uint8_t>(
+        builder.GetBufferPointer(),
+        builder.GetBufferPointer() + builder.GetSize());
+}
+
+bool DecodeUdpHello(
+    const std::vector<std::uint8_t>& bytes,
+    UdpHelloMessage& output)
+{
+    if (bytes.empty())
+    {
+        return false;
+    }
+
+    flatbuffers::Verifier verifier(bytes.data(), bytes.size());
+    if (!Dnf::Protocol::VerifyDungeonMessageBuffer(verifier))
+    {
+        return false;
+    }
+
+    const Dnf::Protocol::DungeonMessage* message =
+        Dnf::Protocol::GetDungeonMessage(bytes.data());
+
+    if (message->protocol_version() != DUNGEON_PROTOCOL_VERSION ||
+        message->payload_type() != Dnf::Protocol::DungeonPayload_UdpHello)
+    {
+        return false;
+    }
+
+    const Dnf::Protocol::UdpHello* udpHello =
+        message->payload_as_UdpHello();
+    if (udpHello == nullptr)
+    {
+        return false;
+    }
+
+    UdpHelloMessage decoded;
+    decoded.dungeonId = message->dungeon_id();
+    decoded.sessionId = udpHello->session_id();
+    decoded.token = udpHello->token();
 
     if (!IsValid(decoded))
     {

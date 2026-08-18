@@ -24,9 +24,15 @@ table DungeonSnapshot {
   players:[PlayerSnapshot];
 }
 
+table UdpHello {
+  session_id:ulong;
+  token:ulong;
+}
+
 union DungeonPayload {
   PlayerInput,
-  DungeonSnapshot
+  DungeonSnapshot,
+  UdpHello
 }
 
 table DungeonMessage {

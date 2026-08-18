@@ -71,6 +71,46 @@ void TestInvalidMovementIsRejected()
     assert(threw);
 }
 
+void TestUdpHelloRoundTrip()
+{
+    dnf::UdpHelloMessage sent;
+    sent.dungeonId = 5001;
+    sent.sessionId = 100;
+    sent.token = 90001;
+
+    const auto bytes = dnf::EncodeUdpHello(sent);
+
+    dnf::UdpHelloMessage received;
+    assert(dnf::DecodeUdpHello(bytes, received));
+    assert(received.dungeonId == sent.dungeonId);
+    assert(received.sessionId == sent.sessionId);
+    assert(received.token == sent.token);
+
+    dnf::PlayerInputMessage input;
+    input.dungeonId = 5001;
+    const auto wrongMessageType = dnf::EncodePlayerInput(input);
+    assert(!dnf::DecodeUdpHello(wrongMessageType, received));
+}
+
+void TestInvalidUdpHelloIsRejected()
+{
+    dnf::UdpHelloMessage hello;
+    hello.dungeonId = 5001;
+    hello.sessionId = 100;
+
+    bool threw = false;
+    try
+    {
+        dnf::EncodeUdpHello(hello);
+    }
+    catch (const std::invalid_argument&)
+    {
+        threw = true;
+    }
+
+    assert(threw);
+}
+
 void TestDungeonSnapshotEncoding()
 {
     dnf::EnemyCatalog enemyCatalog;
@@ -121,6 +161,8 @@ int main()
     TestPlayerInputRoundTrip();
     TestBrokenBufferIsRejected();
     TestInvalidMovementIsRejected();
+    TestUdpHelloRoundTrip();
+    TestInvalidUdpHelloIsRejected();
     TestDungeonSnapshotEncoding();
 
     std::cout << "All dungeon protocol tests passed.\n";
