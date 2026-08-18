@@ -30,6 +30,13 @@ struct ObstacleState
     bool destroyed = false;
 };
 
+enum class PositionCheckResult
+{
+    Valid,
+    OutsideRoom,
+    BlockedByObstacle
+};
+
 class RoomState
 {
 public:
@@ -44,6 +51,7 @@ public:
     bool ApplyEnemyDamage(DungeonEntityId entityId, std::uint32_t damage);
     bool ApplyObstacleDamage(ObstacleId obstacleId, std::uint32_t damage);
     bool IsCleared() const;
+    PositionCheckResult CheckPosition(const Position& position) const;
 
     std::vector<EnemyState> Enemies() const;
     std::vector<ObstacleState> Obstacles() const;

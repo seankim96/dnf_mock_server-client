@@ -18,6 +18,7 @@ add_library(dnf_core
     src/DungeonCatalog.cpp
     src/DungeonInstance.cpp
     src/DungeonManager.cpp
+    src/DungeonPlayerState.cpp
     src/DungeonRoom.cpp
     src/EnemyCatalog.cpp
     src/LoginValidator.cpp
@@ -105,3 +106,8 @@ add_executable(room_state_test tests/RoomStateTest.cpp)
 target_link_libraries(room_state_test PRIVATE dnf_core)
 
 add_test(NAME room_state_test COMMAND room_state_test)
+
+add_executable(dungeon_player_state_test tests/DungeonPlayerStateTest.cpp)
+target_link_libraries(dungeon_player_state_test PRIVATE dnf_core)
+
+add_test(NAME dungeon_player_state_test COMMAND dungeon_player_state_test)

@@ -171,6 +171,31 @@ bool RoomState::IsCleared() const
     return currentWave_ == lastWave_ && !HasLivingEnemy();
 }
 
+PositionCheckResult RoomState::CheckPosition(const Position& position) const
+{
+    std::lock_guard lock(mutex_);
+
+    if (position.z < 0.0f || !IsInsideRoom(roomTemplate_, position))
+    {
+        return PositionCheckResult::OutsideRoom;
+    }
+
+    for (std::size_t index = 0;
+         index < roomTemplate_.obstacles.size();
+         ++index)
+    {
+        if (!obstacles_[index].destroyed &&
+            IsInsideCollisionBox(
+                roomTemplate_.obstacles[index].collision,
+                position))
+        {
+            return PositionCheckResult::BlockedByObstacle;
+        }
+    }
+
+    return PositionCheckResult::Valid;
+}
+
 std::vector<EnemyState> RoomState::Enemies() const
 {
     std::lock_guard lock(mutex_);
