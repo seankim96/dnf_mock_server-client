@@ -51,11 +51,33 @@ void TestUdpHelloRegistersEndpoint()
     hello.token = token.value();
     const auto validHello = dnf::EncodeUdpHello(hello);
 
+    dnf::PlayerInputMessage input;
+    input.dungeonId = 5001;
+    input.sequence = 1;
+    input.moveX = 1.0f;
+    const auto firstInput = dnf::EncodePlayerInput(input);
+
+    input.sequence = 2;
+    const auto secondInput = dnf::EncodePlayerInput(input);
+
+    input.sequence = 3;
+    const auto foreignEndpointInput = dnf::EncodePlayerInput(input);
+
     std::thread serverThread(
         [&serverIoContext]
         {
             serverIoContext.run();
         });
+
+    boost::system::error_code preAuthenticationInputError;
+    firstClient.send_to(
+        boost::asio::buffer(firstInput),
+        serverEndpoint,
+        0,
+        preAuthenticationInputError);
+    std::this_thread::sleep_for(std::chrono::milliseconds(30));
+    const bool preAuthenticationInputRejected =
+        manager.PendingInputCount(5001) == 0;
 
     boost::system::error_code firstSendError;
     firstClient.send_to(
@@ -87,27 +109,101 @@ void TestUdpHelloRegistersEndpoint()
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
 
+    boost::system::error_code firstInputError;
+    firstClient.send_to(
+        boost::asio::buffer(firstInput),
+        serverEndpoint,
+        0,
+        firstInputError);
+
+    for (int attempt = 0; attempt < 100; ++attempt)
+    {
+        if (manager.PendingInputCount(5001) == 1)
+        {
+            break;
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    }
+
+    boost::system::error_code duplicateInputError;
+    firstClient.send_to(
+        boost::asio::buffer(firstInput),
+        serverEndpoint,
+        0,
+        duplicateInputError);
+
+    boost::system::error_code secondInputError;
+    firstClient.send_to(
+        boost::asio::buffer(secondInput),
+        serverEndpoint,
+        0,
+        secondInputError);
+
+    for (int attempt = 0; attempt < 100; ++attempt)
+    {
+        if (manager.PendingInputCount(5001) == 2)
+        {
+            break;
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    }
+
     boost::system::error_code replaySendError;
     secondClient.send_to(
         boost::asio::buffer(validHello),
         serverEndpoint,
         0,
         replaySendError);
+
+    boost::system::error_code foreignInputError;
+    secondClient.send_to(
+        boost::asio::buffer(foreignEndpointInput),
+        serverEndpoint,
+        0,
+        foreignInputError);
     std::this_thread::sleep_for(std::chrono::milliseconds(30));
     const auto endpointAfterReplay = manager.FindEndpoint(5001, 100);
+    const std::size_t pendingCountAfterForeignInput =
+        manager.PendingInputCount(5001);
+
+    dnf::AuthenticatedPlayerInput receivedFirstInput;
+    dnf::AuthenticatedPlayerInput receivedSecondInput;
+    dnf::AuthenticatedPlayerInput unexpectedInput;
+    const bool poppedFirst =
+        manager.TryPopInput(5001, receivedFirstInput);
+    const bool poppedSecond =
+        manager.TryPopInput(5001, receivedSecondInput);
+    const bool poppedUnexpected =
+        manager.TryPopInput(5001, unexpectedInput);
 
     manager.Release(5001);
     serverThread.join();
 
+    assert(!preAuthenticationInputError);
     assert(!firstSendError);
     assert(!validSendError);
+    assert(!firstInputError);
+    assert(!duplicateInputError);
+    assert(!secondInputError);
     assert(!replaySendError);
+    assert(!foreignInputError);
+    assert(preAuthenticationInputRejected);
     assert(wrongTokenRejected);
     assert(registeredEndpoint.has_value());
     assert(registeredEndpoint->address() ==
            boost::asio::ip::address_v4::loopback());
     assert(registeredEndpoint->port() == firstClient.local_endpoint().port());
     assert(endpointAfterReplay == registeredEndpoint);
+    assert(pendingCountAfterForeignInput == 2);
+    assert(poppedFirst);
+    assert(poppedSecond);
+    assert(!poppedUnexpected);
+    assert(receivedFirstInput.sessionId == 100);
+    assert(receivedFirstInput.input.sequence == 1);
+    assert(receivedSecondInput.sessionId == 100);
+    assert(receivedSecondInput.input.sequence == 2);
 }
 } // namespace
 

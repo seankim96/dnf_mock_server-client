@@ -32,6 +32,10 @@ public:
     std::optional<boost::asio::ip::udp::endpoint> FindEndpoint(
         DungeonId dungeonId,
         SessionId sessionId) const;
+    bool TryPopInput(
+        DungeonId dungeonId,
+        AuthenticatedPlayerInput& output);
+    std::size_t PendingInputCount(DungeonId dungeonId) const;
     bool Release(DungeonId dungeonId);
     std::size_t AllocationCount() const;
 
