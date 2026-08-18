@@ -18,6 +18,8 @@
 namespace dnf
 {
 class ChannelManager;
+class DungeonManager;
+class PartyManager;
 class SessionManager;
 
 class TcpSession : public std::enable_shared_from_this<TcpSession>
@@ -27,7 +29,9 @@ public:
         SessionId sessionId,
         boost::asio::ip::tcp::socket socket,
         SessionManager& sessionManager,
-        ChannelManager& channelManager);
+        ChannelManager& channelManager,
+        PartyManager& partyManager,
+        DungeonManager& dungeonManager);
 
     void Start();
     SessionId Id() const;

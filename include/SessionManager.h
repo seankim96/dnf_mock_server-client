@@ -13,6 +13,7 @@
 namespace dnf
 {
 class ChannelManager;
+class DungeonManager;
 class PartyManager;
 class TcpSession;
 
@@ -21,7 +22,8 @@ class SessionManager
 public:
     SessionManager(
         ChannelManager& channelManager,
-        PartyManager& partyManager);
+        PartyManager& partyManager,
+        DungeonManager& dungeonManager);
 
     SessionId StartSession(boost::asio::ip::tcp::socket socket);
     void RemoveSession(SessionId sessionId);
@@ -31,6 +33,7 @@ public:
 private:
     ChannelManager& channelManager_;
     PartyManager& partyManager_;
+    DungeonManager& dungeonManager_;
     std::atomic<SessionId> nextSessionId_{1};
 
     mutable std::mutex mutex_;

@@ -1,7 +1,10 @@
 #include "PacketDispatcher.h"
 
 #include "ChannelProtocol.h"
+#include "DungeonAdmissionProtocol.h"
+#include "DungeonManager.h"
 #include "LoginValidator.h"
+#include "PartyManager.h"
 
 #include <stdexcept>
 
@@ -9,8 +12,12 @@ namespace dnf
 {
 PacketDispatcher::PacketDispatcher(
     ChannelManager& channelManager,
+    PartyManager& partyManager,
+    DungeonManager& dungeonManager,
     SessionId sessionId)
     : channelManager_(channelManager),
+      partyManager_(partyManager),
+      dungeonManager_(dungeonManager),
       sessionId_(sessionId)
 {
 }
@@ -28,6 +35,9 @@ std::vector<std::uint8_t> PacketDispatcher::Dispatch(
 
     case JoinChannelRequest:
         return HandleJoinChannelRequest(request);
+
+    case EnterDungeonRequest:
+        return HandleEnterDungeonRequest(request);
 
     default:
         throw std::runtime_error("No handler for packet type");
@@ -80,5 +90,71 @@ std::vector<std::uint8_t> PacketDispatcher::HandleJoinChannelRequest(
         JoinChannelResponse,
         request.header.requestId,
         responsePayload);
+}
+
+std::vector<std::uint8_t> PacketDispatcher::HandleEnterDungeonRequest(
+    const Packet& request) const
+{
+    const DungeonTemplateId templateId =
+        DecodeEnterDungeonRequestPayload(request.payload);
+
+    const auto partyId = partyManager_.GetJoinedParty(sessionId_);
+    if (!partyId.has_value())
+    {
+        return EncodePacket(
+            EnterDungeonResponse,
+            request.header.requestId,
+            EncodeEnterDungeonResponsePayload(
+                EnterDungeonResult::NotInParty,
+                0));
+    }
+
+    const auto party = partyManager_.GetParty(partyId.value());
+    if (!party.has_value())
+    {
+        return EncodePacket(
+            EnterDungeonResponse,
+            request.header.requestId,
+            EncodeEnterDungeonResponsePayload(
+                EnterDungeonResult::NotInParty,
+                0));
+    }
+
+    if (party->leaderSessionId != sessionId_)
+    {
+        return EncodePacket(
+            EnterDungeonResponse,
+            request.header.requestId,
+            EncodeEnterDungeonResponsePayload(
+                EnterDungeonResult::NotPartyLeader,
+                0));
+    }
+
+    const CreateDungeonResult creation =
+        dungeonManager_.CreateDungeon(partyId.value(), templateId);
+
+    EnterDungeonResult result = EnterDungeonResult::Success;
+    DungeonId dungeonId = 0;
+
+    switch (creation.status)
+    {
+    case CreateDungeonStatus::Success:
+        dungeonId = creation.dungeon->Id();
+        break;
+    case CreateDungeonStatus::PartyNotFound:
+        result = EnterDungeonResult::NotInParty;
+        break;
+    case CreateDungeonStatus::DungeonTemplateNotFound:
+        result = EnterDungeonResult::DungeonTemplateNotFound;
+        break;
+    case CreateDungeonStatus::PartyAlreadyInDungeon:
+        result = EnterDungeonResult::PartyAlreadyInDungeon;
+        break;
+    }
+
+    return EncodePacket(
+        EnterDungeonResponse,
+        request.header.requestId,
+        EncodeEnterDungeonResponsePayload(result, dungeonId));
 }
 } // namespace dnf

@@ -16,7 +16,7 @@ constexpr std::size_t IO_THREAD_COUNT = 4;
 ServerApplication::ServerApplication(std::uint16_t port)
     : dungeonCatalog_(enemyCatalog_),
       dungeonManager_(partyManager_, dungeonCatalog_, enemyCatalog_),
-      sessionManager_(channelManager_, partyManager_),
+      sessionManager_(channelManager_, partyManager_, dungeonManager_),
       tcpServer_(ioContext_, port, sessionManager_)
 {
     channelManager_.AddChannel(1, "Channel 1", 100);

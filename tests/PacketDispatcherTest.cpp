@@ -1,5 +1,9 @@
 #include "ChannelProtocol.h"
+#include "DungeonAdmissionProtocol.h"
+#include "DungeonManager.h"
+#include "EnemyCatalog.h"
 #include "PacketDispatcher.h"
+#include "PartyManager.h"
 #include "ReceiveBuffer.h"
 
 #include <cassert>
@@ -10,15 +14,37 @@
 
 namespace
 {
+struct TestContext
+{
+    TestContext()
+        : dungeonCatalog(enemyCatalog),
+          dungeonManager(partyManager, dungeonCatalog, enemyCatalog)
+    {
+        const dnf::RoomTemplate room{
+            1, 1200.0f, 500.0f, {100.0f, 250.0f, 0.0f}};
+        assert(dungeonCatalog.AddDungeon(1001, "Forest", {room}));
+    }
+
+    dnf::ChannelManager channelManager;
+    dnf::PartyManager partyManager;
+    dnf::EnemyCatalog enemyCatalog;
+    dnf::DungeonCatalog dungeonCatalog;
+    dnf::DungeonManager dungeonManager;
+};
+
 void TestLoginRequest()
 {
-    dnf::ChannelManager channelManager;
+    TestContext context;
     dnf::Packet request;
     request.header.type = dnf::LoginRequest;
     request.header.requestId = 42;
     request.payload = {'M', 'o', 'c', 'k'};
 
-    dnf::PacketDispatcher dispatcher(channelManager, 100);
+    dnf::PacketDispatcher dispatcher(
+        context.channelManager,
+        context.partyManager,
+        context.dungeonManager,
+        100);
     const auto responseBytes = dispatcher.Dispatch(request);
 
     dnf::ReceiveBuffer buffer;
@@ -33,16 +59,20 @@ void TestLoginRequest()
 
 void TestChannelListRequest()
 {
-    dnf::ChannelManager channelManager;
-    channelManager.AddChannel(1, "Channel 1", 100);
-    channelManager.AddChannel(2, "Channel 2", 200);
-    channelManager.JoinChannel(500, 1);
+    TestContext context;
+    context.channelManager.AddChannel(1, "Channel 1", 100);
+    context.channelManager.AddChannel(2, "Channel 2", 200);
+    context.channelManager.JoinChannel(500, 1);
 
     dnf::Packet request;
     request.header.type = dnf::ChannelListRequest;
     request.header.requestId = 44;
 
-    dnf::PacketDispatcher dispatcher(channelManager, 100);
+    dnf::PacketDispatcher dispatcher(
+        context.channelManager,
+        context.partyManager,
+        context.dungeonManager,
+        100);
     const auto responseBytes = dispatcher.Dispatch(request);
 
     dnf::ReceiveBuffer buffer;
@@ -65,11 +95,15 @@ void TestChannelListRequest()
 
 void TestMissingHandler()
 {
-    dnf::ChannelManager channelManager;
+    TestContext context;
     dnf::Packet request;
     request.header.type = dnf::LoginResponse;
 
-    dnf::PacketDispatcher dispatcher(channelManager, 100);
+    dnf::PacketDispatcher dispatcher(
+        context.channelManager,
+        context.partyManager,
+        context.dungeonManager,
+        100);
     bool errorOccurred = false;
 
     try
@@ -86,15 +120,19 @@ void TestMissingHandler()
 
 void TestJoinChannelRequest()
 {
-    dnf::ChannelManager channelManager;
-    channelManager.AddChannel(1, "Channel 1", 100);
+    TestContext context;
+    context.channelManager.AddChannel(1, "Channel 1", 100);
 
     dnf::Packet request;
     request.header.type = dnf::JoinChannelRequest;
     request.header.requestId = 45;
     request.payload = dnf::EncodeJoinChannelRequestPayload(1);
 
-    dnf::PacketDispatcher dispatcher(channelManager, 700);
+    dnf::PacketDispatcher dispatcher(
+        context.channelManager,
+        context.partyManager,
+        context.dungeonManager,
+        700);
     const auto responseBytes = dispatcher.Dispatch(request);
 
     dnf::ReceiveBuffer buffer;
@@ -109,18 +147,22 @@ void TestJoinChannelRequest()
         dnf::DecodeJoinChannelResponsePayload(response.payload);
     assert(result.result == dnf::JoinChannelResult::Success);
     assert(result.channelId == 1);
-    assert(channelManager.GetJoinedChannel(700).value() == 1);
+    assert(context.channelManager.GetJoinedChannel(700).value() == 1);
 }
 
 void TestInvalidLoginRequest()
 {
-    dnf::ChannelManager channelManager;
+    TestContext context;
     dnf::Packet request;
     request.header.type = dnf::LoginRequest;
     request.header.requestId = 43;
     request.payload = {};
 
-    dnf::PacketDispatcher dispatcher(channelManager, 100);
+    dnf::PacketDispatcher dispatcher(
+        context.channelManager,
+        context.partyManager,
+        context.dungeonManager,
+        100);
     const auto responseBytes = dispatcher.Dispatch(request);
 
     dnf::ReceiveBuffer buffer;
@@ -130,6 +172,84 @@ void TestInvalidLoginRequest()
     assert(buffer.TryPop(response) == true);
     assert(response.payload == std::vector<std::uint8_t>({1}));
 }
+
+dnf::EnterDungeonResponseData SendEnterDungeonRequest(
+    TestContext& context,
+    dnf::SessionId sessionId,
+    dnf::DungeonTemplateId templateId)
+{
+    dnf::Packet request;
+    request.header.type = dnf::EnterDungeonRequest;
+    request.header.requestId = 50;
+    request.payload = dnf::EncodeEnterDungeonRequestPayload(templateId);
+
+    dnf::PacketDispatcher dispatcher(
+        context.channelManager,
+        context.partyManager,
+        context.dungeonManager,
+        sessionId);
+    const auto responseBytes = dispatcher.Dispatch(request);
+
+    dnf::ReceiveBuffer buffer;
+    buffer.Append(responseBytes);
+
+    dnf::Packet response;
+    assert(buffer.TryPop(response));
+    assert(response.header.type == dnf::EnterDungeonResponse);
+    assert(response.header.requestId == 50);
+    return dnf::DecodeEnterDungeonResponsePayload(response.payload);
+}
+
+void TestPartyLeaderEntersDungeon()
+{
+    TestContext context;
+    const dnf::PartyId partyId =
+        context.partyManager.CreateParty(700).value();
+
+    const auto response = SendEnterDungeonRequest(context, 700, 1001);
+
+    assert(response.result == dnf::EnterDungeonResult::Success);
+    assert(response.dungeonId != 0);
+    assert(context.dungeonManager.FindDungeonByParty(partyId) != nullptr);
+}
+
+void TestDungeonEntryPermission()
+{
+    TestContext context;
+
+    const auto noParty = SendEnterDungeonRequest(context, 700, 1001);
+    assert(noParty.result == dnf::EnterDungeonResult::NotInParty);
+
+    const dnf::PartyId partyId =
+        context.partyManager.CreateParty(700).value();
+    assert(context.partyManager.JoinParty(partyId, 701) ==
+           dnf::JoinPartyResult::Success);
+
+    const auto memberRequest =
+        SendEnterDungeonRequest(context, 701, 1001);
+    assert(memberRequest.result ==
+           dnf::EnterDungeonResult::NotPartyLeader);
+    assert(context.dungeonManager.ActiveDungeonCount() == 0);
+}
+
+void TestDungeonEntryFailures()
+{
+    TestContext context;
+    context.partyManager.CreateParty(700);
+
+    const auto missingTemplate =
+        SendEnterDungeonRequest(context, 700, 9999);
+    assert(missingTemplate.result ==
+           dnf::EnterDungeonResult::DungeonTemplateNotFound);
+
+    const auto firstEntry = SendEnterDungeonRequest(context, 700, 1001);
+    assert(firstEntry.result == dnf::EnterDungeonResult::Success);
+
+    const auto duplicateEntry =
+        SendEnterDungeonRequest(context, 700, 1001);
+    assert(duplicateEntry.result ==
+           dnf::EnterDungeonResult::PartyAlreadyInDungeon);
+}
 } // namespace
 
 int main()
@@ -138,6 +258,9 @@ int main()
     TestInvalidLoginRequest();
     TestChannelListRequest();
     TestJoinChannelRequest();
+    TestPartyLeaderEntersDungeon();
+    TestDungeonEntryPermission();
+    TestDungeonEntryFailures();
     TestMissingHandler();
 
     std::cout << "All packet dispatcher tests passed.\n";
