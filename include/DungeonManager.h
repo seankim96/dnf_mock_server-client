@@ -30,7 +30,8 @@ class DungeonManager
 public:
     DungeonManager(
         PartyManager& partyManager,
-        DungeonCatalog& dungeonCatalog);
+        DungeonCatalog& dungeonCatalog,
+        const EnemyCatalog& enemyCatalog);
 
     CreateDungeonResult CreateDungeon(
         PartyId partyId,
@@ -45,6 +46,7 @@ public:
 private:
     PartyManager& partyManager_;
     DungeonCatalog& dungeonCatalog_;
+    const EnemyCatalog& enemyCatalog_;
 
     mutable std::mutex mutex_;
     DungeonId nextDungeonId_ = 1;

@@ -23,7 +23,8 @@ void TestCreateDungeonFromParty()
     dnf::DungeonCatalog dungeonCatalog(enemyCatalog);
     AddTestDungeon(dungeonCatalog);
 
-    dnf::DungeonManager dungeonManager(partyManager, dungeonCatalog);
+    dnf::DungeonManager dungeonManager(
+        partyManager, dungeonCatalog, enemyCatalog);
     const auto result = dungeonManager.CreateDungeon(partyId, 1001);
 
     assert(result.status == dnf::CreateDungeonStatus::Success);
@@ -32,6 +33,8 @@ void TestCreateDungeonFromParty()
     assert(result.dungeon->Party() == partyId);
     assert(result.dungeon->HasParticipant(100));
     assert(result.dungeon->HasParticipant(200));
+    assert(result.dungeon->FindRoom(1) != nullptr);
+    assert(result.dungeon->FindPlayer(100) != nullptr);
     assert(dungeonManager.ActiveDungeonCount() == 1);
 }
 
@@ -41,7 +44,8 @@ void TestCreationFailure()
     dnf::EnemyCatalog enemyCatalog;
     dnf::DungeonCatalog dungeonCatalog(enemyCatalog);
     AddTestDungeon(dungeonCatalog);
-    dnf::DungeonManager dungeonManager(partyManager, dungeonCatalog);
+    dnf::DungeonManager dungeonManager(
+        partyManager, dungeonCatalog, enemyCatalog);
 
     const auto missingParty = dungeonManager.CreateDungeon(999, 1001);
     assert(missingParty.status == dnf::CreateDungeonStatus::PartyNotFound);
@@ -68,7 +72,8 @@ void TestDungeonLifecycle()
     dnf::EnemyCatalog enemyCatalog;
     dnf::DungeonCatalog dungeonCatalog(enemyCatalog);
     AddTestDungeon(dungeonCatalog);
-    dnf::DungeonManager dungeonManager(partyManager, dungeonCatalog);
+    dnf::DungeonManager dungeonManager(
+        partyManager, dungeonCatalog, enemyCatalog);
     const auto created = dungeonManager.CreateDungeon(partyId, 1001);
     const dnf::DungeonId dungeonId = created.dungeon->Id();
 
@@ -98,7 +103,8 @@ void TestParticipantSnapshot()
     dnf::EnemyCatalog enemyCatalog;
     dnf::DungeonCatalog dungeonCatalog(enemyCatalog);
     AddTestDungeon(dungeonCatalog);
-    dnf::DungeonManager dungeonManager(partyManager, dungeonCatalog);
+    dnf::DungeonManager dungeonManager(
+        partyManager, dungeonCatalog, enemyCatalog);
     const auto created = dungeonManager.CreateDungeon(partyId, 1001);
 
     partyManager.LeaveParty(200);

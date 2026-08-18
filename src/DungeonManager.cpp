@@ -4,9 +4,11 @@ namespace dnf
 {
 DungeonManager::DungeonManager(
     PartyManager& partyManager,
-    DungeonCatalog& dungeonCatalog)
+    DungeonCatalog& dungeonCatalog,
+    const EnemyCatalog& enemyCatalog)
     : partyManager_(partyManager),
-      dungeonCatalog_(dungeonCatalog)
+      dungeonCatalog_(dungeonCatalog),
+      enemyCatalog_(enemyCatalog)
 {
 }
 
@@ -20,7 +22,8 @@ CreateDungeonResult DungeonManager::CreateDungeon(
         return {CreateDungeonStatus::PartyNotFound, nullptr};
     }
 
-    if (!dungeonCatalog_.GetDungeon(templateId).has_value())
+    const auto dungeonTemplate = dungeonCatalog_.GetDungeon(templateId);
+    if (!dungeonTemplate.has_value())
     {
         return {CreateDungeonStatus::DungeonTemplateNotFound, nullptr};
     }
@@ -35,9 +38,10 @@ CreateDungeonResult DungeonManager::CreateDungeon(
     const DungeonId dungeonId = nextDungeonId_++;
     auto dungeon = std::make_shared<DungeonInstance>(
         dungeonId,
-        templateId,
+        dungeonTemplate.value(),
         partyId,
-        party->members);
+        party->members,
+        enemyCatalog_);
 
     dungeons_.emplace(dungeonId, dungeon);
     partyDungeons_.emplace(partyId, dungeonId);

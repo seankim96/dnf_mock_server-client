@@ -1,11 +1,16 @@
 #pragma once
 
 #include "DungeonCatalog.h"
+#include "DungeonPlayerState.h"
+#include "EnemyCatalog.h"
 #include "PartyManager.h"
+#include "RoomState.h"
 #include "SessionId.h"
 
 #include <cstdint>
+#include <memory>
 #include <mutex>
+#include <unordered_map>
 #include <vector>
 
 namespace dnf
@@ -24,9 +29,10 @@ class DungeonInstance
 public:
     DungeonInstance(
         DungeonId dungeonId,
-        DungeonTemplateId templateId,
+        DungeonTemplate dungeonTemplate,
         PartyId partyId,
-        std::vector<SessionId> participants);
+        std::vector<SessionId> participants,
+        const EnemyCatalog& enemyCatalog);
 
     DungeonId Id() const;
     DungeonTemplateId TemplateId() const;
@@ -35,14 +41,18 @@ public:
     DungeonState State() const;
 
     bool HasParticipant(SessionId sessionId) const;
+    std::shared_ptr<RoomState> FindRoom(RoomId roomId) const;
+    std::shared_ptr<DungeonPlayerState> FindPlayer(SessionId sessionId) const;
     bool Start();
     bool Finish();
 
 private:
     DungeonId dungeonId_;
-    DungeonTemplateId templateId_;
+    DungeonTemplate dungeonTemplate_;
     PartyId partyId_;
     std::vector<SessionId> participants_;
+    std::unordered_map<RoomId, std::shared_ptr<RoomState>> rooms_;
+    std::unordered_map<SessionId, std::shared_ptr<DungeonPlayerState>> players_;
 
     mutable std::mutex stateMutex_;
     DungeonState state_ = DungeonState::Waiting;
