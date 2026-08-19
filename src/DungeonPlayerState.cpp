@@ -25,12 +25,16 @@ MovePlayerResult ToMovePlayerResult(PositionCheckResult result)
 DungeonPlayerState::DungeonPlayerState(
     SessionId sessionId,
     RoomId roomId,
-    Position position)
+    Position position,
+    std::uint32_t maxMp)
     : sessionId_(sessionId),
       roomId_(roomId),
-      position_(position)
+      position_(position),
+      currentMp_(maxMp),
+      maxMp_(maxMp)
 {
-    if (sessionId_ == 0 || roomId_ == 0 || position_.z < 0.0f)
+    if (sessionId_ == 0 || roomId_ == 0 || position_.z < 0.0f ||
+        maxMp_ == 0)
     {
         throw std::invalid_argument("Invalid dungeon player state");
     }
@@ -56,7 +60,78 @@ Position DungeonPlayerState::CurrentPosition() const
 DungeonPlayerSnapshot DungeonPlayerState::Snapshot() const
 {
     std::lock_guard lock(mutex_);
-    return {roomId_, position_};
+    return {roomId_, position_, currentMp_, maxMp_};
+}
+
+std::uint32_t DungeonPlayerState::CurrentMp() const
+{
+    std::lock_guard lock(mutex_);
+    return currentMp_;
+}
+
+std::uint32_t DungeonPlayerState::RemainingCooldown(SkillId skillId) const
+{
+    std::lock_guard lock(mutex_);
+
+    const auto cooldownIt = cooldowns_.find(skillId);
+    if (cooldownIt == cooldowns_.end())
+    {
+        return 0;
+    }
+
+    return cooldownIt->second;
+}
+
+BeginSkillResult DungeonPlayerState::BeginSkill(
+    SkillId skillId,
+    std::uint32_t manaCost,
+    std::uint32_t cooldownTicks)
+{
+    std::lock_guard lock(mutex_);
+
+    if (skillId == 0)
+    {
+        return BeginSkillResult::InvalidSkill;
+    }
+
+    if (cooldowns_.contains(skillId))
+    {
+        return BeginSkillResult::OnCooldown;
+    }
+
+    if (currentMp_ < manaCost)
+    {
+        return BeginSkillResult::NotEnoughMana;
+    }
+
+    currentMp_ -= manaCost;
+
+    if (cooldownTicks > 0)
+    {
+        cooldowns_.emplace(skillId, cooldownTicks);
+    }
+
+    return BeginSkillResult::Success;
+}
+
+void DungeonPlayerState::AdvanceCombatTick()
+{
+    std::lock_guard lock(mutex_);
+
+    for (auto cooldownIt = cooldowns_.begin();
+         cooldownIt != cooldowns_.end();)
+    {
+        --cooldownIt->second;
+
+        if (cooldownIt->second == 0)
+        {
+            cooldownIt = cooldowns_.erase(cooldownIt);
+        }
+        else
+        {
+            ++cooldownIt;
+        }
+    }
 }
 
 MovePlayerResult DungeonPlayerState::MoveTo(
