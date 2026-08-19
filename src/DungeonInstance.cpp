@@ -124,6 +124,27 @@ std::shared_ptr<DungeonPlayerState> DungeonInstance::FindPlayer(
     return playerIt->second;
 }
 
+std::vector<DungeonEnemySnapshot> DungeonInstance::EnemySnapshots() const
+{
+    std::vector<DungeonEnemySnapshot> snapshots;
+
+    for (const RoomTemplate& roomTemplate : dungeonTemplate_.rooms)
+    {
+        const auto room = FindRoom(roomTemplate.id);
+        if (room == nullptr)
+        {
+            continue;
+        }
+
+        for (const EnemyState& enemy : room->Enemies())
+        {
+            snapshots.push_back({roomTemplate.id, enemy});
+        }
+    }
+
+    return snapshots;
+}
+
 std::size_t DungeonInstance::AdvanceRoomWaves()
 {
     if (State() != DungeonState::Running)

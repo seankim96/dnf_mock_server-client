@@ -19,9 +19,19 @@ table PlayerSnapshot {
   position:Vec3;
 }
 
+table EnemySnapshot {
+  entity_id:ulong;
+  enemy_template_id:uint;
+  room_id:uint;
+  position:Vec3;
+  current_hp:uint;
+  alive:bool = true;
+}
+
 table DungeonSnapshot {
   server_tick:uint;
   players:[PlayerSnapshot];
+  enemies:[EnemySnapshot];
 }
 
 table UdpHello {

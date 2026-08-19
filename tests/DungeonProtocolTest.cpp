@@ -15,8 +15,12 @@ dnf::DungeonTemplate MakeDungeonTemplate()
     dnf::DungeonTemplate dungeon;
     dungeon.id = 1001;
     dungeon.name = "Forest";
-    dungeon.rooms.push_back(
-        {1, 1200.0f, 500.0f, {100.0f, 250.0f, 0.0f}});
+
+    dnf::RoomTemplate room{
+        1, 1200.0f, 500.0f, {100.0f, 250.0f, 0.0f}};
+    room.enemySpawns.push_back(
+        {1, 2001, {500.0f, 250.0f, 0.0f}, 1});
+    dungeon.rooms.push_back(room);
     return dungeon;
 }
 
@@ -125,12 +129,22 @@ void TestUdpHeartbeatRoundTrip()
 void TestDungeonSnapshotEncoding()
 {
     dnf::EnemyCatalog enemyCatalog;
+    dnf::EnemyTemplate enemyTemplate;
+    enemyTemplate.id = 2001;
+    enemyTemplate.name = "Goblin";
+    enemyTemplate.maxHp = 100;
+    enemyTemplate.collision = {
+        {-20.0f, -15.0f, 0.0f},
+        {20.0f, 15.0f, 80.0f}};
+    assert(enemyCatalog.AddEnemy(enemyTemplate));
+
     dnf::DungeonInstance dungeon(
         5001,
         MakeDungeonTemplate(),
         20,
         {100, 200},
         enemyCatalog);
+    assert(dungeon.Start());
 
     const auto player = dungeon.FindPlayer(100);
     const auto room = dungeon.FindRoom(1);
@@ -138,6 +152,10 @@ void TestDungeonSnapshotEncoding()
     assert(room != nullptr);
     assert(player->MoveTo(*room, {300.0f, 200.0f, 0.0f}) ==
            dnf::MovePlayerResult::Success);
+
+    const auto enemies = room->Enemies();
+    assert(enemies.size() == 1);
+    assert(room->ApplyEnemyDamage(enemies[0].entityId, 100));
 
     const std::vector<std::uint8_t> bytes =
         dnf::EncodeDungeonSnapshot(dungeon, 77);
@@ -164,6 +182,17 @@ void TestDungeonSnapshotEncoding()
     assert(firstPlayer->room_id() == 1);
     assert(firstPlayer->position()->x() == 300.0f);
     assert(firstPlayer->position()->y() == 200.0f);
+
+    assert(snapshot->enemies()->size() == 1);
+    const Dnf::Protocol::EnemySnapshot* firstEnemy =
+        snapshot->enemies()->Get(0);
+    assert(firstEnemy->entity_id() == enemies[0].entityId);
+    assert(firstEnemy->enemy_template_id() == 2001);
+    assert(firstEnemy->room_id() == 1);
+    assert(firstEnemy->position()->x() == 500.0f);
+    assert(firstEnemy->position()->y() == 250.0f);
+    assert(firstEnemy->current_hp() == 0);
+    assert(!firstEnemy->alive());
 }
 } // namespace
 

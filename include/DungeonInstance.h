@@ -7,8 +7,8 @@
 #include "RoomState.h"
 #include "SessionId.h"
 
-#include <cstdint>
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <mutex>
 #include <unordered_map>
@@ -36,6 +36,12 @@ enum class UsePortalResult
     TargetPositionBlocked
 };
 
+struct DungeonEnemySnapshot
+{
+    RoomId roomId = 0;
+    EnemyState enemy;
+};
+
 class DungeonInstance
 {
 public:
@@ -55,6 +61,7 @@ public:
     bool HasParticipant(SessionId sessionId) const;
     std::shared_ptr<RoomState> FindRoom(RoomId roomId) const;
     std::shared_ptr<DungeonPlayerState> FindPlayer(SessionId sessionId) const;
+    std::vector<DungeonEnemySnapshot> EnemySnapshots() const;
     std::size_t AdvanceRoomWaves();
     UsePortalResult TryUsePortal(SessionId sessionId);
     bool Start();

@@ -293,10 +293,35 @@ std::vector<std::uint8_t> EncodeDungeonSnapshot(
     }
 
     const auto playerVector = builder.CreateVector(players);
+
+    std::vector<flatbuffers::Offset<Dnf::Protocol::EnemySnapshot>> enemies;
+    const std::vector<DungeonEnemySnapshot> enemySnapshots =
+        dungeon.EnemySnapshots();
+    enemies.reserve(enemySnapshots.size());
+
+    for (const DungeonEnemySnapshot& snapshot : enemySnapshots)
+    {
+        const Dnf::Protocol::Vec3 position(
+            snapshot.enemy.position.x,
+            snapshot.enemy.position.y,
+            snapshot.enemy.position.z);
+
+        enemies.push_back(Dnf::Protocol::CreateEnemySnapshot(
+            builder,
+            snapshot.enemy.entityId,
+            snapshot.enemy.enemyTemplateId,
+            snapshot.roomId,
+            &position,
+            snapshot.enemy.currentHp,
+            snapshot.enemy.alive));
+    }
+
+    const auto enemyVector = builder.CreateVector(enemies);
     const auto snapshot = Dnf::Protocol::CreateDungeonSnapshot(
         builder,
         serverTick,
-        playerVector);
+        playerVector,
+        enemyVector);
 
     const auto message = Dnf::Protocol::CreateDungeonMessage(
         builder,

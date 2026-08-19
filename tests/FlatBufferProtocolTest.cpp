@@ -70,10 +70,25 @@ void TestDungeonSnapshot()
     const std::vector<flatbuffers::Offset<Dnf::Protocol::PlayerSnapshot>>
         playerOffsets = {player};
     const auto players = builder.CreateVector(playerOffsets);
+
+    const Dnf::Protocol::Vec3 enemyPosition(500.0f, 250.0f, 0.0f);
+    const auto enemy = Dnf::Protocol::CreateEnemySnapshot(
+        builder,
+        9001,
+        2001,
+        1,
+        &enemyPosition,
+        80,
+        true);
+    const std::vector<flatbuffers::Offset<Dnf::Protocol::EnemySnapshot>>
+        enemyOffsets = {enemy};
+    const auto enemies = builder.CreateVector(enemyOffsets);
+
     const auto snapshot = Dnf::Protocol::CreateDungeonSnapshot(
         builder,
         77,
-        players);
+        players,
+        enemies);
 
     const auto message = Dnf::Protocol::CreateDungeonMessage(
         builder,
@@ -98,6 +113,9 @@ void TestDungeonSnapshot()
     assert(receivedSnapshot->players()->size() == 1);
     assert(receivedSnapshot->players()->Get(0)->session_id() == 100);
     assert(receivedSnapshot->players()->Get(0)->position()->x() == 100.0f);
+    assert(receivedSnapshot->enemies()->size() == 1);
+    assert(receivedSnapshot->enemies()->Get(0)->entity_id() == 9001);
+    assert(receivedSnapshot->enemies()->Get(0)->current_hp() == 80);
 }
 } // namespace
 
