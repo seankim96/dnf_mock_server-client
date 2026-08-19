@@ -21,77 +21,229 @@ grow_vertical = 2
 mouse_filter = 2
 color = Color(0.035, 0.043, 0.059, 1)
 
-[node name="CenterContainer" type="CenterContainer" parent="."]
+[node name="Margin" type="MarginContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 22
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 22
 
-[node name="PanelContainer" type="PanelContainer" parent="CenterContainer"]
-custom_minimum_size = Vector2(560, 0)
+[node name="RootVBox" type="VBoxContainer" parent="Margin"]
 layout_mode = 2
+theme_override_constants/separation = 12
 
-[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/PanelContainer"]
-layout_mode = 2
-theme_override_constants/margin_left = 32
-theme_override_constants/margin_top = 28
-theme_override_constants/margin_right = 32
-theme_override_constants/margin_bottom = 28
-
-[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer"]
-layout_mode = 2
-theme_override_constants/separation = 18
-
-[node name="Title" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
+[node name="Title" type="Label" parent="Margin/RootVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 28
 text = "DNF Mock Client"
-horizontal_alignment = 1
 
-[node name="Description" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
+[node name="Description" type="Label" parent="Margin/RootVBox"]
 layout_mode = 2
-text = "C++ 서버에 TCP 연결을 시도합니다."
-horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.65, 0.7, 0.8, 1)
+text = "TCP 로비 흐름과 파티별 UDP 던전을 시연합니다."
 
-[node name="ServerFields" type="GridContainer" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
+[node name="Content" type="HBoxContainer" parent="Margin/RootVBox"]
 layout_mode = 2
-theme_override_constants/h_separation = 14
-theme_override_constants/v_separation = 12
+size_flags_vertical = 3
+theme_override_constants/separation = 16
+
+[node name="LeftScroll" type="ScrollContainer" parent="Margin/RootVBox/Content"]
+custom_minimum_size = Vector2(480, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Steps" type="VBoxContainer" parent="Margin/RootVBox/Content/LeftScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="ConnectionPanel" type="PanelContainer" parent="Margin/RootVBox/Content/LeftScroll/Steps"]
+layout_mode = 2
+
+[node name="Margin" type="MarginContainer" parent="Margin/RootVBox/Content/LeftScroll/Steps/ConnectionPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 12
+
+[node name="VBox" type="VBoxContainer" parent="Margin/RootVBox/Content/LeftScroll/Steps/ConnectionPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Heading" type="Label" parent="Margin/RootVBox/Content/LeftScroll/Steps/ConnectionPanel/Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "1. 서버 연결"
+
+[node name="Fields" type="GridContainer" parent="Margin/RootVBox/Content/LeftScroll/Steps/ConnectionPanel/Margin/VBox"]
+layout_mode = 2
 columns = 2
 
-[node name="AddressLabel" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/ServerFields"]
+[node name="AddressLabel" type="Label" parent="Margin/RootVBox/Content/LeftScroll/Steps/ConnectionPanel/Margin/VBox/Fields"]
 layout_mode = 2
-text = "서버 주소"
+text = "주소"
 
-[node name="AddressInput" type="LineEdit" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/ServerFields"]
+[node name="AddressInput" type="LineEdit" parent="Margin/RootVBox/Content/LeftScroll/Steps/ConnectionPanel/Margin/VBox/Fields"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(340, 0)
 layout_mode = 2
+size_flags_horizontal = 3
 text = "127.0.0.1"
-placeholder_text = "127.0.0.1"
 
-[node name="PortLabel" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/ServerFields"]
+[node name="PortLabel" type="Label" parent="Margin/RootVBox/Content/LeftScroll/Steps/ConnectionPanel/Margin/VBox/Fields"]
 layout_mode = 2
 text = "TCP 포트"
 
-[node name="PortInput" type="LineEdit" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/ServerFields"]
+[node name="PortInput" type="LineEdit" parent="Margin/RootVBox/Content/LeftScroll/Steps/ConnectionPanel/Margin/VBox/Fields"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "7777"
-placeholder_text = "7777"
 
-[node name="ConnectButton" type="Button" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
+[node name="ConnectButton" type="Button" parent="Margin/RootVBox/Content/LeftScroll/Steps/ConnectionPanel/Margin/VBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 48)
+custom_minimum_size = Vector2(0, 38)
 layout_mode = 2
 text = "서버에 연결"
 
-[node name="StatusLabel" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
+[node name="LoginPanel" type="PanelContainer" parent="Margin/RootVBox/Content/LeftScroll/Steps"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Margin" type="MarginContainer" parent="Margin/RootVBox/Content/LeftScroll/Steps/LoginPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 12
+
+[node name="VBox" type="VBoxContainer" parent="Margin/RootVBox/Content/LeftScroll/Steps/LoginPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Heading" type="Label" parent="Margin/RootVBox/Content/LeftScroll/Steps/LoginPanel/Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "2. 로그인"
+
+[node name="PlayerNameInput" type="LineEdit" parent="Margin/RootVBox/Content/LeftScroll/Steps/LoginPanel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "GodotPlayer"
+placeholder_text = "영문, 숫자, 밑줄 1~16자"
+
+[node name="LoginButton" type="Button" parent="Margin/RootVBox/Content/LeftScroll/Steps/LoginPanel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "로그인"
+
+[node name="ChannelPanel" type="PanelContainer" parent="Margin/RootVBox/Content/LeftScroll/Steps"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Margin" type="MarginContainer" parent="Margin/RootVBox/Content/LeftScroll/Steps/ChannelPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 12
+
+[node name="VBox" type="VBoxContainer" parent="Margin/RootVBox/Content/LeftScroll/Steps/ChannelPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Heading" type="Label" parent="Margin/RootVBox/Content/LeftScroll/Steps/ChannelPanel/Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "3. 채널 선택"
+
+[node name="ChannelSelect" type="OptionButton" parent="Margin/RootVBox/Content/LeftScroll/Steps/ChannelPanel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Buttons" type="HBoxContainer" parent="Margin/RootVBox/Content/LeftScroll/Steps/ChannelPanel/Margin/VBox"]
+layout_mode = 2
+
+[node name="RefreshChannelsButton" type="Button" parent="Margin/RootVBox/Content/LeftScroll/Steps/ChannelPanel/Margin/VBox/Buttons"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "목록 새로고침"
+
+[node name="JoinChannelButton" type="Button" parent="Margin/RootVBox/Content/LeftScroll/Steps/ChannelPanel/Margin/VBox/Buttons"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "채널 입장"
+
+[node name="DungeonPanel" type="PanelContainer" parent="Margin/RootVBox/Content/LeftScroll/Steps"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Margin" type="MarginContainer" parent="Margin/RootVBox/Content/LeftScroll/Steps/DungeonPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 12
+
+[node name="VBox" type="VBoxContainer" parent="Margin/RootVBox/Content/LeftScroll/Steps/DungeonPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Heading" type="Label" parent="Margin/RootVBox/Content/LeftScroll/Steps/DungeonPanel/Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "4. 던전 입장"
+
+[node name="DungeonTemplateInput" type="LineEdit" parent="Margin/RootVBox/Content/LeftScroll/Steps/DungeonPanel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "1001"
+placeholder_text = "던전 템플릿 ID"
+
+[node name="EnterDungeonButton" type="Button" parent="Margin/RootVBox/Content/LeftScroll/Steps/DungeonPanel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "던전 입장 요청"
+
+[node name="LogPanel" type="PanelContainer" parent="Margin/RootVBox/Content"]
+custom_minimum_size = Vector2(380, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Margin" type="MarginContainer" parent="Margin/RootVBox/Content/LogPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 12
+
+[node name="VBox" type="VBoxContainer" parent="Margin/RootVBox/Content/LogPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Heading" type="Label" parent="Margin/RootVBox/Content/LogPanel/Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "서버 이벤트"
+
+[node name="StatusLabel" type="Label" parent="Margin/RootVBox/Content/LogPanel/Margin/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.72, 0.76, 0.84, 1)
 text = "연결 대기 중"
-horizontal_alignment = 1
 autowrap_mode = 2
+
+[node name="EventLog" type="RichTextLabel" parent="Margin/RootVBox/Content/LogPanel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+bbcode_enabled = true
+text = "[color=#8390a8]클라이언트가 준비되었습니다.[/color]"
+fit_content = false
+scroll_following = true
