@@ -8,6 +8,7 @@ TestHeaderEncoding();
 TestSplitPacket();
 TestCombinedPackets();
 TestInvalidPacketSize();
+TestGamePayloads();
 await TestTcpConnectionAsync();
 
 Console.WriteLine("All client smoke tests passed.");
@@ -105,6 +106,49 @@ static void TestInvalidPacketSize()
     }
 
     throw new InvalidOperationException("A packet smaller than the header was accepted.");
+}
+
+static void TestGamePayloads()
+{
+    byte[] loginPayload = GamePayloadCodec.EncodeLoginRequest("Player_1");
+    Assert(loginPayload.SequenceEqual("Player_1"u8.ToArray()),
+        "Login request payload is incorrect.");
+    Assert(GamePayloadCodec.DecodeLoginResponse(new byte[] { 0 }) == LoginResult.Success,
+        "Login response payload is incorrect.");
+
+    byte[] channelListPayload =
+    {
+        0, 1,
+        0, 0, 0, 2,
+        0, 0, 0, 5,
+        0, 0, 0, 100
+    };
+    IReadOnlyList<ChannelInfo> channels =
+        GamePayloadCodec.DecodeChannelListResponse(channelListPayload);
+    Assert(channels.Count == 1, "Channel count is incorrect.");
+    Assert(channels[0].Id == 2 && channels[0].CurrentPlayers == 5 &&
+        channels[0].MaxPlayers == 100, "Channel entry is incorrect.");
+
+    byte[] joinPayload = GamePayloadCodec.EncodeJoinChannelRequest(3);
+    Assert(joinPayload.SequenceEqual(new byte[] { 0, 0, 0, 3 }),
+        "Join channel request payload is incorrect.");
+    JoinChannelResponse joinResponse = GamePayloadCodec.DecodeJoinChannelResponse(
+        new byte[] { 0, 0, 0, 0, 3 });
+    Assert(joinResponse.Result == JoinChannelResult.Success &&
+        joinResponse.ChannelId == 3, "Join channel response is incorrect.");
+
+    byte[] dungeonPayload =
+    {
+        0,
+        0, 0, 0, 0, 0, 0, 0, 9,
+        0x23, 0x45,
+        0, 0, 0, 0, 0, 0, 0, 7
+    };
+    EnterDungeonResponse dungeonResponse =
+        GamePayloadCodec.DecodeEnterDungeonResponse(dungeonPayload);
+    Assert(dungeonResponse.Result == EnterDungeonResult.Success &&
+        dungeonResponse.DungeonId == 9 && dungeonResponse.UdpPort == 0x2345 &&
+        dungeonResponse.UdpToken == 7, "Dungeon response is incorrect.");
 }
 
 static async Task TestTcpConnectionAsync()
