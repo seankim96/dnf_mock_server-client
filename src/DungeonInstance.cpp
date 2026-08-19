@@ -189,6 +189,7 @@ UsePortalResult DungeonInstance::TryUsePortal(SessionId sessionId)
         return UsePortalResult::TargetPositionBlocked;
     }
 
+    targetRoom->StartNextWave();
     return UsePortalResult::Success;
 }
 
@@ -202,6 +203,9 @@ bool DungeonInstance::Start()
     }
 
     state_ = DungeonState::Running;
+
+    const RoomId firstRoomId = dungeonTemplate_.rooms.front().id;
+    rooms_.at(firstRoomId)->StartNextWave();
     return true;
 }
 
