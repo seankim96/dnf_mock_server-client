@@ -9,4 +9,8 @@
   <ItemGroup>
     <Compile Remove="tests/**/*.cs" />
   </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Google.FlatBuffers" Version="25.2.10" />
+  </ItemGroup>
 </Project>

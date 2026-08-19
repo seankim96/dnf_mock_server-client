@@ -1,14 +1,17 @@
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
+using Dnf.Protocol;
 using DnfMockClient.Networking;
 using DnfMockClient.Protocol;
+using Google.FlatBuffers;
 
 TestHeaderEncoding();
 TestSplitPacket();
 TestCombinedPackets();
 TestInvalidPacketSize();
 TestGamePayloads();
+TestDungeonProtocol();
 await TestTcpConnectionAsync();
 
 Console.WriteLine("All client smoke tests passed.");
@@ -149,6 +152,67 @@ static void TestGamePayloads()
     Assert(dungeonResponse.Result == EnterDungeonResult.Success &&
         dungeonResponse.DungeonId == 9 && dungeonResponse.UdpPort == 0x2345 &&
         dungeonResponse.UdpToken == 7, "Dungeon response is incorrect.");
+}
+
+static void TestDungeonProtocol()
+{
+    byte[] helloBytes = DungeonProtocolCodec.EncodeUdpHello(9, 3, 77);
+    var helloBuffer = new ByteBuffer(helloBytes);
+    Assert(DungeonMessage.VerifyDungeonMessage(helloBuffer),
+        "UDP hello FlatBuffer is invalid.");
+    DungeonMessage helloMessage = DungeonMessage.GetRootAsDungeonMessage(helloBuffer);
+    UdpHello hello = helloMessage.PayloadAsUdpHello();
+    Assert(helloMessage.DungeonId == 9 && hello.SessionId == 3 && hello.Token == 77,
+        "UDP hello values are incorrect.");
+
+    byte[] movementBytes = DungeonProtocolCodec.EncodePlayerMovement(
+        9, 10, 0.5f, -0.25f, false);
+    var movementBuffer = new ByteBuffer(movementBytes);
+    DungeonMessage movementMessage =
+        DungeonMessage.GetRootAsDungeonMessage(movementBuffer);
+    PlayerMovement movement = movementMessage.PayloadAsPlayerMovement();
+    Assert(movement.Sequence == 10 && movement.MoveX == 0.5f &&
+        movement.MoveY == -0.25f, "Player movement values are incorrect.");
+
+    var builder = new FlatBufferBuilder(256);
+    PlayerSnapshot.StartPlayerSnapshot(builder);
+    PlayerSnapshot.AddSessionId(builder, 3);
+    PlayerSnapshot.AddRoomId(builder, 1);
+    Offset<Vec3> position = Vec3.CreateVec3(builder, 100.0f, 250.0f, 0.0f);
+    PlayerSnapshot.AddPosition(builder, position);
+    Offset<PlayerSnapshot> player = PlayerSnapshot.EndPlayerSnapshot(builder);
+    VectorOffset players = DungeonSnapshot.CreatePlayersVector(
+        builder,
+        new[] { player });
+    VectorOffset enemies = DungeonSnapshot.CreateEnemiesVector(
+        builder,
+        Array.Empty<Offset<EnemySnapshot>>());
+    Offset<DungeonSnapshot> snapshot = DungeonSnapshot.CreateDungeonSnapshot(
+        builder,
+        45,
+        players,
+        enemies);
+    Offset<DungeonMessage> snapshotMessage = DungeonMessage.CreateDungeonMessage(
+        builder,
+        1,
+        9,
+        DungeonPayload.DungeonSnapshot,
+        snapshot.Value);
+    DungeonMessage.FinishDungeonMessageBuffer(builder, snapshotMessage);
+
+    Assert(DungeonProtocolCodec.TryDecodeSnapshot(
+        builder.SizedByteArray(),
+        out DungeonSnapshotData? decoded) && decoded is not null,
+        "Dungeon snapshot was not decoded.");
+
+    if (decoded is null)
+    {
+        throw new InvalidOperationException("Decoded snapshot is null.");
+    }
+
+    Assert(decoded.ServerTick == 45 && decoded.Players.Count == 1 &&
+        decoded.Players[0].X == 100.0f && decoded.Players[0].Y == 250.0f,
+        "Dungeon snapshot values are incorrect.");
 }
 
 static async Task TestTcpConnectionAsync()

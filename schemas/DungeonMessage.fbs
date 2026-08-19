@@ -1,0 +1,68 @@
+namespace Dnf.Protocol;
+
+struct Vec3 {
+  x:float;
+  y:float;
+  z:float;
+}
+
+table PlayerMovement {
+  sequence:uint;
+  move_x:float;
+  move_y:float;
+  jump:bool = false;
+}
+
+table PlayerSnapshot {
+  session_id:ulong;
+  room_id:uint;
+  position:Vec3;
+}
+
+table EnemySnapshot {
+  entity_id:ulong;
+  enemy_template_id:uint;
+  room_id:uint;
+  position:Vec3;
+  current_hp:uint;
+  alive:bool = true;
+}
+
+table DungeonSnapshot {
+  server_tick:uint;
+  players:[PlayerSnapshot];
+  enemies:[EnemySnapshot];
+}
+
+table UdpHello {
+  session_id:ulong;
+  token:ulong;
+}
+
+table UdpHeartbeat {
+  session_id:ulong;
+}
+
+table PlayerAttack {
+  sequence:uint;
+  skill_id:uint;
+  direction_x:float;
+  direction_y:float;
+}
+
+union DungeonPayload {
+  PlayerMovement,
+  DungeonSnapshot,
+  UdpHello,
+  UdpHeartbeat,
+  PlayerAttack
+}
+
+table DungeonMessage {
+  protocol_version:ushort = 1;
+  dungeon_id:ulong;
+  payload:DungeonPayload;
+}
+
+root_type DungeonMessage;
+file_identifier "DNFD";
