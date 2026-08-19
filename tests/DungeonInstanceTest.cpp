@@ -111,7 +111,13 @@ void TestPortalRequiresRoomClear()
     dungeonTemplate.rooms[0].enemySpawns.push_back(spawn);
 
     spawn.id = 2;
+    spawn.position = {550.0f, 250.0f, 0.0f};
+    spawn.wave = 2;
+    dungeonTemplate.rooms[0].enemySpawns.push_back(spawn);
+
+    spawn.id = 3;
     spawn.position = {600.0f, 300.0f, 0.0f};
+    spawn.wave = 1;
     dungeonTemplate.rooms[1].enemySpawns.push_back(spawn);
 
     dnf::DungeonInstance dungeon(
@@ -130,10 +136,24 @@ void TestPortalRequiresRoomClear()
            dnf::UsePortalResult::RoomNotCleared);
 
     const auto firstRoom = dungeon.FindRoom(1);
+    const auto secondRoom = dungeon.FindRoom(2);
     assert(firstRoom->CurrentWave() == 1);
+    assert(secondRoom->CurrentWave() == 0);
     const auto enemies = firstRoom->Enemies();
     assert(enemies.size() == 1);
     assert(firstRoom->ApplyEnemyDamage(enemies[0].entityId, 100));
+
+    assert(dungeon.TryUsePortal(100) ==
+           dnf::UsePortalResult::RoomNotCleared);
+    assert(dungeon.AdvanceRoomWaves() == 1);
+    assert(firstRoom->CurrentWave() == 2);
+    assert(secondRoom->CurrentWave() == 0);
+
+    const auto secondWaveEnemies = firstRoom->Enemies();
+    assert(secondWaveEnemies.size() == 2);
+    assert(firstRoom->ApplyEnemyDamage(
+        secondWaveEnemies[1].entityId,
+        100));
 
     assert(dungeon.TryUsePortal(100) == dnf::UsePortalResult::Success);
 
@@ -142,9 +162,9 @@ void TestPortalRequiresRoomClear()
     assert(player->CurrentPosition().x == 200.0f);
     assert(player->CurrentPosition().y == 300.0f);
 
-    const auto secondRoom = dungeon.FindRoom(2);
     assert(secondRoom->CurrentWave() == 1);
     assert(secondRoom->Enemies().size() == 1);
+    assert(dungeon.AdvanceRoomWaves() == 0);
     assert(dungeon.TryUsePortal(100) ==
            dnf::UsePortalResult::NotInsidePortal);
 }

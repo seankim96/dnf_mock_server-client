@@ -8,6 +8,7 @@
 #include "SessionId.h"
 
 #include <cstdint>
+#include <cstddef>
 #include <memory>
 #include <mutex>
 #include <unordered_map>
@@ -54,6 +55,7 @@ public:
     bool HasParticipant(SessionId sessionId) const;
     std::shared_ptr<RoomState> FindRoom(RoomId roomId) const;
     std::shared_ptr<DungeonPlayerState> FindPlayer(SessionId sessionId) const;
+    std::size_t AdvanceRoomWaves();
     UsePortalResult TryUsePortal(SessionId sessionId);
     bool Start();
     bool Finish();

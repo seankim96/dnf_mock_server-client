@@ -151,6 +151,7 @@ void DungeonTickService::HandleTick(
         const auto dungeon = dungeonManager_.FindDungeon(dungeonId);
         if (dungeon != nullptr)
         {
+            dungeon->AdvanceRoomWaves();
             udpManager_.BroadcastSnapshot(
                 dungeonId,
                 EncodeDungeonSnapshot(

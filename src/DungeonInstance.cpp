@@ -124,6 +124,32 @@ std::shared_ptr<DungeonPlayerState> DungeonInstance::FindPlayer(
     return playerIt->second;
 }
 
+std::size_t DungeonInstance::AdvanceRoomWaves()
+{
+    if (State() != DungeonState::Running)
+    {
+        return 0;
+    }
+
+    std::unordered_set<RoomId> occupiedRoomIds;
+    for (const auto& entry : players_)
+    {
+        occupiedRoomIds.insert(entry.second->CurrentRoom());
+    }
+
+    std::size_t startedWaveCount = 0;
+    for (RoomId roomId : occupiedRoomIds)
+    {
+        const auto room = FindRoom(roomId);
+        if (room != nullptr && room->StartNextWave())
+        {
+            ++startedWaveCount;
+        }
+    }
+
+    return startedWaveCount;
+}
+
 UsePortalResult DungeonInstance::TryUsePortal(SessionId sessionId)
 {
     if (State() != DungeonState::Running)
