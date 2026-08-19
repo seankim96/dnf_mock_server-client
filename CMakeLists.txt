@@ -69,13 +69,6 @@ endif()
 add_executable(dnf_mock_server src/main.cpp)
 target_link_libraries(dnf_mock_server PRIVATE dnf_core)
 
-add_executable(dnf_mock_client
-    src/mock_client_main.cpp
-    src/TcpClient.cpp
-)
-target_include_directories(dnf_mock_client PRIVATE include)
-target_link_libraries(dnf_mock_client PRIVATE dnf_core)
-
 enable_testing()
 
 add_executable(receive_buffer_test tests/ReceiveBufferTest.cpp)
