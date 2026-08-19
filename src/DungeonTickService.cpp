@@ -22,12 +22,14 @@ DungeonTickService::DungeonTickService(
     boost::asio::io_context& ioContext,
     DungeonManager& dungeonManager,
     DungeonUdpManager& udpManager,
+    const SkillCatalog& skillCatalog,
     std::chrono::milliseconds readyTimeout,
     std::chrono::milliseconds udpIdleTimeout)
     : timer_(ioContext),
       dungeonManager_(dungeonManager),
       udpManager_(udpManager),
       movementProcessor_(dungeonManager, udpManager),
+      combatProcessor_(dungeonManager, udpManager, skillCatalog),
       lifecycleService_(dungeonManager, udpManager),
       readyTimeout_(readyTimeout),
       udpIdleTimeout_(udpIdleTimeout)
@@ -147,6 +149,7 @@ void DungeonTickService::HandleTick(
             dungeonId,
             udpIdleTimeout_);
         movementProcessor_.Process(dungeonId, TICK_SECONDS);
+        combatProcessor_.Process(dungeonId);
 
         const auto dungeon = dungeonManager_.FindDungeon(dungeonId);
         if (dungeon != nullptr)

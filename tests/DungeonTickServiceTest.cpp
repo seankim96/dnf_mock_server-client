@@ -19,6 +19,7 @@ void TestTickTimerRunsAndStops()
     dnf::DungeonUdpManager udpManager(ioContext);
     dnf::PartyManager partyManager;
     dnf::EnemyCatalog enemyCatalog;
+    dnf::SkillCatalog skillCatalog;
     dnf::DungeonCatalog dungeonCatalog(enemyCatalog);
     dnf::DungeonManager dungeonManager(
         partyManager,
@@ -28,7 +29,8 @@ void TestTickTimerRunsAndStops()
     dnf::DungeonTickService tickService(
         ioContext,
         dungeonManager,
-        udpManager);
+        udpManager,
+        skillCatalog);
 
     tickService.Start();
     tickService.Start();
@@ -61,6 +63,7 @@ void TestDungeonStartsAfterAllUdpHelloMessages()
            dnf::JoinPartyResult::Success);
 
     dnf::EnemyCatalog enemyCatalog;
+    dnf::SkillCatalog skillCatalog;
     dnf::DungeonCatalog dungeonCatalog(enemyCatalog);
     const dnf::RoomTemplate room{
         1, 1200.0f, 500.0f, {100.0f, 250.0f, 0.0f}};
@@ -96,7 +99,8 @@ void TestDungeonStartsAfterAllUdpHelloMessages()
     dnf::DungeonTickService tickService(
         ioContext,
         dungeonManager,
-        udpManager);
+        udpManager,
+        skillCatalog);
     tickService.Start();
 
     bool stayedWaitingForFirstPlayer = false;
@@ -137,6 +141,7 @@ void TestWaitingDungeonTimesOut()
     const dnf::PartyId partyId = partyManager.CreateParty(100).value();
 
     dnf::EnemyCatalog enemyCatalog;
+    dnf::SkillCatalog skillCatalog;
     dnf::DungeonCatalog dungeonCatalog(enemyCatalog);
     const dnf::RoomTemplate room{
         1, 1200.0f, 500.0f, {100.0f, 250.0f, 0.0f}};
@@ -154,6 +159,7 @@ void TestWaitingDungeonTimesOut()
         ioContext,
         dungeonManager,
         udpManager,
+        skillCatalog,
         std::chrono::milliseconds(90));
     tickService.Start();
 

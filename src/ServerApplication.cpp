@@ -20,7 +20,8 @@ ServerApplication::ServerApplication(std::uint16_t port)
       dungeonTickService_(
           ioContext_,
           dungeonManager_,
-          dungeonUdpManager_),
+          dungeonUdpManager_,
+          skillCatalog_),
       sessionManager_(
           channelManager_,
           partyManager_,

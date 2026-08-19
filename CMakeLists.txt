@@ -25,6 +25,7 @@ flatbuffers_generate_headers(
 add_library(dnf_core
     src/ChannelManager.cpp
     src/ChannelProtocol.cpp
+    src/DungeonCombatProcessor.cpp
     src/DungeonAdmissionProtocol.cpp
     src/DungeonCatalog.cpp
     src/DungeonConnectionProtocol.cpp
@@ -187,6 +188,17 @@ add_executable(dungeon_udp_session_test tests/DungeonUdpSessionTest.cpp)
 target_link_libraries(dungeon_udp_session_test PRIVATE dnf_core)
 
 add_test(NAME dungeon_udp_session_test COMMAND dungeon_udp_session_test)
+
+add_executable(
+    dungeon_combat_processor_test
+    tests/DungeonCombatProcessorTest.cpp
+)
+target_link_libraries(dungeon_combat_processor_test PRIVATE dnf_core)
+
+add_test(
+    NAME dungeon_combat_processor_test
+    COMMAND dungeon_combat_processor_test
+)
 
 add_executable(
     dungeon_movement_processor_test

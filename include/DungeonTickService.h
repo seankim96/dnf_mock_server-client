@@ -1,5 +1,6 @@
 #pragma once
 
+#include "DungeonCombatProcessor.h"
 #include "DungeonMovementProcessor.h"
 #include "DungeonLifecycleService.h"
 
@@ -24,6 +25,7 @@ public:
         boost::asio::io_context& ioContext,
         DungeonManager& dungeonManager,
         DungeonUdpManager& udpManager,
+        const SkillCatalog& skillCatalog,
         std::chrono::milliseconds readyTimeout =
             DEFAULT_DUNGEON_READY_TIMEOUT,
         std::chrono::milliseconds udpIdleTimeout =
@@ -43,6 +45,7 @@ private:
     DungeonManager& dungeonManager_;
     DungeonUdpManager& udpManager_;
     DungeonMovementProcessor movementProcessor_;
+    DungeonCombatProcessor combatProcessor_;
     DungeonLifecycleService lifecycleService_;
     std::chrono::milliseconds readyTimeout_;
     std::chrono::milliseconds udpIdleTimeout_;
