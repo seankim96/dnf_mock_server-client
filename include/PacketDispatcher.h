@@ -37,6 +37,8 @@ private:
         const Packet& request) const;
     std::vector<std::uint8_t> HandleDungeonConnectionInfoRequest(
         const Packet& request) const;
+    std::vector<std::uint8_t> HandleCreatePartyRequest(
+        const Packet& request) const;
 
     ChannelManager& channelManager_;
     PartyManager& partyManager_;

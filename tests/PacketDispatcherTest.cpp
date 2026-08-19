@@ -7,6 +7,7 @@
 #include "LoginProtocol.h"
 #include "PacketDispatcher.h"
 #include "PartyManager.h"
+#include "PartyProtocol.h"
 #include "ReceiveBuffer.h"
 
 #include <boost/asio/io_context.hpp>
@@ -191,6 +192,67 @@ void TestInvalidLoginRequest()
         dnf::DecodeLoginResponsePayload(response.payload);
     assert(loginResponse.result == dnf::EmptyPlayerName);
     assert(loginResponse.sessionId == 0);
+}
+
+dnf::CreatePartyResponseData SendCreatePartyRequest(
+    TestContext& context,
+    dnf::SessionId sessionId,
+    std::uint32_t requestId = 70)
+{
+    dnf::Packet request;
+    request.header.type = dnf::CreatePartyRequest;
+    request.header.requestId = requestId;
+
+    dnf::PacketDispatcher dispatcher(
+        context.channelManager,
+        context.partyManager,
+        context.dungeonManager,
+        context.dungeonUdpManager,
+        sessionId);
+    const auto responseBytes = dispatcher.Dispatch(request);
+
+    dnf::ReceiveBuffer buffer;
+    buffer.Append(responseBytes);
+
+    dnf::Packet response;
+    assert(buffer.TryPop(response));
+    assert(response.header.type == dnf::CreatePartyResponse);
+    assert(response.header.requestId == requestId);
+    return dnf::DecodeCreatePartyResponsePayload(response.payload);
+}
+
+void TestCreatePartyRequest()
+{
+    TestContext context;
+
+    const auto response = SendCreatePartyRequest(context, 700);
+
+    assert(response.result == dnf::CreatePartyResult::Success);
+    assert(response.partyId != 0);
+    assert(response.leaderSessionId == 700);
+
+    const auto party = context.partyManager.GetParty(response.partyId);
+    assert(party.has_value());
+    assert(party->leaderSessionId == 700);
+    assert(party->members.size() == 1);
+    assert(party->members[0] == 700);
+}
+
+void TestDuplicateCreatePartyRequest()
+{
+    TestContext context;
+
+    const auto firstResponse = SendCreatePartyRequest(context, 700, 70);
+    const auto duplicateResponse =
+        SendCreatePartyRequest(context, 700, 71);
+
+    assert(firstResponse.result == dnf::CreatePartyResult::Success);
+    assert(duplicateResponse.result ==
+           dnf::CreatePartyResult::AlreadyInParty);
+    assert(duplicateResponse.partyId == 0);
+    assert(duplicateResponse.leaderSessionId == 0);
+    assert(context.partyManager.GetJoinedParty(700) ==
+           firstResponse.partyId);
 }
 
 dnf::EnterDungeonResponseData SendEnterDungeonRequest(
@@ -386,6 +448,8 @@ int main()
     TestInvalidLoginRequest();
     TestChannelListRequest();
     TestJoinChannelRequest();
+    TestCreatePartyRequest();
+    TestDuplicateCreatePartyRequest();
     TestPartyLeaderEntersDungeon();
     TestDungeonEntryPermission();
     TestDungeonEntryFailures();

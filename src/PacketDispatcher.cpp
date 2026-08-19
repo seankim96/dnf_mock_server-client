@@ -9,6 +9,7 @@
 #include "LoginProtocol.h"
 #include "LoginValidator.h"
 #include "PartyManager.h"
+#include "PartyProtocol.h"
 
 #include <stdexcept>
 
@@ -47,6 +48,9 @@ std::vector<std::uint8_t> PacketDispatcher::Dispatch(
 
     case DungeonConnectionInfoRequest:
         return HandleDungeonConnectionInfoRequest(request);
+
+    case CreatePartyRequest:
+        return HandleCreatePartyRequest(request);
 
     default:
         throw std::runtime_error("No handler for packet type");
@@ -274,5 +278,31 @@ PacketDispatcher::HandleDungeonConnectionInfoRequest(
             dungeonId,
             udpPort,
             udpToken));
+}
+
+std::vector<std::uint8_t> PacketDispatcher::HandleCreatePartyRequest(
+    const Packet& request) const
+{
+    ValidateCreatePartyRequestPayload(request.payload);
+
+    const auto createdPartyId = partyManager_.CreateParty(sessionId_);
+    CreatePartyResult result = CreatePartyResult::AlreadyInParty;
+    PartyId partyId = 0;
+    SessionId leaderSessionId = 0;
+
+    if (createdPartyId.has_value())
+    {
+        result = CreatePartyResult::Success;
+        partyId = createdPartyId.value();
+        leaderSessionId = sessionId_;
+    }
+
+    return EncodePacket(
+        CreatePartyResponse,
+        request.header.requestId,
+        EncodeCreatePartyResponsePayload(
+            result,
+            partyId,
+            leaderSessionId));
 }
 } // namespace dnf
