@@ -52,6 +52,9 @@ std::vector<std::uint8_t> PacketDispatcher::Dispatch(
     case CreatePartyRequest:
         return HandleCreatePartyRequest(request);
 
+    case JoinPartyRequest:
+        return HandleJoinPartyRequest(request);
+
     default:
         throw std::runtime_error("No handler for packet type");
     }
@@ -301,6 +304,38 @@ std::vector<std::uint8_t> PacketDispatcher::HandleCreatePartyRequest(
         CreatePartyResponse,
         request.header.requestId,
         EncodeCreatePartyResponsePayload(
+            result,
+            partyId,
+            leaderSessionId));
+}
+
+std::vector<std::uint8_t> PacketDispatcher::HandleJoinPartyRequest(
+    const Packet& request) const
+{
+    const PartyId requestedPartyId =
+        DecodeJoinPartyRequestPayload(request.payload);
+    const JoinPartyResult result =
+        partyManager_.JoinParty(requestedPartyId, sessionId_);
+
+    PartyId partyId = 0;
+    SessionId leaderSessionId = 0;
+
+    if (result == JoinPartyResult::Success)
+    {
+        const auto party = partyManager_.GetParty(requestedPartyId);
+        if (!party.has_value())
+        {
+            throw std::runtime_error("Joined party was not found");
+        }
+
+        partyId = party->id;
+        leaderSessionId = party->leaderSessionId;
+    }
+
+    return EncodePacket(
+        JoinPartyResponse,
+        request.header.requestId,
+        EncodeJoinPartyResponsePayload(
             result,
             partyId,
             leaderSessionId));

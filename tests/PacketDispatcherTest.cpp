@@ -255,6 +255,62 @@ void TestDuplicateCreatePartyRequest()
            firstResponse.partyId);
 }
 
+dnf::JoinPartyResponseData SendJoinPartyRequest(
+    TestContext& context,
+    dnf::SessionId sessionId,
+    dnf::PartyId partyId)
+{
+    dnf::Packet request;
+    request.header.type = dnf::JoinPartyRequest;
+    request.header.requestId = 72;
+    request.payload = dnf::EncodeJoinPartyRequestPayload(partyId);
+
+    dnf::PacketDispatcher dispatcher(
+        context.channelManager,
+        context.partyManager,
+        context.dungeonManager,
+        context.dungeonUdpManager,
+        sessionId);
+
+    dnf::ReceiveBuffer buffer;
+    buffer.Append(dispatcher.Dispatch(request));
+
+    dnf::Packet response;
+    assert(buffer.TryPop(response));
+    assert(response.header.type == dnf::JoinPartyResponse);
+    assert(response.header.requestId == 72);
+    return dnf::DecodeJoinPartyResponsePayload(response.payload);
+}
+
+void TestJoinPartyRequest()
+{
+    TestContext context;
+    const dnf::PartyId partyId =
+        context.partyManager.CreateParty(700).value();
+
+    const auto response = SendJoinPartyRequest(context, 701, partyId);
+
+    assert(response.result == dnf::JoinPartyResult::Success);
+    assert(response.partyId == partyId);
+    assert(response.leaderSessionId == 700);
+
+    const auto party = context.partyManager.GetParty(partyId);
+    assert(party.has_value());
+    assert(party->members.size() == 2);
+    assert(party->members[1] == 701);
+}
+
+void TestJoinMissingPartyRequest()
+{
+    TestContext context;
+
+    const auto response = SendJoinPartyRequest(context, 701, 999);
+
+    assert(response.result == dnf::JoinPartyResult::PartyNotFound);
+    assert(response.partyId == 0);
+    assert(response.leaderSessionId == 0);
+}
+
 dnf::EnterDungeonResponseData SendEnterDungeonRequest(
     TestContext& context,
     dnf::SessionId sessionId,
@@ -450,6 +506,8 @@ int main()
     TestJoinChannelRequest();
     TestCreatePartyRequest();
     TestDuplicateCreatePartyRequest();
+    TestJoinPartyRequest();
+    TestJoinMissingPartyRequest();
     TestPartyLeaderEntersDungeon();
     TestDungeonEntryPermission();
     TestDungeonEntryFailures();
