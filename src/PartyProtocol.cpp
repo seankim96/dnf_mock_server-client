@@ -181,4 +181,38 @@ JoinPartyResponseData DecodeJoinPartyResponsePayload(
 
     return {result, partyId, leaderSessionId};
 }
+
+void ValidateLeavePartyRequestPayload(
+    const std::vector<std::uint8_t>& payload)
+{
+    if (!payload.empty())
+    {
+        throw std::runtime_error(
+            "Leave party request payload must be empty");
+    }
+}
+
+std::vector<std::uint8_t> EncodeLeavePartyResponsePayload(
+    LeavePartyResult result)
+{
+    if (result < LeavePartyResult::Success ||
+        result > LeavePartyResult::NotInParty)
+    {
+        throw std::invalid_argument("Invalid leave party result");
+    }
+
+    return {static_cast<std::uint8_t>(result)};
+}
+
+LeavePartyResult DecodeLeavePartyResponsePayload(
+    const std::vector<std::uint8_t>& payload)
+{
+    if (payload.size() != 1 ||
+        payload[0] > static_cast<std::uint8_t>(LeavePartyResult::NotInParty))
+    {
+        throw std::runtime_error("Invalid leave party response payload");
+    }
+
+    return static_cast<LeavePartyResult>(payload[0]);
+}
 } // namespace dnf

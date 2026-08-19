@@ -183,6 +183,58 @@ void TestInvalidJoinPartyPayload()
     }
     assert(threw);
 }
+
+void TestLeavePartyRequest()
+{
+    const auto packetBytes = dnf::EncodePacket(
+        dnf::LeavePartyRequest,
+        73,
+        {});
+
+    dnf::ReceiveBuffer buffer;
+    buffer.Append(packetBytes);
+
+    dnf::Packet request;
+    assert(buffer.TryPop(request));
+    assert(request.header.type == dnf::LeavePartyRequest);
+    dnf::ValidateLeavePartyRequestPayload(request.payload);
+
+    bool threw = false;
+    try
+    {
+        dnf::ValidateLeavePartyRequestPayload({1});
+    }
+    catch (const std::runtime_error&)
+    {
+        threw = true;
+    }
+    assert(threw);
+}
+
+void TestLeavePartyResponse()
+{
+    const auto successPayload = dnf::EncodeLeavePartyResponsePayload(
+        dnf::LeavePartyResult::Success);
+    assert(successPayload.size() == 1);
+    assert(dnf::DecodeLeavePartyResponsePayload(successPayload) ==
+           dnf::LeavePartyResult::Success);
+
+    const auto failurePayload = dnf::EncodeLeavePartyResponsePayload(
+        dnf::LeavePartyResult::NotInParty);
+    assert(dnf::DecodeLeavePartyResponsePayload(failurePayload) ==
+           dnf::LeavePartyResult::NotInParty);
+
+    bool threw = false;
+    try
+    {
+        dnf::DecodeLeavePartyResponsePayload({2});
+    }
+    catch (const std::runtime_error&)
+    {
+        threw = true;
+    }
+    assert(threw);
+}
 } // namespace
 
 int main()
@@ -194,6 +246,8 @@ int main()
     TestJoinPartyRequest();
     TestJoinPartyResponse();
     TestInvalidJoinPartyPayload();
+    TestLeavePartyRequest();
+    TestLeavePartyResponse();
 
     std::cout << "All party protocol tests passed.\n";
     return 0;
