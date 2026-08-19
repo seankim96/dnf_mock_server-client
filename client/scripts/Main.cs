@@ -30,6 +30,7 @@ public partial class Main : Control
     private Button _createPartyButton = null!;
     private LineEdit _partyIdInput = null!;
     private Button _joinPartyButton = null!;
+    private Button _leavePartyButton = null!;
     private Label _partyInfoLabel = null!;
     private Control _dungeonPanel = null!;
     private LineEdit _dungeonTemplateInput = null!;
@@ -137,6 +138,7 @@ public partial class Main : Control
         _createPartyButton = GetNode<Button>("%CreatePartyButton");
         _partyIdInput = GetNode<LineEdit>("%PartyIdInput");
         _joinPartyButton = GetNode<Button>("%JoinPartyButton");
+        _leavePartyButton = GetNode<Button>("%LeavePartyButton");
         _partyInfoLabel = GetNode<Label>("%PartyInfoLabel");
         _dungeonPanel = GetNode<Control>("%DungeonPanel");
         _dungeonTemplateInput = GetNode<LineEdit>("%DungeonTemplateInput");
@@ -162,6 +164,7 @@ public partial class Main : Control
         _joinChannelButton.Pressed += OnJoinChannelButtonPressed;
         _createPartyButton.Pressed += OnCreatePartyButtonPressed;
         _joinPartyButton.Pressed += OnJoinPartyButtonPressed;
+        _leavePartyButton.Pressed += OnLeavePartyButtonPressed;
         _enterDungeonButton.Pressed += OnEnterDungeonButtonPressed;
         _leaveDungeonButton.Pressed += OnLeaveDungeonButtonPressed;
     }
@@ -174,6 +177,7 @@ public partial class Main : Control
         _joinChannelButton.Pressed -= OnJoinChannelButtonPressed;
         _createPartyButton.Pressed -= OnCreatePartyButtonPressed;
         _joinPartyButton.Pressed -= OnJoinPartyButtonPressed;
+        _leavePartyButton.Pressed -= OnLeavePartyButtonPressed;
         _enterDungeonButton.Pressed -= OnEnterDungeonButtonPressed;
         _leaveDungeonButton.Pressed -= OnLeaveDungeonButtonPressed;
     }
@@ -446,6 +450,47 @@ public partial class Main : Control
             $"Party {partyId} / Leader {leaderSessionId}";
     }
 
+    private async void OnLeavePartyButtonPressed()
+    {
+        BeginOperation(TimeSpan.FromSeconds(5));
+
+        try
+        {
+            TcpPacket packet = await _connection.SendRequestAsync(
+                TcpPacketType.LeavePartyRequest,
+                GamePayloadCodec.EncodeLeavePartyRequest(),
+                _operationCancellation!.Token);
+            LeavePartyResult result =
+                GamePayloadCodec.DecodeLeavePartyResponse(packet.Payload);
+
+            if (result != LeavePartyResult.Success)
+            {
+                SetStatus($"파티 탈퇴 실패: {result}", Colors.Orange);
+                AddLog($"LeavePartyResponse: {result}");
+                return;
+            }
+
+            ClearPartyInfo();
+            SetStatus("파티 탈퇴 성공", Colors.LightGreen);
+            AddLog("파티 탈퇴 성공");
+        }
+        catch (Exception exception) when (IsExpectedOperationError(exception))
+        {
+            ShowOperationError(exception);
+        }
+        finally
+        {
+            EndOperation();
+        }
+    }
+
+    private void ClearPartyInfo()
+    {
+        _inParty = false;
+        _partyIdInput.Clear();
+        _partyInfoLabel.Text = "파티 없음";
+    }
+
     private async Task LoadChannelsAsync(
         CancellationToken cancellationToken)
     {
@@ -492,12 +537,10 @@ public partial class Main : Control
         _udpService.Disconnect();
         _loggedIn = false;
         _joinedChannel = false;
-        _inParty = false;
         _localSessionId = 0;
         _receivedFirstSnapshot = false;
         _channelSelect.Clear();
-        _partyIdInput.Clear();
-        _partyInfoLabel.Text = "파티 없음";
+        ClearPartyInfo();
         _lobbyScreen.Visible = true;
         _dungeonScreen.Visible = false;
     }
@@ -524,6 +567,7 @@ public partial class Main : Control
         _createPartyButton.Disabled = !_joinedChannel || _inParty || _busy;
         _partyIdInput.Editable = _joinedChannel && !_inParty && !_busy;
         _joinPartyButton.Disabled = !_joinedChannel || _inParty || _busy;
+        _leavePartyButton.Disabled = !_inParty || _busy;
         _partyPanel.Modulate = _joinedChannel ? Colors.White : Colors.DimGray;
 
         _dungeonTemplateInput.Editable = _inParty && !_busy;

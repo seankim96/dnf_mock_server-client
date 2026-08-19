@@ -104,6 +104,12 @@ public sealed class JoinPartyResponse
     public ulong LeaderSessionId { get; }
 }
 
+public enum LeavePartyResult : byte
+{
+    Success = 0,
+    NotInParty = 1
+}
+
 public enum EnterDungeonResult : byte
 {
     Success = 0,

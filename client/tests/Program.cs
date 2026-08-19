@@ -199,6 +199,16 @@ static void TestGamePayloads()
         missingParty.PartyId == 0 && missingParty.LeaderSessionId == 0,
         "Failed join party response is incorrect.");
 
+    Assert(GamePayloadCodec.EncodeLeavePartyRequest().Length == 0,
+        "Leave party request payload must be empty.");
+    Assert(GamePayloadCodec.DecodeLeavePartyResponse(new byte[] { 0 }) ==
+        LeavePartyResult.Success, "Leave party success result is incorrect.");
+    Assert(GamePayloadCodec.DecodeLeavePartyResponse(new byte[] { 1 }) ==
+        LeavePartyResult.NotInParty, "Leave party failure result is incorrect.");
+    AssertThrows<InvalidDataException>(
+        () => GamePayloadCodec.DecodeLeavePartyResponse(new byte[] { 2 }),
+        "Unknown leave party result was accepted.");
+
     byte[] dungeonPayload =
     {
         0,
@@ -430,6 +440,29 @@ static async Task TestTcpConnectionAsync()
     TcpPacket joinPartyResponse = await joinPartyResponseTask;
     Assert(joinPartyResponse.Header.Type == TcpPacketType.JoinPartyResponse,
         "Join party TCP response type is incorrect.");
+
+    Task<TcpPacket> leavePartyResponseTask = connection.SendRequestAsync(
+        TcpPacketType.LeavePartyRequest,
+        GamePayloadCodec.EncodeLeavePartyRequest(),
+        timeout.Token);
+
+    await serverStream.ReadExactlyAsync(requestHeaderBytes, timeout.Token);
+    TcpPacketHeader leavePartyRequestHeader =
+        TcpPacketCodec.DecodeHeader(requestHeaderBytes);
+    Assert(leavePartyRequestHeader.Type == TcpPacketType.LeavePartyRequest,
+        "Leave party TCP request type is incorrect.");
+    Assert(leavePartyRequestHeader.PacketSize == TcpPacketCodec.HeaderSize,
+        "Leave party TCP request payload must be empty.");
+
+    byte[] leavePartyResponseBytes = TcpPacketCodec.EncodePacket(
+        TcpPacketType.LeavePartyResponse,
+        leavePartyRequestHeader.RequestId,
+        new byte[] { 0 });
+    await serverStream.WriteAsync(leavePartyResponseBytes, timeout.Token);
+
+    TcpPacket leavePartyResponse = await leavePartyResponseTask;
+    Assert(leavePartyResponse.Header.Type == TcpPacketType.LeavePartyResponse,
+        "Leave party TCP response type is incorrect.");
 
     connection.Disconnect();
 

@@ -227,6 +227,11 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "파티 가입"
 
+[node name="LeavePartyButton" type="Button" parent="Margin/RootVBox/Content/LeftScroll/Steps/PartyPanel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "파티 탈퇴"
+
 [node name="DungeonPanel" type="PanelContainer" parent="Margin/RootVBox/Content/LeftScroll/Steps"]
 unique_name_in_owner = true
 layout_mode = 2

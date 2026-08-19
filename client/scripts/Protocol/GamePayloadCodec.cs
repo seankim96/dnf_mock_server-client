@@ -167,6 +167,22 @@ public static class GamePayloadCodec
         return new JoinPartyResponse(result, partyId, leaderSessionId);
     }
 
+    public static byte[] EncodeLeavePartyRequest()
+    {
+        return Array.Empty<byte>();
+    }
+
+    public static LeavePartyResult DecodeLeavePartyResponse(byte[] payload)
+    {
+        if (payload.Length != 1 ||
+            !Enum.IsDefined(typeof(LeavePartyResult), payload[0]))
+        {
+            throw new InvalidDataException("Invalid leave party response payload.");
+        }
+
+        return (LeavePartyResult)payload[0];
+    }
+
     public static byte[] EncodeEnterDungeonRequest(uint dungeonTemplateId)
     {
         if (dungeonTemplateId == 0)
