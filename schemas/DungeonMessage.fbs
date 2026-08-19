@@ -43,11 +43,19 @@ table UdpHeartbeat {
   session_id:ulong;
 }
 
+table PlayerAttack {
+  sequence:uint;
+  skill_id:uint;
+  direction_x:float;
+  direction_y:float;
+}
+
 union DungeonPayload {
   PlayerInput,
   DungeonSnapshot,
   UdpHello,
-  UdpHeartbeat
+  UdpHeartbeat,
+  PlayerAttack
 }
 
 table DungeonMessage {

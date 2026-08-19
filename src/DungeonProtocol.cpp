@@ -22,6 +22,21 @@ bool IsValid(const PlayerInputMessage& input)
            input.moveY >= -1.0f && input.moveY <= 1.0f;
 }
 
+bool IsValid(const PlayerAttackMessage& attack)
+{
+    const float directionLengthSquared =
+        attack.directionX * attack.directionX +
+        attack.directionY * attack.directionY;
+
+    return attack.dungeonId != 0 &&
+           attack.skillId != 0 &&
+           std::isfinite(attack.directionX) &&
+           std::isfinite(attack.directionY) &&
+           attack.directionX >= -1.0f && attack.directionX <= 1.0f &&
+           attack.directionY >= -1.0f && attack.directionY <= 1.0f &&
+           directionLengthSquared > 0.0f;
+}
+
 bool IsValid(const UdpHelloMessage& hello)
 {
     return hello.dungeonId != 0 &&
@@ -105,6 +120,85 @@ bool DecodePlayerInput(
     decoded.moveX = playerInput->move_x();
     decoded.moveY = playerInput->move_y();
     decoded.jump = playerInput->jump();
+
+    if (!IsValid(decoded))
+    {
+        return false;
+    }
+
+    output = decoded;
+    return true;
+}
+
+std::vector<std::uint8_t> EncodePlayerAttack(
+    const PlayerAttackMessage& attack)
+{
+    if (!IsValid(attack))
+    {
+        throw std::invalid_argument("Invalid player attack");
+    }
+
+    flatbuffers::FlatBufferBuilder builder;
+
+    const auto playerAttack = Dnf::Protocol::CreatePlayerAttack(
+        builder,
+        attack.sequence,
+        attack.skillId,
+        attack.directionX,
+        attack.directionY);
+
+    const auto message = Dnf::Protocol::CreateDungeonMessage(
+        builder,
+        DUNGEON_PROTOCOL_VERSION,
+        attack.dungeonId,
+        Dnf::Protocol::DungeonPayload_PlayerAttack,
+        playerAttack.Union());
+
+    Dnf::Protocol::FinishDungeonMessageBuffer(builder, message);
+
+    return std::vector<std::uint8_t>(
+        builder.GetBufferPointer(),
+        builder.GetBufferPointer() + builder.GetSize());
+}
+
+bool DecodePlayerAttack(
+    const std::vector<std::uint8_t>& bytes,
+    PlayerAttackMessage& output)
+{
+    if (bytes.empty())
+    {
+        return false;
+    }
+
+    flatbuffers::Verifier verifier(bytes.data(), bytes.size());
+    if (!Dnf::Protocol::VerifyDungeonMessageBuffer(verifier))
+    {
+        return false;
+    }
+
+    const Dnf::Protocol::DungeonMessage* message =
+        Dnf::Protocol::GetDungeonMessage(bytes.data());
+
+    if (message->protocol_version() != DUNGEON_PROTOCOL_VERSION ||
+        message->payload_type() !=
+            Dnf::Protocol::DungeonPayload_PlayerAttack)
+    {
+        return false;
+    }
+
+    const Dnf::Protocol::PlayerAttack* playerAttack =
+        message->payload_as_PlayerAttack();
+    if (playerAttack == nullptr)
+    {
+        return false;
+    }
+
+    PlayerAttackMessage decoded;
+    decoded.dungeonId = message->dungeon_id();
+    decoded.sequence = playerAttack->sequence();
+    decoded.skillId = playerAttack->skill_id();
+    decoded.directionX = playerAttack->direction_x();
+    decoded.directionY = playerAttack->direction_y();
 
     if (!IsValid(decoded))
     {

@@ -75,6 +75,51 @@ void TestInvalidMovementIsRejected()
     assert(threw);
 }
 
+void TestPlayerAttackRoundTrip()
+{
+    dnf::PlayerAttackMessage sent;
+    sent.dungeonId = 5001;
+    sent.sequence = 43;
+    sent.skillId = 1;
+    sent.directionX = 1.0f;
+    sent.directionY = -0.25f;
+
+    const auto bytes = dnf::EncodePlayerAttack(sent);
+
+    dnf::PlayerAttackMessage received;
+    assert(dnf::DecodePlayerAttack(bytes, received));
+    assert(received.dungeonId == sent.dungeonId);
+    assert(received.sequence == sent.sequence);
+    assert(received.skillId == sent.skillId);
+    assert(received.directionX == sent.directionX);
+    assert(received.directionY == sent.directionY);
+
+    dnf::PlayerInputMessage movement;
+    movement.dungeonId = 5001;
+    assert(!dnf::DecodePlayerAttack(
+        dnf::EncodePlayerInput(movement),
+        received));
+}
+
+void TestInvalidPlayerAttackIsRejected()
+{
+    dnf::PlayerAttackMessage attack;
+    attack.dungeonId = 5001;
+    attack.skillId = 1;
+
+    bool threw = false;
+    try
+    {
+        dnf::EncodePlayerAttack(attack);
+    }
+    catch (const std::invalid_argument&)
+    {
+        threw = true;
+    }
+
+    assert(threw);
+}
+
 void TestUdpHelloRoundTrip()
 {
     dnf::UdpHelloMessage sent;
@@ -201,6 +246,8 @@ int main()
     TestPlayerInputRoundTrip();
     TestBrokenBufferIsRejected();
     TestInvalidMovementIsRejected();
+    TestPlayerAttackRoundTrip();
+    TestInvalidPlayerAttackIsRejected();
     TestUdpHelloRoundTrip();
     TestInvalidUdpHelloIsRejected();
     TestUdpHeartbeatRoundTrip();
