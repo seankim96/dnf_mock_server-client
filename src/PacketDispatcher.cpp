@@ -3,6 +3,7 @@
 #include "ChannelProtocol.h"
 #include "DungeonAdmissionProtocol.h"
 #include "DungeonConnectionProtocol.h"
+#include "DungeonLifecycleService.h"
 #include "DungeonManager.h"
 #include "DungeonUdpManager.h"
 #include "LoginValidator.h"
@@ -189,12 +190,11 @@ std::vector<std::uint8_t> PacketDispatcher::HandleEnterDungeonRequest(
 
         if (!udpReady)
         {
-            if (allocatedPort.has_value())
-            {
-                dungeonUdpManager_.Release(dungeonId);
-            }
+            DungeonLifecycleService lifecycleService(
+                dungeonManager_,
+                dungeonUdpManager_);
 
-            if (!dungeonManager_.CancelDungeon(dungeonId))
+            if (!lifecycleService.CancelWaitingDungeon(dungeonId))
             {
                 throw std::runtime_error(
                     "Failed to cancel dungeon after UDP allocation error");

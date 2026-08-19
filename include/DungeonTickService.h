@@ -1,6 +1,7 @@
 #pragma once
 
 #include "DungeonInputProcessor.h"
+#include "DungeonLifecycleService.h"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/steady_timer.hpp>
@@ -42,6 +43,7 @@ private:
     DungeonManager& dungeonManager_;
     DungeonUdpManager& udpManager_;
     DungeonInputProcessor inputProcessor_;
+    DungeonLifecycleService lifecycleService_;
     std::chrono::milliseconds readyTimeout_;
     std::chrono::milliseconds udpIdleTimeout_;
     std::unordered_map<

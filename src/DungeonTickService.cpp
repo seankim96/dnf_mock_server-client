@@ -28,6 +28,7 @@ DungeonTickService::DungeonTickService(
       dungeonManager_(dungeonManager),
       udpManager_(udpManager),
       inputProcessor_(dungeonManager, udpManager),
+      lifecycleService_(dungeonManager, udpManager),
       readyTimeout_(readyTimeout),
       udpIdleTimeout_(udpIdleTimeout)
 {
@@ -121,10 +122,7 @@ void DungeonTickService::HandleTick(
 
         if (!inserted && now - waitingIt->second >= readyTimeout_)
         {
-            if (dungeonManager_.CancelDungeon(dungeonId))
-            {
-                udpManager_.Release(dungeonId);
-            }
+            lifecycleService_.CancelWaitingDungeon(dungeonId);
 
             waitingSince_.erase(waitingIt);
         }

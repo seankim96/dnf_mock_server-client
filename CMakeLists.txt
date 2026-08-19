@@ -30,6 +30,7 @@ add_library(dnf_core
     src/DungeonConnectionProtocol.cpp
     src/DungeonInputProcessor.cpp
     src/DungeonInstance.cpp
+    src/DungeonLifecycleService.cpp
     src/DungeonManager.cpp
     src/DungeonPlayerState.cpp
     src/DungeonProtocol.cpp
@@ -201,4 +202,15 @@ target_link_libraries(dungeon_tick_service_test PRIVATE dnf_core)
 add_test(
     NAME dungeon_tick_service_test
     COMMAND dungeon_tick_service_test
+)
+
+add_executable(
+    dungeon_lifecycle_service_test
+    tests/DungeonLifecycleServiceTest.cpp
+)
+target_link_libraries(dungeon_lifecycle_service_test PRIVATE dnf_core)
+
+add_test(
+    NAME dungeon_lifecycle_service_test
+    COMMAND dungeon_lifecycle_service_test
 )
