@@ -126,6 +126,39 @@ static async Task TestTcpConnectionAsync()
         throw new InvalidOperationException("TCP connection was not established.");
     }
 
+    Task<TcpPacket> responseTask = connection.SendRequestAsync(
+        TcpPacketType.LoginRequest,
+        new byte[] { (byte)'P', (byte)'1' },
+        timeout.Token);
+
+    NetworkStream serverStream = acceptedClient.GetStream();
+    var requestHeaderBytes = new byte[TcpPacketCodec.HeaderSize];
+    await serverStream.ReadExactlyAsync(requestHeaderBytes, timeout.Token);
+    TcpPacketHeader requestHeader = TcpPacketCodec.DecodeHeader(requestHeaderBytes);
+
+    int requestPayloadSize = requestHeader.PacketSize - TcpPacketCodec.HeaderSize;
+    var requestPayload = new byte[requestPayloadSize];
+    await serverStream.ReadExactlyAsync(requestPayload, timeout.Token);
+
+    Assert(requestHeader.Type == TcpPacketType.LoginRequest,
+        "TCP request type is incorrect.");
+    Assert(requestPayload.SequenceEqual(new byte[] { (byte)'P', (byte)'1' }),
+        "TCP request payload is incorrect.");
+
+    byte[] responseBytes = TcpPacketCodec.EncodePacket(
+        TcpPacketType.LoginResponse,
+        requestHeader.RequestId,
+        new byte[] { 0 });
+
+    await serverStream.WriteAsync(responseBytes[..3], timeout.Token);
+    await serverStream.WriteAsync(responseBytes[3..], timeout.Token);
+
+    TcpPacket response = await responseTask;
+    Assert(response.Header.Type == TcpPacketType.LoginResponse,
+        "TCP response type is incorrect.");
+    Assert(response.Payload.SequenceEqual(new byte[] { 0 }),
+        "TCP response payload is incorrect.");
+
     connection.Disconnect();
 
     if (connection.IsConnected)

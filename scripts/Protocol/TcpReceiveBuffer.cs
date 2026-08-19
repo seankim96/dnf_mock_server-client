@@ -13,6 +13,11 @@ public sealed class TcpReceiveBuffer
         _buffer.AddRange(data);
     }
 
+    public void Clear()
+    {
+        _buffer.Clear();
+    }
+
     public bool TryPop(out TcpPacket? packet)
     {
         packet = null;
