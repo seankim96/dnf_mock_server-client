@@ -49,7 +49,10 @@ CombatProcessResult DungeonCombatProcessor::Process(DungeonId dungeonId)
         const BeginSkillResult beginResult = player->BeginSkill(
             skill->id,
             skill->manaCost,
-            skill->cooldownTicks);
+            skill->cooldownTicks,
+            skill->startupTicks,
+            skill->activeTicks,
+            skill->recoveryTicks);
         if (beginResult != BeginSkillResult::Success)
         {
             ++result.rejectedCount;

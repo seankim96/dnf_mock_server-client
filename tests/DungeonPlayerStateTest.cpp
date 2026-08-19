@@ -82,12 +82,12 @@ void TestManaAndSkillCooldown()
         20);
 
     assert(player.CurrentMp() == 20);
-    assert(player.BeginSkill(1001, 5, 2) ==
+    assert(player.BeginSkill(1001, 5, 2, 0, 1, 0) ==
            dnf::BeginSkillResult::Success);
     assert(player.CurrentMp() == 15);
     assert(player.RemainingCooldown(1001) == 2);
 
-    assert(player.BeginSkill(1001, 5, 2) ==
+    assert(player.BeginSkill(1001, 5, 2, 0, 1, 0) ==
            dnf::BeginSkillResult::OnCooldown);
     assert(player.CurrentMp() == 15);
 
@@ -96,20 +96,62 @@ void TestManaAndSkillCooldown()
     player.AdvanceCombatTick();
     assert(player.RemainingCooldown(1001) == 0);
 
-    assert(player.BeginSkill(1002, 16, 0) ==
+    assert(player.BeginSkill(1002, 16, 0, 0, 1, 0) ==
            dnf::BeginSkillResult::NotEnoughMana);
     assert(player.CurrentMp() == 15);
 
-    assert(player.BeginSkill(1002, 15, 0) ==
+    assert(player.BeginSkill(1002, 15, 0, 0, 1, 0) ==
            dnf::BeginSkillResult::Success);
     assert(player.CurrentMp() == 0);
 
-    assert(player.BeginSkill(0, 0, 0) ==
+    assert(player.BeginSkill(0, 0, 0, 0, 1, 0) ==
            dnf::BeginSkillResult::InvalidSkill);
 
     const dnf::DungeonPlayerSnapshot snapshot = player.Snapshot();
     assert(snapshot.currentMp == 0);
     assert(snapshot.maxMp == 20);
+}
+
+void TestSkillActionPhases()
+{
+    dnf::DungeonPlayerState player(
+        100,
+        1,
+        {100.0f, 250.0f, 0.0f});
+
+    assert(player.BeginSkill(2001, 10, 10, 2, 1, 2) ==
+           dnf::BeginSkillResult::Success);
+
+    dnf::SkillActionSnapshot action = player.CurrentSkillAction();
+    assert(action.skillId == 2001);
+    assert(action.phase == dnf::SkillActionPhase::Startup);
+    assert(action.remainingTicks == 2);
+
+    assert(player.BeginSkill(2002, 10, 10, 1, 1, 1) ==
+           dnf::BeginSkillResult::Busy);
+    assert(player.CurrentMp() == 90);
+
+    player.AdvanceCombatTick();
+    action = player.CurrentSkillAction();
+    assert(action.phase == dnf::SkillActionPhase::Startup);
+    assert(action.remainingTicks == 1);
+
+    player.AdvanceCombatTick();
+    action = player.CurrentSkillAction();
+    assert(action.phase == dnf::SkillActionPhase::Active);
+    assert(action.remainingTicks == 1);
+
+    player.AdvanceCombatTick();
+    action = player.CurrentSkillAction();
+    assert(action.phase == dnf::SkillActionPhase::Recovery);
+    assert(action.remainingTicks == 2);
+
+    player.AdvanceCombatTick();
+    player.AdvanceCombatTick();
+    action = player.CurrentSkillAction();
+    assert(action.skillId == 0);
+    assert(action.phase == dnf::SkillActionPhase::Idle);
+    assert(action.remainingTicks == 0);
 }
 } // namespace
 
@@ -118,6 +160,7 @@ int main()
     TestMovementValidation();
     TestRoomChange();
     TestManaAndSkillCooldown();
+    TestSkillActionPhases();
 
     std::cout << "All dungeon player state tests passed.\n";
     return 0;

@@ -60,7 +60,12 @@ Position DungeonPlayerState::CurrentPosition() const
 DungeonPlayerSnapshot DungeonPlayerState::Snapshot() const
 {
     std::lock_guard lock(mutex_);
-    return {roomId_, position_, currentMp_, maxMp_};
+    return {
+        roomId_,
+        position_,
+        currentMp_,
+        maxMp_,
+        {actionSkillId_, actionPhase_, actionRemainingTicks_}};
 }
 
 std::uint32_t DungeonPlayerState::CurrentMp() const
@@ -82,14 +87,23 @@ std::uint32_t DungeonPlayerState::RemainingCooldown(SkillId skillId) const
     return cooldownIt->second;
 }
 
+SkillActionSnapshot DungeonPlayerState::CurrentSkillAction() const
+{
+    std::lock_guard lock(mutex_);
+    return {actionSkillId_, actionPhase_, actionRemainingTicks_};
+}
+
 BeginSkillResult DungeonPlayerState::BeginSkill(
     SkillId skillId,
     std::uint32_t manaCost,
-    std::uint32_t cooldownTicks)
+    std::uint32_t cooldownTicks,
+    std::uint32_t startupTicks,
+    std::uint32_t activeTicks,
+    std::uint32_t recoveryTicks)
 {
     std::lock_guard lock(mutex_);
 
-    if (skillId == 0)
+    if (skillId == 0 || activeTicks == 0)
     {
         return BeginSkillResult::InvalidSkill;
     }
@@ -97,6 +111,11 @@ BeginSkillResult DungeonPlayerState::BeginSkill(
     if (cooldowns_.contains(skillId))
     {
         return BeginSkillResult::OnCooldown;
+    }
+
+    if (actionPhase_ != SkillActionPhase::Idle)
+    {
+        return BeginSkillResult::Busy;
     }
 
     if (currentMp_ < manaCost)
@@ -109,6 +128,21 @@ BeginSkillResult DungeonPlayerState::BeginSkill(
     if (cooldownTicks > 0)
     {
         cooldowns_.emplace(skillId, cooldownTicks);
+    }
+
+    actionSkillId_ = skillId;
+    actionActiveTicks_ = activeTicks;
+    actionRecoveryTicks_ = recoveryTicks;
+
+    if (startupTicks > 0)
+    {
+        actionPhase_ = SkillActionPhase::Startup;
+        actionRemainingTicks_ = startupTicks;
+    }
+    else
+    {
+        actionPhase_ = SkillActionPhase::Active;
+        actionRemainingTicks_ = activeTicks;
     }
 
     return BeginSkillResult::Success;
@@ -132,6 +166,38 @@ void DungeonPlayerState::AdvanceCombatTick()
             ++cooldownIt;
         }
     }
+
+    if (actionPhase_ == SkillActionPhase::Idle)
+    {
+        return;
+    }
+
+    --actionRemainingTicks_;
+    if (actionRemainingTicks_ > 0)
+    {
+        return;
+    }
+
+    if (actionPhase_ == SkillActionPhase::Startup)
+    {
+        actionPhase_ = SkillActionPhase::Active;
+        actionRemainingTicks_ = actionActiveTicks_;
+        return;
+    }
+
+    if (actionPhase_ == SkillActionPhase::Active &&
+        actionRecoveryTicks_ > 0)
+    {
+        actionPhase_ = SkillActionPhase::Recovery;
+        actionRemainingTicks_ = actionRecoveryTicks_;
+        return;
+    }
+
+    actionSkillId_ = 0;
+    actionPhase_ = SkillActionPhase::Idle;
+    actionRemainingTicks_ = 0;
+    actionActiveTicks_ = 0;
+    actionRecoveryTicks_ = 0;
 }
 
 MovePlayerResult DungeonPlayerState::MoveTo(

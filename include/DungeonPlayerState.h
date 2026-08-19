@@ -24,7 +24,23 @@ enum class BeginSkillResult
     Success,
     InvalidSkill,
     NotEnoughMana,
-    OnCooldown
+    OnCooldown,
+    Busy
+};
+
+enum class SkillActionPhase
+{
+    Idle,
+    Startup,
+    Active,
+    Recovery
+};
+
+struct SkillActionSnapshot
+{
+    SkillId skillId = 0;
+    SkillActionPhase phase = SkillActionPhase::Idle;
+    std::uint32_t remainingTicks = 0;
 };
 
 struct DungeonPlayerSnapshot
@@ -33,6 +49,7 @@ struct DungeonPlayerSnapshot
     Position position;
     std::uint32_t currentMp = 0;
     std::uint32_t maxMp = 0;
+    SkillActionSnapshot skillAction;
 };
 
 class DungeonPlayerState
@@ -50,11 +67,15 @@ public:
     DungeonPlayerSnapshot Snapshot() const;
     std::uint32_t CurrentMp() const;
     std::uint32_t RemainingCooldown(SkillId skillId) const;
+    SkillActionSnapshot CurrentSkillAction() const;
 
     BeginSkillResult BeginSkill(
         SkillId skillId,
         std::uint32_t manaCost,
-        std::uint32_t cooldownTicks);
+        std::uint32_t cooldownTicks,
+        std::uint32_t startupTicks,
+        std::uint32_t activeTicks,
+        std::uint32_t recoveryTicks);
     void AdvanceCombatTick();
 
     MovePlayerResult MoveTo(
@@ -74,5 +95,11 @@ private:
     std::uint32_t currentMp_;
     std::uint32_t maxMp_;
     std::unordered_map<SkillId, std::uint32_t> cooldowns_;
+
+    SkillId actionSkillId_ = 0;
+    SkillActionPhase actionPhase_ = SkillActionPhase::Idle;
+    std::uint32_t actionRemainingTicks_ = 0;
+    std::uint32_t actionActiveTicks_ = 0;
+    std::uint32_t actionRecoveryTicks_ = 0;
 };
 } // namespace dnf
