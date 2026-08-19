@@ -117,8 +117,24 @@ static void TestGamePayloads()
     byte[] loginPayload = GamePayloadCodec.EncodeLoginRequest("Player_1");
     Assert(loginPayload.SequenceEqual("Player_1"u8.ToArray()),
         "Login request payload is incorrect.");
-    Assert(GamePayloadCodec.DecodeLoginResponse(new byte[] { 0 }) == LoginResult.Success,
+    LoginResponseData login = GamePayloadCodec.DecodeLoginResponse(
+        new byte[] { 0, 0, 0, 0, 0, 0, 0, 0, 42 });
+    Assert(login.Result == LoginResult.Success && login.SessionId == 42,
         "Login response payload is incorrect.");
+
+    LoginResponseData failedLogin = GamePayloadCodec.DecodeLoginResponse(
+        new byte[] { 1, 0, 0, 0, 0, 0, 0, 0, 0 });
+    Assert(failedLogin.Result == LoginResult.EmptyPlayerName &&
+        failedLogin.SessionId == 0, "Failed login payload is incorrect.");
+
+    AssertThrows<InvalidDataException>(
+        () => GamePayloadCodec.DecodeLoginResponse(
+            new byte[] { 0, 0, 0, 0, 0, 0, 0, 0, 0 }),
+        "Successful login with a zero session ID was accepted.");
+    AssertThrows<InvalidDataException>(
+        () => GamePayloadCodec.DecodeLoginResponse(
+            new byte[] { 1, 0, 0, 0, 0, 0, 0, 0, 42 }),
+        "Failed login with a non-zero session ID was accepted.");
 
     byte[] channelListPayload =
     {
@@ -302,7 +318,7 @@ static async Task TestTcpConnectionAsync()
     byte[] responseBytes = TcpPacketCodec.EncodePacket(
         TcpPacketType.LoginResponse,
         requestHeader.RequestId,
-        new byte[] { 0 });
+        new byte[] { 0, 0, 0, 0, 0, 0, 0, 0, 42 });
 
     await serverStream.WriteAsync(responseBytes[..3], timeout.Token);
     await serverStream.WriteAsync(responseBytes[3..], timeout.Token);
@@ -310,7 +326,8 @@ static async Task TestTcpConnectionAsync()
     TcpPacket response = await responseTask;
     Assert(response.Header.Type == TcpPacketType.LoginResponse,
         "TCP response type is incorrect.");
-    Assert(response.Payload.SequenceEqual(new byte[] { 0 }),
+    Assert(response.Payload.SequenceEqual(
+        new byte[] { 0, 0, 0, 0, 0, 0, 0, 0, 42 }),
         "TCP response payload is incorrect.");
 
     connection.Disconnect();
@@ -327,4 +344,19 @@ static void Assert(bool condition, string message)
     {
         throw new InvalidOperationException(message);
     }
+}
+
+static void AssertThrows<TException>(Action action, string message)
+    where TException : Exception
+{
+    try
+    {
+        action();
+    }
+    catch (TException)
+    {
+        return;
+    }
+
+    throw new InvalidOperationException(message);
 }

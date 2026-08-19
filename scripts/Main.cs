@@ -29,7 +29,6 @@ public partial class Main : Control
     private Control _dungeonPanel = null!;
     private LineEdit _dungeonTemplateInput = null!;
     private Button _enterDungeonButton = null!;
-    private LineEdit _sessionIdInput = null!;
     private Label _statusLabel = null!;
     private RichTextLabel _eventLog = null!;
     private Control _lobbyScreen = null!;
@@ -131,7 +130,6 @@ public partial class Main : Control
         _dungeonPanel = GetNode<Control>("%DungeonPanel");
         _dungeonTemplateInput = GetNode<LineEdit>("%DungeonTemplateInput");
         _enterDungeonButton = GetNode<Button>("%EnterDungeonButton");
-        _sessionIdInput = GetNode<LineEdit>("%SessionIdInput");
         _statusLabel = GetNode<Label>("%StatusLabel");
         _eventLog = GetNode<RichTextLabel>("%EventLog");
         _lobbyScreen = GetNode<Control>("%Margin");
@@ -220,18 +218,21 @@ public partial class Main : Control
                 TcpPacketType.LoginRequest,
                 payload,
                 _operationCancellation!.Token);
-            LoginResult result = GamePayloadCodec.DecodeLoginResponse(response.Payload);
+            LoginResponseData login =
+                GamePayloadCodec.DecodeLoginResponse(response.Payload);
 
-            if (result != LoginResult.Success)
+            if (login.Result != LoginResult.Success)
             {
-                SetStatus($"로그인 실패: {result}", Colors.Orange);
-                AddLog($"LoginResponse: {result}");
+                SetStatus($"로그인 실패: {login.Result}", Colors.Orange);
+                AddLog($"LoginResponse: {login.Result}");
                 return;
             }
 
             _loggedIn = true;
+            _localSessionId = login.SessionId;
             SetStatus("로그인 성공", Colors.LightGreen);
-            AddLog($"로그인 성공: {_playerNameInput.Text.Trim()}");
+            AddLog(
+                $"로그인 성공: {_playerNameInput.Text.Trim()}, session={_localSessionId}");
             await LoadChannelsAsync(_operationCancellation.Token);
         }
         catch (Exception exception) when (IsExpectedOperationError(exception))
@@ -333,17 +334,7 @@ public partial class Main : Control
             SetStatus($"던전 {response.DungeonId} 생성 성공", Colors.LightGreen);
             AddLog($"던전 생성: id={response.DungeonId}, UDP={response.UdpPort}");
 
-            if (!ulong.TryParse(_sessionIdInput.Text, out ulong sessionId) ||
-                sessionId == 0)
-            {
-                SetStatus(
-                    "서버 응답에 Session ID가 없어 UDP 연결에는 임시 입력이 필요합니다.",
-                    Colors.Orange);
-                AddLog("UDP 연결 대기: Session ID 입력 필요");
-                return;
-            }
-
-            await StartDungeonUdpAsync(response, sessionId,
+            await StartDungeonUdpAsync(response, _localSessionId,
                 _operationCancellation.Token);
         }
         catch (Exception exception) when (IsExpectedOperationError(exception))
@@ -429,7 +420,6 @@ public partial class Main : Control
         _channelPanel.Modulate = _loggedIn ? Colors.White : Colors.DimGray;
 
         _dungeonTemplateInput.Editable = _joinedChannel && !_busy;
-        _sessionIdInput.Editable = _joinedChannel && !_busy;
         _enterDungeonButton.Disabled = !_joinedChannel || _busy;
         _dungeonPanel.Modulate = _joinedChannel ? Colors.White : Colors.DimGray;
     }

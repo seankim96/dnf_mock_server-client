@@ -17,21 +17,14 @@ Godot 클라이언트를 실제 C++ 서버에 연결하면서 확인한 보완 �
 - 정식 흐름을 만든다면 CreateParty, JoinParty, LeaveParty 요청/응답을 추가한다.
 - 파티 ID, 파티장, 멤버 Session ID 목록을 내려주는 PartySnapshot 응답을 추가한다.
 
-## 2. 클라이언트가 자신의 Session ID를 받을 수 없음
+## 해결됨: 클라이언트 Session ID 전달
 
-`SessionManager`는 접속 시 `SessionId`를 만들지만 TCP 응답으로 전달하지 않는다.
-반면 UDP의 `UdpHello`에는 `session_id`, `dungeon_id`, `token`이 모두 필요하다.
+서버 커밋 `52da0c0`부터 LoginResponse가 LoginResult와 Session ID를 함께 전달한다.
+성공 응답에는 0이 아닌 Session ID가, 실패 응답에는 0이 들어간다.
 
-따라서 던전 생성과 UDP 포트·토큰 할당에 성공하더라도 클라이언트는 올바른
-`UdpHello`를 만들 수 없다. 현재 Godot 클라이언트에는 이 문제를 드러내기 위해
-Session ID 임시 입력란을 두었다.
-
-권장 보완안:
-
-- 로그인 성공 응답에 현재 세션의 `sessionId`를 포함한다.
-- 또는 EnterDungeonResponse와 DungeonConnectionInfoResponse에 `sessionId`를 포함한다.
-- 장기적으로는 로그인 후 발급되는 명시적인 Player/Character ID와 네트워크 Session ID를
-  구분해서 관리한다.
+Godot 클라이언트는 로그인 성공 시 Session ID를 보관하고 UDP Hello에 사용한다.
+임시 Session ID 입력란은 제거했다. 장기적으로는 캐릭터 ID와 네트워크 Session ID를
+구분해서 관리하는 것이 좋다.
 
 ## 3. UDP 인증 성공 응답이 없음
 
@@ -89,11 +82,10 @@ DungeonSnapshot은 플레이어와 적의 room ID 및 좌표를 보내지만 룸
 
 ## 구현 우선순위
 
-1. Session ID를 클라이언트에 전달
-2. 1인 파티 자동 생성 또는 파티 TCP 프로토콜 추가
-3. UdpHelloAck 추가
-4. 던전 카탈로그와 정적 룸 데이터 추가
-5. 전투 상태와 이벤트 메시지 추가
+1. 1인 파티 자동 생성 또는 파티 TCP 프로토콜 추가
+2. UdpHelloAck 추가
+3. 던전 카탈로그와 정적 룸 데이터 추가
+4. 전투 상태와 이벤트 메시지 추가
 
-앞의 두 항목이 해결되어야 현재 Godot 클라이언트가 실제 서버를 통해
+파티 생성·가입 경로가 해결되어야 현재 Godot 클라이언트가 실제 서버를 통해
 TCP 로비에서 UDP 던전까지 끊김 없이 진입할 수 있다.

@@ -208,11 +208,6 @@ layout_mode = 2
 text = "1001"
 placeholder_text = "던전 템플릿 ID"
 
-[node name="SessionIdInput" type="LineEdit" parent="Margin/RootVBox/Content/LeftScroll/Steps/DungeonPanel/Margin/VBox"]
-unique_name_in_owner = true
-layout_mode = 2
-placeholder_text = "UDP용 Session ID (현재 서버 임시 입력)"
-
 [node name="EnterDungeonButton" type="Button" parent="Margin/RootVBox/Content/LeftScroll/Steps/DungeonPanel/Margin/VBox"]
 unique_name_in_owner = true
 layout_mode = 2

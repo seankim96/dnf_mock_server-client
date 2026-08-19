@@ -10,6 +10,18 @@ public enum LoginResult : byte
     InvalidPlayerNameCharacter = 3
 }
 
+public sealed class LoginResponseData
+{
+    public LoginResponseData(LoginResult result, ulong sessionId)
+    {
+        Result = result;
+        SessionId = sessionId;
+    }
+
+    public LoginResult Result { get; }
+    public ulong SessionId { get; }
+}
+
 public sealed class ChannelInfo
 {
     public ChannelInfo(uint id, uint currentPlayers, uint maxPlayers)

@@ -28,14 +28,23 @@ public static class GamePayloadCodec
         return Encoding.ASCII.GetBytes(playerName);
     }
 
-    public static LoginResult DecodeLoginResponse(byte[] payload)
+    public static LoginResponseData DecodeLoginResponse(byte[] payload)
     {
-        if (payload.Length != 1 || !Enum.IsDefined(typeof(LoginResult), payload[0]))
+        if (payload.Length != 9 || !Enum.IsDefined(typeof(LoginResult), payload[0]))
         {
             throw new InvalidDataException("Invalid login response payload.");
         }
 
-        return (LoginResult)payload[0];
+        var result = (LoginResult)payload[0];
+        ulong sessionId = ReadUInt64(payload, 1);
+        bool succeeded = result == LoginResult.Success;
+
+        if (succeeded != (sessionId != 0))
+        {
+            throw new InvalidDataException("Invalid login response data.");
+        }
+
+        return new LoginResponseData(result, sessionId);
     }
 
     public static IReadOnlyList<ChannelInfo> DecodeChannelListResponse(
