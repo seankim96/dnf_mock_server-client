@@ -132,6 +132,41 @@ public static class GamePayloadCodec
         return new CreatePartyResponse(result, partyId, leaderSessionId);
     }
 
+    public static byte[] EncodeJoinPartyRequest(ulong partyId)
+    {
+        if (partyId == 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(partyId));
+        }
+
+        var payload = new byte[8];
+        BinaryPrimitives.WriteUInt64BigEndian(payload, partyId);
+        return payload;
+    }
+
+    public static JoinPartyResponse DecodeJoinPartyResponse(byte[] payload)
+    {
+        if (payload.Length != 17 ||
+            !Enum.IsDefined(typeof(JoinPartyResult), payload[0]))
+        {
+            throw new InvalidDataException("Invalid join party response payload.");
+        }
+
+        var result = (JoinPartyResult)payload[0];
+        ulong partyId = ReadUInt64(payload, 1);
+        ulong leaderSessionId = ReadUInt64(payload, 9);
+        bool succeeded = result == JoinPartyResult.Success;
+        bool hasPartyData = partyId != 0 && leaderSessionId != 0;
+        bool hasNoPartyData = partyId == 0 && leaderSessionId == 0;
+
+        if ((succeeded && !hasPartyData) || (!succeeded && !hasNoPartyData))
+        {
+            throw new InvalidDataException("Invalid join party response data.");
+        }
+
+        return new JoinPartyResponse(result, partyId, leaderSessionId);
+    }
+
     public static byte[] EncodeEnterDungeonRequest(uint dungeonTemplateId)
     {
         if (dungeonTemplateId == 0)

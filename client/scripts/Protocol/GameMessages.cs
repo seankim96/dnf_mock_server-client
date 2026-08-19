@@ -79,6 +79,31 @@ public sealed class CreatePartyResponse
     public ulong LeaderSessionId { get; }
 }
 
+public enum JoinPartyResult : byte
+{
+    Success = 0,
+    PartyNotFound = 1,
+    PartyFull = 2,
+    AlreadyJoined = 3
+}
+
+public sealed class JoinPartyResponse
+{
+    public JoinPartyResponse(
+        JoinPartyResult result,
+        ulong partyId,
+        ulong leaderSessionId)
+    {
+        Result = result;
+        PartyId = partyId;
+        LeaderSessionId = leaderSessionId;
+    }
+
+    public JoinPartyResult Result { get; }
+    public ulong PartyId { get; }
+    public ulong LeaderSessionId { get; }
+}
+
 public enum EnterDungeonResult : byte
 {
     Success = 0,

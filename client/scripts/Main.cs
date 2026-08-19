@@ -28,6 +28,8 @@ public partial class Main : Control
     private Button _joinChannelButton = null!;
     private Control _partyPanel = null!;
     private Button _createPartyButton = null!;
+    private LineEdit _partyIdInput = null!;
+    private Button _joinPartyButton = null!;
     private Label _partyInfoLabel = null!;
     private Control _dungeonPanel = null!;
     private LineEdit _dungeonTemplateInput = null!;
@@ -133,6 +135,8 @@ public partial class Main : Control
         _joinChannelButton = GetNode<Button>("%JoinChannelButton");
         _partyPanel = GetNode<Control>("%PartyPanel");
         _createPartyButton = GetNode<Button>("%CreatePartyButton");
+        _partyIdInput = GetNode<LineEdit>("%PartyIdInput");
+        _joinPartyButton = GetNode<Button>("%JoinPartyButton");
         _partyInfoLabel = GetNode<Label>("%PartyInfoLabel");
         _dungeonPanel = GetNode<Control>("%DungeonPanel");
         _dungeonTemplateInput = GetNode<LineEdit>("%DungeonTemplateInput");
@@ -157,6 +161,7 @@ public partial class Main : Control
         _refreshChannelsButton.Pressed += OnRefreshChannelsButtonPressed;
         _joinChannelButton.Pressed += OnJoinChannelButtonPressed;
         _createPartyButton.Pressed += OnCreatePartyButtonPressed;
+        _joinPartyButton.Pressed += OnJoinPartyButtonPressed;
         _enterDungeonButton.Pressed += OnEnterDungeonButtonPressed;
         _leaveDungeonButton.Pressed += OnLeaveDungeonButtonPressed;
     }
@@ -168,6 +173,7 @@ public partial class Main : Control
         _refreshChannelsButton.Pressed -= OnRefreshChannelsButtonPressed;
         _joinChannelButton.Pressed -= OnJoinChannelButtonPressed;
         _createPartyButton.Pressed -= OnCreatePartyButtonPressed;
+        _joinPartyButton.Pressed -= OnJoinPartyButtonPressed;
         _enterDungeonButton.Pressed -= OnEnterDungeonButtonPressed;
         _leaveDungeonButton.Pressed -= OnLeaveDungeonButtonPressed;
     }
@@ -377,8 +383,7 @@ public partial class Main : Control
             }
 
             _inParty = true;
-            _partyInfoLabel.Text =
-                $"Party {response.PartyId} / Leader {response.LeaderSessionId}";
+            ShowPartyInfo(response.PartyId, response.LeaderSessionId);
             SetStatus($"파티 {response.PartyId} 생성 성공", Colors.LightGreen);
             AddLog(
                 $"파티 생성: id={response.PartyId}, leader={response.LeaderSessionId}");
@@ -391,6 +396,54 @@ public partial class Main : Control
         {
             EndOperation();
         }
+    }
+
+    private async void OnJoinPartyButtonPressed()
+    {
+        if (!ulong.TryParse(_partyIdInput.Text, out ulong partyId) || partyId == 0)
+        {
+            SetStatus("가입할 Party ID를 확인해 주세요.", Colors.Orange);
+            return;
+        }
+
+        BeginOperation(TimeSpan.FromSeconds(5));
+
+        try
+        {
+            TcpPacket packet = await _connection.SendRequestAsync(
+                TcpPacketType.JoinPartyRequest,
+                GamePayloadCodec.EncodeJoinPartyRequest(partyId),
+                _operationCancellation!.Token);
+            JoinPartyResponse response =
+                GamePayloadCodec.DecodeJoinPartyResponse(packet.Payload);
+
+            if (response.Result != JoinPartyResult.Success)
+            {
+                SetStatus($"파티 가입 실패: {response.Result}", Colors.Orange);
+                AddLog($"JoinPartyResponse: {response.Result}");
+                return;
+            }
+
+            _inParty = true;
+            ShowPartyInfo(response.PartyId, response.LeaderSessionId);
+            SetStatus($"파티 {response.PartyId} 가입 성공", Colors.LightGreen);
+            AddLog(
+                $"파티 가입: id={response.PartyId}, leader={response.LeaderSessionId}");
+        }
+        catch (Exception exception) when (IsExpectedOperationError(exception))
+        {
+            ShowOperationError(exception);
+        }
+        finally
+        {
+            EndOperation();
+        }
+    }
+
+    private void ShowPartyInfo(ulong partyId, ulong leaderSessionId)
+    {
+        _partyInfoLabel.Text =
+            $"Party {partyId} / Leader {leaderSessionId}";
     }
 
     private async Task LoadChannelsAsync(
@@ -443,6 +496,7 @@ public partial class Main : Control
         _localSessionId = 0;
         _receivedFirstSnapshot = false;
         _channelSelect.Clear();
+        _partyIdInput.Clear();
         _partyInfoLabel.Text = "파티 없음";
         _lobbyScreen.Visible = true;
         _dungeonScreen.Visible = false;
@@ -468,6 +522,8 @@ public partial class Main : Control
         _channelPanel.Modulate = _loggedIn ? Colors.White : Colors.DimGray;
 
         _createPartyButton.Disabled = !_joinedChannel || _inParty || _busy;
+        _partyIdInput.Editable = _joinedChannel && !_inParty && !_busy;
+        _joinPartyButton.Disabled = !_joinedChannel || _inParty || _busy;
         _partyPanel.Modulate = _joinedChannel ? Colors.White : Colors.DimGray;
 
         _dungeonTemplateInput.Editable = _inParty && !_busy;

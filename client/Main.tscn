@@ -212,6 +212,21 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "1인 파티 생성"
 
+[node name="JoinPartyRow" type="HBoxContainer" parent="Margin/RootVBox/Content/LeftScroll/Steps/PartyPanel/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="PartyIdInput" type="LineEdit" parent="Margin/RootVBox/Content/LeftScroll/Steps/PartyPanel/Margin/VBox/JoinPartyRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "가입할 Party ID"
+
+[node name="JoinPartyButton" type="Button" parent="Margin/RootVBox/Content/LeftScroll/Steps/PartyPanel/Margin/VBox/JoinPartyRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "파티 가입"
+
 [node name="DungeonPanel" type="PanelContainer" parent="Margin/RootVBox/Content/LeftScroll/Steps"]
 unique_name_in_owner = true
 layout_mode = 2

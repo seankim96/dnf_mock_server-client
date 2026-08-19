@@ -179,6 +179,26 @@ static void TestGamePayloads()
             new byte[17] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }),
         "Successful create party response with zero IDs was accepted.");
 
+    byte[] joinPartyPayload = GamePayloadCodec.EncodeJoinPartyRequest(9);
+    Assert(joinPartyPayload.SequenceEqual(
+        new byte[] { 0, 0, 0, 0, 0, 0, 0, 9 }),
+        "Join party request payload is incorrect.");
+    JoinPartyResponse joinParty = GamePayloadCodec.DecodeJoinPartyResponse(
+        new byte[]
+        {
+            0,
+            0, 0, 0, 0, 0, 0, 0, 9,
+            0, 0, 0, 0, 0, 0, 0, 42
+        });
+    Assert(joinParty.Result == JoinPartyResult.Success &&
+        joinParty.PartyId == 9 && joinParty.LeaderSessionId == 42,
+        "Join party response is incorrect.");
+    JoinPartyResponse missingParty = GamePayloadCodec.DecodeJoinPartyResponse(
+        new byte[17] { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
+    Assert(missingParty.Result == JoinPartyResult.PartyNotFound &&
+        missingParty.PartyId == 0 && missingParty.LeaderSessionId == 0,
+        "Failed join party response is incorrect.");
+
     byte[] dungeonPayload =
     {
         0,
@@ -379,6 +399,37 @@ static async Task TestTcpConnectionAsync()
     TcpPacket partyResponse = await partyResponseTask;
     Assert(partyResponse.Header.Type == TcpPacketType.CreatePartyResponse,
         "Create party TCP response type is incorrect.");
+
+    Task<TcpPacket> joinPartyResponseTask = connection.SendRequestAsync(
+        TcpPacketType.JoinPartyRequest,
+        GamePayloadCodec.EncodeJoinPartyRequest(9),
+        timeout.Token);
+
+    await serverStream.ReadExactlyAsync(requestHeaderBytes, timeout.Token);
+    TcpPacketHeader joinPartyRequestHeader =
+        TcpPacketCodec.DecodeHeader(requestHeaderBytes);
+    var joinPartyRequestPayload = new byte[8];
+    await serverStream.ReadExactlyAsync(joinPartyRequestPayload, timeout.Token);
+    Assert(joinPartyRequestHeader.Type == TcpPacketType.JoinPartyRequest,
+        "Join party TCP request type is incorrect.");
+    Assert(joinPartyRequestPayload.SequenceEqual(
+        new byte[] { 0, 0, 0, 0, 0, 0, 0, 9 }),
+        "Join party TCP request payload is incorrect.");
+
+    byte[] joinPartyResponseBytes = TcpPacketCodec.EncodePacket(
+        TcpPacketType.JoinPartyResponse,
+        joinPartyRequestHeader.RequestId,
+        new byte[]
+        {
+            0,
+            0, 0, 0, 0, 0, 0, 0, 9,
+            0, 0, 0, 0, 0, 0, 0, 42
+        });
+    await serverStream.WriteAsync(joinPartyResponseBytes, timeout.Token);
+
+    TcpPacket joinPartyResponse = await joinPartyResponseTask;
+    Assert(joinPartyResponse.Header.Type == TcpPacketType.JoinPartyResponse,
+        "Join party TCP response type is incorrect.");
 
     connection.Disconnect();
 
