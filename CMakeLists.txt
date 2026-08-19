@@ -15,6 +15,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(DNF_FLATBUFFER_SCHEMAS
     ${CMAKE_CURRENT_SOURCE_DIR}/schemas/DungeonMessage.fbs
+    ${CMAKE_CURRENT_SOURCE_DIR}/schemas/TcpMessage.fbs
 )
 
 flatbuffers_generate_headers(
@@ -151,6 +152,11 @@ add_executable(flatbuffer_protocol_test tests/FlatBufferProtocolTest.cpp)
 target_link_libraries(flatbuffer_protocol_test PRIVATE dnf_core)
 
 add_test(NAME flatbuffer_protocol_test COMMAND flatbuffer_protocol_test)
+
+add_executable(tcp_flatbuffer_schema_test tests/TcpFlatBufferSchemaTest.cpp)
+target_link_libraries(tcp_flatbuffer_schema_test PRIVATE dnf_core)
+
+add_test(NAME tcp_flatbuffer_schema_test COMMAND tcp_flatbuffer_schema_test)
 
 add_executable(dungeon_protocol_test tests/DungeonProtocolTest.cpp)
 target_link_libraries(dungeon_protocol_test PRIVATE dnf_core)

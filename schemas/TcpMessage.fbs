@@ -1,0 +1,346 @@
+namespace Dnf.Protocol.Tcp;
+
+// TCP packet framing remains in the existing 8-byte header.
+// This schema defines only the payload stored after that header.
+
+enum LoginResult : ubyte {
+  Success = 0,
+  EmptyPlayerName = 1,
+  PlayerNameTooLong = 2,
+  InvalidPlayerNameCharacter = 3
+}
+
+enum JoinChannelResult : ubyte {
+  Success = 0,
+  ChannelNotFound = 1,
+  ChannelFull = 2,
+  AlreadyJoined = 3
+}
+
+enum EnterDungeonResult : ubyte {
+  Success = 0,
+  NotInParty = 1,
+  NotPartyLeader = 2,
+  DungeonTemplateNotFound = 3,
+  PartyAlreadyInDungeon = 4,
+  UdpAllocationFailed = 5
+}
+
+enum DungeonConnectionInfoResult : ubyte {
+  Success = 0,
+  NotInParty = 1,
+  DungeonNotFound = 2,
+  NotDungeonParticipant = 3,
+  UdpNotReady = 4
+}
+
+enum CreatePartyResult : ubyte {
+  Success = 0,
+  AlreadyInParty = 1
+}
+
+enum JoinPartyResult : ubyte {
+  Success = 0,
+  PartyNotFound = 1,
+  PartyFull = 2,
+  AlreadyJoined = 3
+}
+
+enum LeavePartyResult : ubyte {
+  Success = 0,
+  NotInParty = 1
+}
+
+enum PartySnapshotResult : ubyte {
+  Success = 0,
+  NotInParty = 1
+}
+
+enum CatalogResult : ubyte {
+  Success = 0,
+  Unavailable = 1
+}
+
+enum DungeonStaticDataResult : ubyte {
+  Success = 0,
+  DungeonNotFound = 1,
+  NotDungeonParticipant = 2
+}
+
+enum EnemyAiType : ubyte {
+  Melee = 0,
+  Ranged = 1,
+  Boss = 2
+}
+
+enum SkillEffectType : ubyte {
+  Damage = 0,
+  Heal = 1,
+  Buff = 2,
+  Debuff = 3
+}
+
+enum SkillTargetType : ubyte {
+  Self = 0,
+  Party = 1,
+  Enemy = 2
+}
+
+enum SkillStat : ubyte {
+  None = 0,
+  Attack = 1,
+  Defense = 2,
+  MoveSpeed = 3
+}
+
+struct StaticVec3 {
+  x:float;
+  y:float;
+  z:float;
+}
+
+struct StaticCollisionBox {
+  minimum:StaticVec3;
+  maximum:StaticVec3;
+}
+
+// Current login and channel payloads.
+
+table LoginRequest {
+  player_name:string (required);
+}
+
+table LoginResponse {
+  result:LoginResult = Success;
+  session_id:ulong;
+}
+
+table ChannelListRequest {
+}
+
+table ChannelInfo {
+  channel_id:uint;
+  display_name:string (required);
+  current_players:uint;
+  max_players:uint;
+}
+
+table ChannelListResponse {
+  channels:[ChannelInfo] (required);
+}
+
+table JoinChannelRequest {
+  channel_id:uint;
+}
+
+table JoinChannelResponse {
+  result:JoinChannelResult = Success;
+  channel_id:uint;
+}
+
+// Current dungeon admission and UDP connection payloads.
+
+table EnterDungeonRequest {
+  dungeon_template_id:uint;
+}
+
+table EnterDungeonResponse {
+  result:EnterDungeonResult = Success;
+  dungeon_id:ulong;
+  udp_port:ushort;
+  udp_token:ulong;
+}
+
+table DungeonConnectionInfoRequest {
+}
+
+table DungeonConnectionInfoResponse {
+  result:DungeonConnectionInfoResult = Success;
+  dungeon_id:ulong;
+  udp_port:ushort;
+  udp_token:ulong;
+}
+
+// Current party payloads.
+
+table CreatePartyRequest {
+}
+
+table CreatePartyResponse {
+  result:CreatePartyResult = Success;
+  party_id:ulong;
+  leader_session_id:ulong;
+}
+
+table JoinPartyRequest {
+  party_id:ulong;
+}
+
+table JoinPartyResponse {
+  result:JoinPartyResult = Success;
+  party_id:ulong;
+  leader_session_id:ulong;
+}
+
+table LeavePartyRequest {
+}
+
+table LeavePartyResponse {
+  result:LeavePartyResult = Success;
+}
+
+table PartySnapshotRequest {
+}
+
+table PartySnapshotResponse {
+  result:PartySnapshotResult = Success;
+  party_id:ulong;
+  leader_session_id:ulong;
+  member_session_ids:[ulong] (required);
+}
+
+// Planned TCP catalog payloads.
+
+table DungeonCatalogRequest {
+}
+
+table DungeonCatalogEntry {
+  dungeon_template_id:uint;
+  display_name:string (required);
+  recommended_party_size:ubyte = 1;
+  max_party_size:ubyte = 4;
+  available:bool = true;
+}
+
+table DungeonCatalogResponse {
+  result:CatalogResult = Success;
+  dungeons:[DungeonCatalogEntry] (required);
+}
+
+table SkillCatalogRequest {
+}
+
+table SkillHitBoxData {
+  forward_range:float;
+  backward_range:float;
+  half_depth:float;
+  height:float;
+}
+
+table SkillEffectData {
+  effect_type:SkillEffectType = Damage;
+  target_type:SkillTargetType = Enemy;
+  stat:SkillStat = None;
+  value:float;
+  duration_ticks:uint;
+}
+
+table SkillCatalogEntry {
+  skill_id:uint;
+  display_name:string (required);
+  cooldown_ticks:uint;
+  mana_cost:uint;
+  startup_ticks:uint;
+  active_ticks:uint;
+  recovery_ticks:uint;
+  hit_box:SkillHitBoxData (required);
+  effects:[SkillEffectData] (required);
+}
+
+table SkillCatalogResponse {
+  result:CatalogResult = Success;
+  skills:[SkillCatalogEntry] (required);
+}
+
+// Planned one-time static data sent after dungeon admission.
+
+table DungeonStaticDataRequest {
+  dungeon_id:ulong;
+}
+
+table PortalStaticData {
+  portal_id:uint;
+  trigger_area:StaticCollisionBox;
+  target_room_id:uint;
+  target_position:StaticVec3;
+  requires_room_clear:bool = true;
+}
+
+table ObstacleStaticData {
+  obstacle_id:uint;
+  collision:StaticCollisionBox;
+  destructible:bool = false;
+  max_hp:uint;
+}
+
+table EnemySpawnStaticData {
+  enemy_spawn_id:uint;
+  enemy_template_id:uint;
+  position:StaticVec3;
+  wave:uint = 1;
+}
+
+table RoomStaticData {
+  room_id:uint;
+  width:float;
+  depth:float;
+  player_spawn:StaticVec3;
+  portals:[PortalStaticData] (required);
+  obstacles:[ObstacleStaticData] (required);
+  enemy_spawns:[EnemySpawnStaticData] (required);
+}
+
+table EnemyTemplateStaticData {
+  enemy_template_id:uint;
+  display_name:string (required);
+  max_hp:uint;
+  move_speed:float;
+  ai_type:EnemyAiType = Melee;
+  collision:StaticCollisionBox;
+}
+
+table DungeonStaticDataResponse {
+  result:DungeonStaticDataResult = Success;
+  dungeon_id:ulong;
+  dungeon_template_id:uint;
+  rooms:[RoomStaticData] (required);
+  enemy_templates:[EnemyTemplateStaticData] (required);
+}
+
+// Values 1-9 and 101-109 match the existing PacketType header values.
+// Future values are reserved here before their PacketType handlers are added.
+union TcpPayload {
+  LoginRequest = 1,
+  ChannelListRequest = 2,
+  JoinChannelRequest = 3,
+  EnterDungeonRequest = 4,
+  DungeonConnectionInfoRequest = 5,
+  CreatePartyRequest = 6,
+  JoinPartyRequest = 7,
+  LeavePartyRequest = 8,
+  PartySnapshotRequest = 9,
+  DungeonCatalogRequest = 10,
+  DungeonStaticDataRequest = 11,
+  SkillCatalogRequest = 12,
+
+  LoginResponse = 101,
+  ChannelListResponse = 102,
+  JoinChannelResponse = 103,
+  EnterDungeonResponse = 104,
+  DungeonConnectionInfoResponse = 105,
+  CreatePartyResponse = 106,
+  JoinPartyResponse = 107,
+  LeavePartyResponse = 108,
+  PartySnapshotResponse = 109,
+  DungeonCatalogResponse = 110,
+  DungeonStaticDataResponse = 111,
+  SkillCatalogResponse = 112
+}
+
+table TcpMessage {
+  protocol_version:ushort = 1;
+  payload:TcpPayload;
+}
+
+root_type TcpMessage;
+file_identifier "DNFT";

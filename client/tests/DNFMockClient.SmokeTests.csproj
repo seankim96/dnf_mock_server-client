@@ -17,6 +17,7 @@
     <Compile Include="../scripts/Protocol/DungeonSnapshotData.cs" Link="Protocol/DungeonSnapshotData.cs" />
     <Compile Include="../scripts/Protocol/DungeonProtocolCodec.cs" Link="Protocol/DungeonProtocolCodec.cs" />
     <Compile Include="../scripts/Generated/DungeonMessage_generated.cs" Link="Generated/DungeonMessage_generated.cs" />
+    <Compile Include="../scripts/Generated/TcpMessage_generated.cs" Link="Generated/TcpMessage_generated.cs" />
   </ItemGroup>
 
   <ItemGroup>

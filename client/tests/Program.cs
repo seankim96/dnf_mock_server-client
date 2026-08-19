@@ -5,12 +5,14 @@ using Dnf.Protocol;
 using DnfMockClient.Networking;
 using DnfMockClient.Protocol;
 using Google.FlatBuffers;
+using TcpSchema = Dnf.Protocol.Tcp;
 
 TestHeaderEncoding();
 TestSplitPacket();
 TestCombinedPackets();
 TestInvalidPacketSize();
 TestGamePayloads();
+TestTcpFlatBufferSchema();
 TestDungeonProtocol();
 await TestTcpConnectionAsync();
 await TestUdpSessionAsync();
@@ -293,6 +295,34 @@ static void TestDungeonProtocol()
     Assert(decoded.ServerTick == 45 && decoded.Players.Count == 1 &&
         decoded.Players[0].X == 100.0f && decoded.Players[0].Y == 250.0f,
         "Dungeon snapshot values are incorrect.");
+}
+
+static void TestTcpFlatBufferSchema()
+{
+    var builder = new FlatBufferBuilder(128);
+    StringOffset playerName = builder.CreateString("Player_1");
+    Offset<TcpSchema.LoginRequest> login =
+        TcpSchema.LoginRequest.CreateLoginRequest(builder, playerName);
+    Offset<TcpSchema.TcpMessage> message =
+        TcpSchema.TcpMessage.CreateTcpMessage(
+            builder,
+            1,
+            TcpSchema.TcpPayload.LoginRequest,
+            login.Value);
+    TcpSchema.TcpMessage.FinishTcpMessageBuffer(builder, message);
+
+    var buffer = new ByteBuffer(builder.SizedByteArray());
+    Assert(TcpSchema.TcpMessage.TcpMessageBufferHasIdentifier(buffer),
+        "TCP FlatBuffer identifier is incorrect.");
+    Assert(TcpSchema.TcpMessage.VerifyTcpMessage(buffer),
+        "TCP FlatBuffer verification failed.");
+
+    TcpSchema.TcpMessage decoded =
+        TcpSchema.TcpMessage.GetRootAsTcpMessage(buffer);
+    Assert(decoded.ProtocolVersion == 1 &&
+        decoded.PayloadType == TcpSchema.TcpPayload.LoginRequest &&
+        decoded.PayloadAsLoginRequest().PlayerName == "Player_1",
+        "TCP FlatBuffer login payload is incorrect.");
 }
 
 static byte[] CreateTestSnapshotBytes()
