@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net.Sockets;
 using System.Threading;
+using System.Threading.Tasks;
 using DnfMockClient.Networking;
 using DnfMockClient.Protocol;
 using Godot;
@@ -12,6 +13,8 @@ namespace DnfMockClient;
 public partial class Main : Control
 {
     private readonly TcpConnectionService _connection = new();
+    private readonly DungeonUdpService _udpService = new();
+    private readonly object _snapshotLock = new();
 
     private LineEdit _addressInput = null!;
     private LineEdit _portInput = null!;
@@ -26,27 +29,91 @@ public partial class Main : Control
     private Control _dungeonPanel = null!;
     private LineEdit _dungeonTemplateInput = null!;
     private Button _enterDungeonButton = null!;
+    private LineEdit _sessionIdInput = null!;
     private Label _statusLabel = null!;
     private RichTextLabel _eventLog = null!;
+    private Control _lobbyScreen = null!;
+    private Control _dungeonScreen = null!;
+    private DungeonWorldView _dungeonWorldView = null!;
+    private Label _dungeonTitleLabel = null!;
+    private Label _tickLabel = null!;
+    private Label _roomLabel = null!;
+    private Label _positionLabel = null!;
+    private Label _udpStatusLabel = null!;
+    private Button _leaveDungeonButton = null!;
 
     private CancellationTokenSource? _operationCancellation;
     private bool _busy;
     private bool _loggedIn;
     private bool _joinedChannel;
+    private bool _movementSendInProgress;
+    private bool _attackPressed;
+    private bool _receivedFirstSnapshot;
+    private double _movementSendTime;
+    private Vector2 _lastDirection = Vector2.Right;
+    private ulong _localSessionId;
+    private DungeonSnapshotData? _pendingSnapshot;
+    private string? _pendingUdpError;
 
     public override void _Ready()
     {
         FindControls();
         ConnectSignals();
+        _udpService.SnapshotReceived += OnSnapshotReceived;
+        _udpService.ErrorOccurred += OnUdpError;
         RefreshControls();
     }
 
     public override void _ExitTree()
     {
         DisconnectSignals();
+        _udpService.SnapshotReceived -= OnSnapshotReceived;
+        _udpService.ErrorOccurred -= OnUdpError;
         _operationCancellation?.Cancel();
         _operationCancellation?.Dispose();
         _connection.Dispose();
+        _udpService.Dispose();
+    }
+
+    public override void _PhysicsProcess(double delta)
+    {
+        if (!_udpService.IsRunning || !_dungeonScreen.Visible)
+        {
+            return;
+        }
+
+        var direction = Vector2.Zero;
+        direction.X = Input.IsKeyPressed(Key.A) ? direction.X - 1.0f : direction.X;
+        direction.X = Input.IsKeyPressed(Key.D) ? direction.X + 1.0f : direction.X;
+        direction.Y = Input.IsKeyPressed(Key.W) ? direction.Y - 1.0f : direction.Y;
+        direction.Y = Input.IsKeyPressed(Key.S) ? direction.Y + 1.0f : direction.Y;
+
+        if (direction.LengthSquared() > 1.0f)
+        {
+            direction = direction.Normalized();
+        }
+
+        if (direction != Vector2.Zero)
+        {
+            _lastDirection = direction;
+        }
+
+        _movementSendTime += delta;
+        if (_movementSendTime >= 0.05 && !_movementSendInProgress)
+        {
+            _movementSendTime = 0.0;
+            _ = SendMovementAsync(
+                direction,
+                Input.IsKeyPressed(Key.Space));
+        }
+
+        bool attackPressed = Input.IsKeyPressed(Key.J);
+        if (attackPressed && !_attackPressed)
+        {
+            _ = SendAttackAsync();
+        }
+
+        _attackPressed = attackPressed;
     }
 
     private void FindControls()
@@ -64,8 +131,18 @@ public partial class Main : Control
         _dungeonPanel = GetNode<Control>("%DungeonPanel");
         _dungeonTemplateInput = GetNode<LineEdit>("%DungeonTemplateInput");
         _enterDungeonButton = GetNode<Button>("%EnterDungeonButton");
+        _sessionIdInput = GetNode<LineEdit>("%SessionIdInput");
         _statusLabel = GetNode<Label>("%StatusLabel");
         _eventLog = GetNode<RichTextLabel>("%EventLog");
+        _lobbyScreen = GetNode<Control>("%Margin");
+        _dungeonScreen = GetNode<Control>("%DungeonScreen");
+        _dungeonWorldView = GetNode<DungeonWorldView>("%DungeonWorldView");
+        _dungeonTitleLabel = GetNode<Label>("%DungeonTitleLabel");
+        _tickLabel = GetNode<Label>("%TickLabel");
+        _roomLabel = GetNode<Label>("%RoomLabel");
+        _positionLabel = GetNode<Label>("%PositionLabel");
+        _udpStatusLabel = GetNode<Label>("%UdpStatusLabel");
+        _leaveDungeonButton = GetNode<Button>("%LeaveDungeonButton");
     }
 
     private void ConnectSignals()
@@ -75,6 +152,7 @@ public partial class Main : Control
         _refreshChannelsButton.Pressed += OnRefreshChannelsButtonPressed;
         _joinChannelButton.Pressed += OnJoinChannelButtonPressed;
         _enterDungeonButton.Pressed += OnEnterDungeonButtonPressed;
+        _leaveDungeonButton.Pressed += OnLeaveDungeonButtonPressed;
     }
 
     private void DisconnectSignals()
@@ -84,6 +162,7 @@ public partial class Main : Control
         _refreshChannelsButton.Pressed -= OnRefreshChannelsButtonPressed;
         _joinChannelButton.Pressed -= OnJoinChannelButtonPressed;
         _enterDungeonButton.Pressed -= OnEnterDungeonButtonPressed;
+        _leaveDungeonButton.Pressed -= OnLeaveDungeonButtonPressed;
     }
 
     private async void OnConnectButtonPressed()
@@ -253,6 +332,19 @@ public partial class Main : Control
 
             SetStatus($"던전 {response.DungeonId} 생성 성공", Colors.LightGreen);
             AddLog($"던전 생성: id={response.DungeonId}, UDP={response.UdpPort}");
+
+            if (!ulong.TryParse(_sessionIdInput.Text, out ulong sessionId) ||
+                sessionId == 0)
+            {
+                SetStatus(
+                    "서버 응답에 Session ID가 없어 UDP 연결에는 임시 입력이 필요합니다.",
+                    Colors.Orange);
+                AddLog("UDP 연결 대기: Session ID 입력 필요");
+                return;
+            }
+
+            await StartDungeonUdpAsync(response, sessionId,
+                _operationCancellation.Token);
         }
         catch (Exception exception) when (IsExpectedOperationError(exception))
         {
@@ -264,7 +356,7 @@ public partial class Main : Control
         }
     }
 
-    private async System.Threading.Tasks.Task LoadChannelsAsync(
+    private async Task LoadChannelsAsync(
         CancellationToken cancellationToken)
     {
         TcpPacket packet = await _connection.SendRequestAsync(
@@ -307,9 +399,14 @@ public partial class Main : Control
 
     private void ResetSessionState()
     {
+        _udpService.Disconnect();
         _loggedIn = false;
         _joinedChannel = false;
+        _localSessionId = 0;
+        _receivedFirstSnapshot = false;
         _channelSelect.Clear();
+        _lobbyScreen.Visible = true;
+        _dungeonScreen.Visible = false;
     }
 
     private void RefreshControls()
@@ -332,6 +429,7 @@ public partial class Main : Control
         _channelPanel.Modulate = _loggedIn ? Colors.White : Colors.DimGray;
 
         _dungeonTemplateInput.Editable = _joinedChannel && !_busy;
+        _sessionIdInput.Editable = _joinedChannel && !_busy;
         _enterDungeonButton.Disabled = !_joinedChannel || _busy;
         _dungeonPanel.Modulate = _joinedChannel ? Colors.White : Colors.DimGray;
     }
@@ -376,5 +474,145 @@ public partial class Main : Control
     private void AddLog(string message)
     {
         _eventLog.AppendText($"\n[color=#aeb9cc]{DateTime.Now:HH:mm:ss}[/color] {message}");
+    }
+
+    private async Task StartDungeonUdpAsync(
+        EnterDungeonResponse response,
+        ulong sessionId,
+        CancellationToken cancellationToken)
+    {
+        _localSessionId = sessionId;
+        _receivedFirstSnapshot = false;
+        _dungeonWorldView.SetLocalSessionId(sessionId);
+        _dungeonTitleLabel.Text = $"Dungeon {response.DungeonId}";
+        _tickLabel.Text = "Tick: -";
+        _roomLabel.Text = "Room: -";
+        _positionLabel.Text = "Position: -";
+        _udpStatusLabel.Text = "UDP Hello 전송";
+
+        await _udpService.ConnectAsync(
+            _addressInput.Text.Trim(),
+            response.UdpPort,
+            response.DungeonId,
+            sessionId,
+            response.UdpToken,
+            cancellationToken);
+
+        _lobbyScreen.Visible = false;
+        _dungeonScreen.Visible = true;
+        AddLog($"UDP Hello 전송: session={sessionId}");
+    }
+
+    private void OnLeaveDungeonButtonPressed()
+    {
+        _udpService.Disconnect();
+        _dungeonScreen.Visible = false;
+        _lobbyScreen.Visible = true;
+        SetStatus("던전 화면을 닫았습니다.", Colors.LightGray);
+        AddLog("UDP 연결 종료");
+    }
+
+    private void OnSnapshotReceived(DungeonSnapshotData snapshot)
+    {
+        lock (_snapshotLock)
+        {
+            _pendingSnapshot = snapshot;
+        }
+
+        Callable.From(ApplyPendingUdpData).CallDeferred();
+    }
+
+    private void OnUdpError(Exception exception)
+    {
+        lock (_snapshotLock)
+        {
+            _pendingUdpError = exception.Message;
+        }
+
+        Callable.From(ApplyPendingUdpData).CallDeferred();
+    }
+
+    private void ApplyPendingUdpData()
+    {
+        DungeonSnapshotData? snapshot;
+        string? error;
+
+        lock (_snapshotLock)
+        {
+            snapshot = _pendingSnapshot;
+            error = _pendingUdpError;
+            _pendingSnapshot = null;
+            _pendingUdpError = null;
+        }
+
+        if (error is not null)
+        {
+            _udpStatusLabel.Text = $"UDP 오류: {error}";
+            AddLog($"UDP 오류: {error}");
+        }
+
+        if (snapshot is null)
+        {
+            return;
+        }
+
+        _dungeonWorldView.SetSnapshot(snapshot);
+        _tickLabel.Text = $"Tick: {snapshot.ServerTick}";
+        _udpStatusLabel.Text = "UDP 수신 중";
+
+        foreach (PlayerSnapshotData player in snapshot.Players)
+        {
+            if (player.SessionId != _localSessionId)
+            {
+                continue;
+            }
+
+            _roomLabel.Text = $"Room: {player.RoomId}";
+            _positionLabel.Text =
+                $"Position: ({player.X:0.0}, {player.Y:0.0}, {player.Z:0.0})";
+            break;
+        }
+
+        if (!_receivedFirstSnapshot)
+        {
+            _receivedFirstSnapshot = true;
+            AddLog("첫 DungeonSnapshot 수신");
+        }
+    }
+
+    private async Task SendMovementAsync(Vector2 direction, bool jump)
+    {
+        _movementSendInProgress = true;
+
+        try
+        {
+            await _udpService.SendMovementAsync(
+                direction.X,
+                direction.Y,
+                jump);
+        }
+        catch (Exception exception) when (IsExpectedOperationError(exception))
+        {
+            OnUdpError(exception);
+        }
+        finally
+        {
+            _movementSendInProgress = false;
+        }
+    }
+
+    private async Task SendAttackAsync()
+    {
+        try
+        {
+            await _udpService.SendAttackAsync(
+                1001,
+                _lastDirection.X,
+                _lastDirection.Y);
+        }
+        catch (Exception exception) when (IsExpectedOperationError(exception))
+        {
+            OnUdpError(exception);
+        }
     }
 }

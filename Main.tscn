@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/Main.cs" id="1_main"]
+[ext_resource type="Script" path="res://scripts/DungeonWorldView.cs" id="2_world"]
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -22,6 +23,7 @@ mouse_filter = 2
 color = Color(0.035, 0.043, 0.059, 1)
 
 [node name="Margin" type="MarginContainer" parent="."]
+unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -206,6 +208,11 @@ layout_mode = 2
 text = "1001"
 placeholder_text = "던전 템플릿 ID"
 
+[node name="SessionIdInput" type="LineEdit" parent="Margin/RootVBox/Content/LeftScroll/Steps/DungeonPanel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+placeholder_text = "UDP용 Session ID (현재 서버 임시 입력)"
+
 [node name="EnterDungeonButton" type="Button" parent="Margin/RootVBox/Content/LeftScroll/Steps/DungeonPanel/Margin/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
@@ -247,3 +254,89 @@ bbcode_enabled = true
 text = "[color=#8390a8]클라이언트가 준비되었습니다.[/color]"
 fit_content = false
 scroll_following = true
+
+[node name="DungeonScreen" type="Control" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Background" type="ColorRect" parent="DungeonScreen"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.035, 0.043, 0.059, 1)
+
+[node name="Margin" type="MarginContainer" parent="DungeonScreen"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 18
+
+[node name="VBox" type="VBoxContainer" parent="DungeonScreen/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Hud" type="HBoxContainer" parent="DungeonScreen/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="DungeonTitleLabel" type="Label" parent="DungeonScreen/Margin/VBox/Hud"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "Dungeon"
+
+[node name="TickLabel" type="Label" parent="DungeonScreen/Margin/VBox/Hud"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Tick: -"
+
+[node name="RoomLabel" type="Label" parent="DungeonScreen/Margin/VBox/Hud"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Room: -"
+
+[node name="PositionLabel" type="Label" parent="DungeonScreen/Margin/VBox/Hud"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Position: -"
+
+[node name="UdpStatusLabel" type="Label" parent="DungeonScreen/Margin/VBox/Hud"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.345, 0.839, 0.553, 1)
+text = "UDP 연결"
+
+[node name="LeaveDungeonButton" type="Button" parent="DungeonScreen/Margin/VBox/Hud"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "던전 화면 닫기"
+
+[node name="DungeonWorldView" type="Control" parent="DungeonScreen/Margin/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 400)
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+script = ExtResource("2_world")
+
+[node name="Help" type="Label" parent="DungeonScreen/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.7, 0.8, 1)
+text = "이동: WASD / 스킬 1001: J / 서버 좌표를 2D 화면에 투영"
+horizontal_alignment = 1
