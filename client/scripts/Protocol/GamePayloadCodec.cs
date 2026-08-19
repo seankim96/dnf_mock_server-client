@@ -183,6 +183,68 @@ public static class GamePayloadCodec
         return (LeavePartyResult)payload[0];
     }
 
+    public static byte[] EncodePartySnapshotRequest()
+    {
+        return Array.Empty<byte>();
+    }
+
+    public static PartySnapshotData DecodePartySnapshotResponse(byte[] payload)
+    {
+        const int fixedSize = 18;
+
+        if (payload.Length < fixedSize ||
+            !Enum.IsDefined(typeof(PartySnapshotResult), payload[0]))
+        {
+            throw new InvalidDataException("Invalid party snapshot response payload.");
+        }
+
+        var result = (PartySnapshotResult)payload[0];
+        ulong partyId = ReadUInt64(payload, 1);
+        ulong leaderSessionId = ReadUInt64(payload, 9);
+        int memberCount = payload[17];
+        int expectedSize = fixedSize + memberCount * 8;
+
+        if (payload.Length != expectedSize)
+        {
+            throw new InvalidDataException("Invalid party snapshot response size.");
+        }
+
+        var members = new List<ulong>(memberCount);
+        var uniqueMembers = new HashSet<ulong>();
+        bool containsLeader = false;
+
+        for (int index = 0; index < memberCount; index++)
+        {
+            ulong memberSessionId = ReadUInt64(payload, fixedSize + index * 8);
+            if (memberSessionId == 0 || !uniqueMembers.Add(memberSessionId))
+            {
+                throw new InvalidDataException("Invalid party member data.");
+            }
+
+            containsLeader |= memberSessionId == leaderSessionId;
+            members.Add(memberSessionId);
+        }
+
+        if (result == PartySnapshotResult.Success)
+        {
+            if (partyId == 0 || leaderSessionId == 0 ||
+                memberCount is < 1 or > 4 || !containsLeader)
+            {
+                throw new InvalidDataException("Invalid successful party snapshot.");
+            }
+        }
+        else if (partyId != 0 || leaderSessionId != 0 || memberCount != 0)
+        {
+            throw new InvalidDataException("Invalid failed party snapshot.");
+        }
+
+        return new PartySnapshotData(
+            result,
+            partyId,
+            leaderSessionId,
+            members);
+    }
+
     public static byte[] EncodeEnterDungeonRequest(uint dungeonTemplateId)
     {
         if (dungeonTemplateId == 0)

@@ -110,6 +110,32 @@ public enum LeavePartyResult : byte
     NotInParty = 1
 }
 
+public enum PartySnapshotResult : byte
+{
+    Success = 0,
+    NotInParty = 1
+}
+
+public sealed class PartySnapshotData
+{
+    public PartySnapshotData(
+        PartySnapshotResult result,
+        ulong partyId,
+        ulong leaderSessionId,
+        IReadOnlyList<ulong> members)
+    {
+        Result = result;
+        PartyId = partyId;
+        LeaderSessionId = leaderSessionId;
+        Members = members;
+    }
+
+    public PartySnapshotResult Result { get; }
+    public ulong PartyId { get; }
+    public ulong LeaderSessionId { get; }
+    public IReadOnlyList<ulong> Members { get; }
+}
+
 public enum EnterDungeonResult : byte
 {
     Success = 0,

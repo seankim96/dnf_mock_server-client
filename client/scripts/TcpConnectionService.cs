@@ -142,6 +142,8 @@ public sealed class TcpConnectionService : IDisposable
             TcpPacketType.CreatePartyRequest => TcpPacketType.CreatePartyResponse,
             TcpPacketType.JoinPartyRequest => TcpPacketType.JoinPartyResponse,
             TcpPacketType.LeavePartyRequest => TcpPacketType.LeavePartyResponse,
+            TcpPacketType.PartySnapshotRequest =>
+                TcpPacketType.PartySnapshotResponse,
             _ => throw new ArgumentException("Not a TCP request type.", nameof(requestType))
         };
     }

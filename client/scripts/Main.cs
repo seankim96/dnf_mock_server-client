@@ -31,6 +31,7 @@ public partial class Main : Control
     private LineEdit _partyIdInput = null!;
     private Button _joinPartyButton = null!;
     private Button _leavePartyButton = null!;
+    private Button _refreshPartyButton = null!;
     private Label _partyInfoLabel = null!;
     private Control _dungeonPanel = null!;
     private LineEdit _dungeonTemplateInput = null!;
@@ -139,6 +140,7 @@ public partial class Main : Control
         _partyIdInput = GetNode<LineEdit>("%PartyIdInput");
         _joinPartyButton = GetNode<Button>("%JoinPartyButton");
         _leavePartyButton = GetNode<Button>("%LeavePartyButton");
+        _refreshPartyButton = GetNode<Button>("%RefreshPartyButton");
         _partyInfoLabel = GetNode<Label>("%PartyInfoLabel");
         _dungeonPanel = GetNode<Control>("%DungeonPanel");
         _dungeonTemplateInput = GetNode<LineEdit>("%DungeonTemplateInput");
@@ -165,6 +167,7 @@ public partial class Main : Control
         _createPartyButton.Pressed += OnCreatePartyButtonPressed;
         _joinPartyButton.Pressed += OnJoinPartyButtonPressed;
         _leavePartyButton.Pressed += OnLeavePartyButtonPressed;
+        _refreshPartyButton.Pressed += OnRefreshPartyButtonPressed;
         _enterDungeonButton.Pressed += OnEnterDungeonButtonPressed;
         _leaveDungeonButton.Pressed += OnLeaveDungeonButtonPressed;
     }
@@ -178,6 +181,7 @@ public partial class Main : Control
         _createPartyButton.Pressed -= OnCreatePartyButtonPressed;
         _joinPartyButton.Pressed -= OnJoinPartyButtonPressed;
         _leavePartyButton.Pressed -= OnLeavePartyButtonPressed;
+        _refreshPartyButton.Pressed -= OnRefreshPartyButtonPressed;
         _enterDungeonButton.Pressed -= OnEnterDungeonButtonPressed;
         _leaveDungeonButton.Pressed -= OnLeaveDungeonButtonPressed;
     }
@@ -387,7 +391,14 @@ public partial class Main : Control
             }
 
             _inParty = true;
-            ShowPartyInfo(response.PartyId, response.LeaderSessionId);
+            PartySnapshotData? snapshot = await LoadPartySnapshotAsync(
+                _operationCancellation.Token);
+            if (snapshot is null)
+            {
+                SetStatus("파티를 생성했지만 정보를 조회하지 못했습니다.", Colors.Orange);
+                return;
+            }
+
             SetStatus($"파티 {response.PartyId} 생성 성공", Colors.LightGreen);
             AddLog(
                 $"파티 생성: id={response.PartyId}, leader={response.LeaderSessionId}");
@@ -429,7 +440,14 @@ public partial class Main : Control
             }
 
             _inParty = true;
-            ShowPartyInfo(response.PartyId, response.LeaderSessionId);
+            PartySnapshotData? snapshot = await LoadPartySnapshotAsync(
+                _operationCancellation.Token);
+            if (snapshot is null)
+            {
+                SetStatus("파티에 가입했지만 정보를 조회하지 못했습니다.", Colors.Orange);
+                return;
+            }
+
             SetStatus($"파티 {response.PartyId} 가입 성공", Colors.LightGreen);
             AddLog(
                 $"파티 가입: id={response.PartyId}, leader={response.LeaderSessionId}");
@@ -444,10 +462,37 @@ public partial class Main : Control
         }
     }
 
-    private void ShowPartyInfo(ulong partyId, ulong leaderSessionId)
+    private void ShowPartyInfo(PartySnapshotData snapshot)
     {
         _partyInfoLabel.Text =
-            $"Party {partyId} / Leader {leaderSessionId}";
+            $"Party {snapshot.PartyId} / Leader {snapshot.LeaderSessionId}\n" +
+            $"Members: {string.Join(", ", snapshot.Members)}";
+    }
+
+    private async void OnRefreshPartyButtonPressed()
+    {
+        BeginOperation(TimeSpan.FromSeconds(5));
+
+        try
+        {
+            PartySnapshotData? snapshot = await LoadPartySnapshotAsync(
+                _operationCancellation!.Token);
+            if (snapshot is null)
+            {
+                SetStatus("현재 가입한 파티가 없습니다.", Colors.Orange);
+                return;
+            }
+
+            SetStatus($"파티 {snapshot.PartyId} 정보 갱신", Colors.LightGreen);
+        }
+        catch (Exception exception) when (IsExpectedOperationError(exception))
+        {
+            ShowOperationError(exception);
+        }
+        finally
+        {
+            EndOperation();
+        }
     }
 
     private async void OnLeavePartyButtonPressed()
@@ -489,6 +534,30 @@ public partial class Main : Control
         _inParty = false;
         _partyIdInput.Clear();
         _partyInfoLabel.Text = "파티 없음";
+    }
+
+    private async Task<PartySnapshotData?> LoadPartySnapshotAsync(
+        CancellationToken cancellationToken)
+    {
+        TcpPacket packet = await _connection.SendRequestAsync(
+            TcpPacketType.PartySnapshotRequest,
+            GamePayloadCodec.EncodePartySnapshotRequest(),
+            cancellationToken);
+        PartySnapshotData snapshot =
+            GamePayloadCodec.DecodePartySnapshotResponse(packet.Payload);
+
+        if (snapshot.Result != PartySnapshotResult.Success)
+        {
+            ClearPartyInfo();
+            AddLog($"PartySnapshotResponse: {snapshot.Result}");
+            return null;
+        }
+
+        _inParty = true;
+        ShowPartyInfo(snapshot);
+        AddLog(
+            $"파티 정보: id={snapshot.PartyId}, members={snapshot.Members.Count}");
+        return snapshot;
     }
 
     private async Task LoadChannelsAsync(
@@ -568,6 +637,7 @@ public partial class Main : Control
         _partyIdInput.Editable = _joinedChannel && !_inParty && !_busy;
         _joinPartyButton.Disabled = !_joinedChannel || _inParty || _busy;
         _leavePartyButton.Disabled = !_inParty || _busy;
+        _refreshPartyButton.Disabled = !_inParty || _busy;
         _partyPanel.Modulate = _joinedChannel ? Colors.White : Colors.DimGray;
 
         _dungeonTemplateInput.Editable = _inParty && !_busy;

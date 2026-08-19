@@ -10,6 +10,7 @@ public enum TcpPacketType : ushort
     CreatePartyRequest = 6,
     JoinPartyRequest = 7,
     LeavePartyRequest = 8,
+    PartySnapshotRequest = 9,
 
     LoginResponse = 101,
     ChannelListResponse = 102,
@@ -18,7 +19,8 @@ public enum TcpPacketType : ushort
     DungeonConnectionInfoResponse = 105,
     CreatePartyResponse = 106,
     JoinPartyResponse = 107,
-    LeavePartyResponse = 108
+    LeavePartyResponse = 108,
+    PartySnapshotResponse = 109
 }
 
 public sealed class TcpPacketHeader

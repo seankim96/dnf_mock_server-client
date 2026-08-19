@@ -209,6 +209,41 @@ static void TestGamePayloads()
         () => GamePayloadCodec.DecodeLeavePartyResponse(new byte[] { 2 }),
         "Unknown leave party result was accepted.");
 
+    Assert(GamePayloadCodec.EncodePartySnapshotRequest().Length == 0,
+        "Party snapshot request payload must be empty.");
+    PartySnapshotData partySnapshot =
+        GamePayloadCodec.DecodePartySnapshotResponse(
+            new byte[]
+            {
+                0,
+                0, 0, 0, 0, 0, 0, 0, 9,
+                0, 0, 0, 0, 0, 0, 0, 42,
+                2,
+                0, 0, 0, 0, 0, 0, 0, 42,
+                0, 0, 0, 0, 0, 0, 0, 43
+            });
+    Assert(partySnapshot.Result == PartySnapshotResult.Success &&
+        partySnapshot.PartyId == 9 && partySnapshot.LeaderSessionId == 42 &&
+        partySnapshot.Members.SequenceEqual(new ulong[] { 42, 43 }),
+        "Party snapshot response is incorrect.");
+    PartySnapshotData noPartySnapshot =
+        GamePayloadCodec.DecodePartySnapshotResponse(
+            new byte[18] { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
+    Assert(noPartySnapshot.Result == PartySnapshotResult.NotInParty &&
+        noPartySnapshot.Members.Count == 0,
+        "Not-in-party snapshot response is incorrect.");
+    AssertThrows<InvalidDataException>(
+        () => GamePayloadCodec.DecodePartySnapshotResponse(
+            new byte[]
+            {
+                0,
+                0, 0, 0, 0, 0, 0, 0, 9,
+                0, 0, 0, 0, 0, 0, 0, 42,
+                1,
+                0, 0, 0, 0, 0, 0, 0, 43
+            }),
+        "Party snapshot without the leader was accepted.");
+
     byte[] dungeonPayload =
     {
         0,
@@ -440,6 +475,37 @@ static async Task TestTcpConnectionAsync()
     TcpPacket joinPartyResponse = await joinPartyResponseTask;
     Assert(joinPartyResponse.Header.Type == TcpPacketType.JoinPartyResponse,
         "Join party TCP response type is incorrect.");
+
+    Task<TcpPacket> snapshotResponseTask = connection.SendRequestAsync(
+        TcpPacketType.PartySnapshotRequest,
+        GamePayloadCodec.EncodePartySnapshotRequest(),
+        timeout.Token);
+
+    await serverStream.ReadExactlyAsync(requestHeaderBytes, timeout.Token);
+    TcpPacketHeader snapshotRequestHeader =
+        TcpPacketCodec.DecodeHeader(requestHeaderBytes);
+    Assert(snapshotRequestHeader.Type == TcpPacketType.PartySnapshotRequest,
+        "Party snapshot TCP request type is incorrect.");
+    Assert(snapshotRequestHeader.PacketSize == TcpPacketCodec.HeaderSize,
+        "Party snapshot TCP request payload must be empty.");
+
+    byte[] snapshotResponseBytes = TcpPacketCodec.EncodePacket(
+        TcpPacketType.PartySnapshotResponse,
+        snapshotRequestHeader.RequestId,
+        new byte[]
+        {
+            0,
+            0, 0, 0, 0, 0, 0, 0, 9,
+            0, 0, 0, 0, 0, 0, 0, 42,
+            2,
+            0, 0, 0, 0, 0, 0, 0, 42,
+            0, 0, 0, 0, 0, 0, 0, 43
+        });
+    await serverStream.WriteAsync(snapshotResponseBytes, timeout.Token);
+
+    TcpPacket snapshotResponse = await snapshotResponseTask;
+    Assert(snapshotResponse.Header.Type == TcpPacketType.PartySnapshotResponse,
+        "Party snapshot TCP response type is incorrect.");
 
     Task<TcpPacket> leavePartyResponseTask = connection.SendRequestAsync(
         TcpPacketType.LeavePartyRequest,
