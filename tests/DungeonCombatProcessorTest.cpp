@@ -34,6 +34,8 @@ dnf::SkillTemplate MakeIceSlash()
     dnf::SkillTemplate skill;
     skill.id = 1001;
     skill.name = "Ice Slash";
+    skill.cooldownTicks = 2;
+    skill.manaCost = 60;
     skill.activeTicks = 3;
     skill.hitBox = {150.0f, 0.0f, 60.0f, 120.0f};
     skill.effects = {
@@ -128,6 +130,44 @@ void TestRegisteredSkillAttackIsAccepted()
     assert(result.acceptedCount == 1);
     assert(result.rejectedCount == 1);
     assert(udpManager.PendingAttackCount(dungeonId) == 0);
+
+    const auto player = created.dungeon->FindPlayer(100);
+    assert(player != nullptr);
+    assert(player->CurrentMp() == 40);
+    assert(player->RemainingCooldown(1001) == 2);
+
+    attack.sequence = 3;
+    attack.skillId = 1001;
+    const auto cooldownAttack = dnf::EncodePlayerAttack(attack);
+    client.send_to(boost::asio::buffer(cooldownAttack), serverEndpoint);
+    WaitForAttackCount(udpManager, dungeonId, 1);
+
+    const dnf::CombatProcessResult onCooldown =
+        processor.Process(dungeonId);
+    assert(onCooldown.receivedCount == 1);
+    assert(onCooldown.acceptedCount == 0);
+    assert(onCooldown.rejectedCount == 1);
+    assert(player->CurrentMp() == 40);
+    assert(player->RemainingCooldown(1001) == 1);
+
+    const dnf::CombatProcessResult cooldownAdvanced =
+        processor.Process(dungeonId);
+    assert(cooldownAdvanced.receivedCount == 0);
+    assert(player->RemainingCooldown(1001) == 0);
+
+    attack.sequence = 4;
+    const auto insufficientManaAttack = dnf::EncodePlayerAttack(attack);
+    client.send_to(
+        boost::asio::buffer(insufficientManaAttack),
+        serverEndpoint);
+    WaitForAttackCount(udpManager, dungeonId, 1);
+
+    const dnf::CombatProcessResult insufficientMana =
+        processor.Process(dungeonId);
+    assert(insufficientMana.receivedCount == 1);
+    assert(insufficientMana.acceptedCount == 0);
+    assert(insufficientMana.rejectedCount == 1);
+    assert(player->CurrentMp() == 40);
 
     const dnf::CombatProcessResult missingDungeon = processor.Process(9999);
     assert(missingDungeon.receivedCount == 0);

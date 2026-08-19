@@ -22,6 +22,15 @@ CombatProcessResult DungeonCombatProcessor::Process(DungeonId dungeonId)
         return result;
     }
 
+    for (SessionId sessionId : dungeon->Participants())
+    {
+        const auto player = dungeon->FindPlayer(sessionId);
+        if (player != nullptr)
+        {
+            player->AdvanceCombatTick();
+        }
+    }
+
     AuthenticatedPlayerAttack queuedAttack;
     while (udpManager_.TryPopAttack(dungeonId, queuedAttack))
     {
@@ -32,6 +41,16 @@ CombatProcessResult DungeonCombatProcessor::Process(DungeonId dungeonId)
             skillCatalog_.GetSkill(queuedAttack.attack.skillId);
 
         if (player == nullptr || !skill.has_value())
+        {
+            ++result.rejectedCount;
+            continue;
+        }
+
+        const BeginSkillResult beginResult = player->BeginSkill(
+            skill->id,
+            skill->manaCost,
+            skill->cooldownTicks);
+        if (beginResult != BeginSkillResult::Success)
         {
             ++result.rejectedCount;
             continue;
