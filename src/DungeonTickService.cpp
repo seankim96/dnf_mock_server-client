@@ -27,7 +27,7 @@ DungeonTickService::DungeonTickService(
     : timer_(ioContext),
       dungeonManager_(dungeonManager),
       udpManager_(udpManager),
-      inputProcessor_(dungeonManager, udpManager),
+      movementProcessor_(dungeonManager, udpManager),
       lifecycleService_(dungeonManager, udpManager),
       readyTimeout_(readyTimeout),
       udpIdleTimeout_(udpIdleTimeout)
@@ -146,7 +146,7 @@ void DungeonTickService::HandleTick(
         udpManager_.RemoveInactiveEndpoints(
             dungeonId,
             udpIdleTimeout_);
-        inputProcessor_.Process(dungeonId, TICK_SECONDS);
+        movementProcessor_.Process(dungeonId, TICK_SECONDS);
 
         const auto dungeon = dungeonManager_.FindDungeon(dungeonId);
         if (dungeon != nullptr)

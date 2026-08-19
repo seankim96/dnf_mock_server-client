@@ -24,19 +24,20 @@ dnf::DungeonTemplate MakeDungeonTemplate()
     return dungeon;
 }
 
-void TestPlayerInputRoundTrip()
+void TestPlayerMovementRoundTrip()
 {
-    dnf::PlayerInputMessage sent;
+    dnf::PlayerMovementMessage sent;
     sent.dungeonId = 5001;
     sent.sequence = 42;
     sent.moveX = 1.0f;
     sent.moveY = -0.5f;
     sent.jump = true;
 
-    const std::vector<std::uint8_t> bytes = dnf::EncodePlayerInput(sent);
+    const std::vector<std::uint8_t> bytes =
+        dnf::EncodePlayerMovement(sent);
 
-    dnf::PlayerInputMessage received;
-    assert(dnf::DecodePlayerInput(bytes, received));
+    dnf::PlayerMovementMessage received;
+    assert(dnf::DecodePlayerMovement(bytes, received));
     assert(received.dungeonId == sent.dungeonId);
     assert(received.sequence == sent.sequence);
     assert(received.moveX == sent.moveX);
@@ -46,26 +47,27 @@ void TestPlayerInputRoundTrip()
 
 void TestBrokenBufferIsRejected()
 {
-    dnf::PlayerInputMessage input;
-    input.dungeonId = 5001;
+    dnf::PlayerMovementMessage movement;
+    movement.dungeonId = 5001;
 
-    std::vector<std::uint8_t> bytes = dnf::EncodePlayerInput(input);
+    std::vector<std::uint8_t> bytes =
+        dnf::EncodePlayerMovement(movement);
     bytes.resize(bytes.size() / 2);
 
-    dnf::PlayerInputMessage output;
-    assert(!dnf::DecodePlayerInput(bytes, output));
+    dnf::PlayerMovementMessage output;
+    assert(!dnf::DecodePlayerMovement(bytes, output));
 }
 
 void TestInvalidMovementIsRejected()
 {
-    dnf::PlayerInputMessage input;
-    input.dungeonId = 5001;
-    input.moveX = 1.5f;
+    dnf::PlayerMovementMessage movement;
+    movement.dungeonId = 5001;
+    movement.moveX = 1.5f;
 
     bool threw = false;
     try
     {
-        dnf::EncodePlayerInput(input);
+        dnf::EncodePlayerMovement(movement);
     }
     catch (const std::invalid_argument&)
     {
@@ -94,10 +96,10 @@ void TestPlayerAttackRoundTrip()
     assert(received.directionX == sent.directionX);
     assert(received.directionY == sent.directionY);
 
-    dnf::PlayerInputMessage movement;
+    dnf::PlayerMovementMessage movement;
     movement.dungeonId = 5001;
     assert(!dnf::DecodePlayerAttack(
-        dnf::EncodePlayerInput(movement),
+        dnf::EncodePlayerMovement(movement),
         received));
 }
 
@@ -135,9 +137,9 @@ void TestUdpHelloRoundTrip()
     assert(received.sessionId == sent.sessionId);
     assert(received.token == sent.token);
 
-    dnf::PlayerInputMessage input;
-    input.dungeonId = 5001;
-    const auto wrongMessageType = dnf::EncodePlayerInput(input);
+    dnf::PlayerMovementMessage movement;
+    movement.dungeonId = 5001;
+    const auto wrongMessageType = dnf::EncodePlayerMovement(movement);
     assert(!dnf::DecodeUdpHello(wrongMessageType, received));
 }
 
@@ -243,7 +245,7 @@ void TestDungeonSnapshotEncoding()
 
 int main()
 {
-    TestPlayerInputRoundTrip();
+    TestPlayerMovementRoundTrip();
     TestBrokenBufferIsRejected();
     TestInvalidMovementIsRejected();
     TestPlayerAttackRoundTrip();

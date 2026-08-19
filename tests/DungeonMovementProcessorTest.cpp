@@ -1,4 +1,4 @@
-#include "DungeonInputProcessor.h"
+#include "DungeonMovementProcessor.h"
 #include "DungeonProtocol.h"
 
 #include <boost/asio/buffer.hpp>
@@ -19,14 +19,14 @@ bool IsNear(float value, float expected)
     return std::abs(value - expected) < 0.001f;
 }
 
-void WaitForInputCount(
+void WaitForMovementCount(
     const dnf::DungeonUdpManager& udpManager,
     dnf::DungeonId dungeonId,
     std::size_t expectedCount)
 {
     for (int attempt = 0; attempt < 100; ++attempt)
     {
-        if (udpManager.PendingInputCount(dungeonId) == expectedCount)
+        if (udpManager.PendingMovementCount(dungeonId) == expectedCount)
         {
             return;
         }
@@ -35,7 +35,7 @@ void WaitForInputCount(
     }
 }
 
-void TestInputMovesDungeonPlayer()
+void TestMovementMovesDungeonPlayer()
 {
     using boost::asio::ip::udp;
 
@@ -119,23 +119,23 @@ void TestInputMovesDungeonPlayer()
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
 
-    dnf::PlayerInputMessage input;
-    input.dungeonId = dungeonId;
-    input.sequence = 1;
-    input.moveX = 1.0f;
-    const auto firstInput = dnf::EncodePlayerInput(input);
+    dnf::PlayerMovementMessage movement;
+    movement.dungeonId = dungeonId;
+    movement.sequence = 1;
+    movement.moveX = 1.0f;
+    const auto firstMovement = dnf::EncodePlayerMovement(movement);
 
-    input.sequence = 2;
-    input.moveX = 0.0f;
-    input.moveY = 1.0f;
-    const auto latestInput = dnf::EncodePlayerInput(input);
+    movement.sequence = 2;
+    movement.moveX = 0.0f;
+    movement.moveY = 1.0f;
+    const auto latestMovement = dnf::EncodePlayerMovement(movement);
 
-    client.send_to(boost::asio::buffer(firstInput), serverEndpoint);
-    client.send_to(boost::asio::buffer(latestInput), serverEndpoint);
-    WaitForInputCount(udpManager, dungeonId, 2);
+    client.send_to(boost::asio::buffer(firstMovement), serverEndpoint);
+    client.send_to(boost::asio::buffer(latestMovement), serverEndpoint);
+    WaitForMovementCount(udpManager, dungeonId, 2);
 
-    dnf::DungeonInputProcessor processor(dungeonManager, udpManager);
-    const dnf::InputProcessResult moved =
+    dnf::DungeonMovementProcessor processor(dungeonManager, udpManager);
+    const dnf::MovementProcessResult moved =
         processor.Process(dungeonId, 0.1f);
 
     const auto player = created.dungeon->FindPlayer(100);
@@ -147,14 +147,14 @@ void TestInputMovesDungeonPlayer()
     assert(IsNear(movedPosition.x, 100.0f));
     assert(IsNear(movedPosition.y, 280.0f));
 
-    input.sequence = 3;
-    input.moveX = 1.0f;
-    input.moveY = 0.0f;
-    const auto blockedInput = dnf::EncodePlayerInput(input);
-    client.send_to(boost::asio::buffer(blockedInput), serverEndpoint);
-    WaitForInputCount(udpManager, dungeonId, 1);
+    movement.sequence = 3;
+    movement.moveX = 1.0f;
+    movement.moveY = 0.0f;
+    const auto blockedMovement = dnf::EncodePlayerMovement(movement);
+    client.send_to(boost::asio::buffer(blockedMovement), serverEndpoint);
+    WaitForMovementCount(udpManager, dungeonId, 1);
 
-    const dnf::InputProcessResult blocked =
+    const dnf::MovementProcessResult blocked =
         processor.Process(dungeonId, 0.1f);
     const dnf::Position blockedPosition = player->CurrentPosition();
 
@@ -164,14 +164,14 @@ void TestInputMovesDungeonPlayer()
     assert(IsNear(blockedPosition.x, 100.0f));
     assert(IsNear(blockedPosition.y, 280.0f));
 
-    input.sequence = 4;
-    input.moveX = 0.0f;
-    input.moveY = 1.0f;
-    const auto portalInput = dnf::EncodePlayerInput(input);
-    client.send_to(boost::asio::buffer(portalInput), serverEndpoint);
-    WaitForInputCount(udpManager, dungeonId, 1);
+    movement.sequence = 4;
+    movement.moveX = 0.0f;
+    movement.moveY = 1.0f;
+    const auto portalMovement = dnf::EncodePlayerMovement(movement);
+    client.send_to(boost::asio::buffer(portalMovement), serverEndpoint);
+    WaitForMovementCount(udpManager, dungeonId, 1);
 
-    const dnf::InputProcessResult enteredPortal =
+    const dnf::MovementProcessResult enteredPortal =
         processor.Process(dungeonId, 0.1f);
     const dnf::DungeonPlayerSnapshot nextRoom = player->Snapshot();
 
@@ -187,8 +187,8 @@ void TestInputMovesDungeonPlayer()
 
 int main()
 {
-    TestInputMovesDungeonPlayer();
+    TestMovementMovesDungeonPlayer();
 
-    std::cout << "All dungeon input processor tests passed.\n";
+    std::cout << "All dungeon movement processor tests passed.\n";
     return 0;
 }

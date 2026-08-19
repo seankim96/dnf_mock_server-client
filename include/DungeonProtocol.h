@@ -10,7 +10,7 @@ namespace dnf
 {
 constexpr std::uint16_t DUNGEON_PROTOCOL_VERSION = 1;
 
-struct PlayerInputMessage
+struct PlayerMovementMessage
 {
     DungeonId dungeonId = 0;
     std::uint32_t sequence = 0;
@@ -41,12 +41,12 @@ struct UdpHeartbeatMessage
     SessionId sessionId = 0;
 };
 
-std::vector<std::uint8_t> EncodePlayerInput(
-    const PlayerInputMessage& input);
+std::vector<std::uint8_t> EncodePlayerMovement(
+    const PlayerMovementMessage& movement);
 
-bool DecodePlayerInput(
+bool DecodePlayerMovement(
     const std::vector<std::uint8_t>& bytes,
-    PlayerInputMessage& output);
+    PlayerMovementMessage& output);
 
 std::vector<std::uint8_t> EncodePlayerAttack(
     const PlayerAttackMessage& attack);

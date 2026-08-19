@@ -193,9 +193,9 @@ bool DungeonUdpManager::BroadcastSnapshot(
     return session->SendSnapshot(std::move(bytes));
 }
 
-bool DungeonUdpManager::TryPopInput(
+bool DungeonUdpManager::TryPopMovement(
     DungeonId dungeonId,
-    AuthenticatedPlayerInput& output)
+    AuthenticatedPlayerMovement& output)
 {
     std::lock_guard lock(mutex_);
 
@@ -205,10 +205,10 @@ bool DungeonUdpManager::TryPopInput(
         return false;
     }
 
-    return sessionIt->second->TryPopInput(output);
+    return sessionIt->second->TryPopMovement(output);
 }
 
-std::size_t DungeonUdpManager::PendingInputCount(
+std::size_t DungeonUdpManager::PendingMovementCount(
     DungeonId dungeonId) const
 {
     std::lock_guard lock(mutex_);
@@ -219,7 +219,7 @@ std::size_t DungeonUdpManager::PendingInputCount(
         return 0;
     }
 
-    return sessionIt->second->PendingInputCount();
+    return sessionIt->second->PendingMovementCount();
 }
 
 bool DungeonUdpManager::TryPopAttack(

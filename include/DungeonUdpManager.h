@@ -41,10 +41,10 @@ public:
     bool BroadcastSnapshot(
         DungeonId dungeonId,
         std::vector<std::uint8_t> bytes);
-    bool TryPopInput(
+    bool TryPopMovement(
         DungeonId dungeonId,
-        AuthenticatedPlayerInput& output);
-    std::size_t PendingInputCount(DungeonId dungeonId) const;
+        AuthenticatedPlayerMovement& output);
+    std::size_t PendingMovementCount(DungeonId dungeonId) const;
     bool TryPopAttack(
         DungeonId dungeonId,
         AuthenticatedPlayerAttack& output);

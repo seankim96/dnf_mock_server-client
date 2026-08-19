@@ -130,17 +130,17 @@ std::vector<SessionId> DungeonUdpSession::RemoveInactiveEndpoints(
 
         const SessionId sessionId = activityIt->first;
         endpoints_.erase(sessionId);
-        lastSequences_.erase(sessionId);
+        lastMovementSequences_.erase(sessionId);
         lastAttackSequences_.erase(sessionId);
-        pendingInputs_.erase(
+        pendingMovements_.erase(
             std::remove_if(
-                pendingInputs_.begin(),
-                pendingInputs_.end(),
-                [sessionId](const AuthenticatedPlayerInput& input)
+                pendingMovements_.begin(),
+                pendingMovements_.end(),
+                [sessionId](const AuthenticatedPlayerMovement& movement)
                 {
-                    return input.sessionId == sessionId;
+                    return movement.sessionId == sessionId;
                 }),
-            pendingInputs_.end());
+            pendingMovements_.end());
         pendingAttacks_.erase(
             std::remove_if(
                 pendingAttacks_.begin(),
@@ -179,24 +179,25 @@ bool DungeonUdpSession::SendSnapshot(std::vector<std::uint8_t> bytes)
     return true;
 }
 
-bool DungeonUdpSession::TryPopInput(AuthenticatedPlayerInput& output)
+bool DungeonUdpSession::TryPopMovement(
+    AuthenticatedPlayerMovement& output)
 {
     std::lock_guard lock(stateMutex_);
 
-    if (pendingInputs_.empty())
+    if (pendingMovements_.empty())
     {
         return false;
     }
 
-    output = std::move(pendingInputs_.front());
-    pendingInputs_.pop_front();
+    output = std::move(pendingMovements_.front());
+    pendingMovements_.pop_front();
     return true;
 }
 
-std::size_t DungeonUdpSession::PendingInputCount() const
+std::size_t DungeonUdpSession::PendingMovementCount() const
 {
     std::lock_guard lock(stateMutex_);
-    return pendingInputs_.size();
+    return pendingMovements_.size();
 }
 
 bool DungeonUdpSession::TryPopAttack(AuthenticatedPlayerAttack& output)
@@ -263,11 +264,11 @@ void DungeonUdpSession::HandleReceive(
         }
         else
         {
-            PlayerInputMessage input;
-            if (DecodePlayerInput(bytes, input) &&
-                input.dungeonId == dungeonId_)
+            PlayerMovementMessage movement;
+            if (DecodePlayerMovement(bytes, movement) &&
+                movement.dungeonId == dungeonId_)
             {
-                HandlePlayerInput(input);
+                HandlePlayerMovement(movement);
             }
             else
             {
@@ -331,8 +332,8 @@ void DungeonUdpSession::HandleHeartbeat(
         std::chrono::steady_clock::now();
 }
 
-void DungeonUdpSession::HandlePlayerInput(
-    const PlayerInputMessage& input)
+void DungeonUdpSession::HandlePlayerMovement(
+    const PlayerMovementMessage& movement)
 {
     std::lock_guard lock(stateMutex_);
 
@@ -353,20 +354,20 @@ void DungeonUdpSession::HandlePlayerInput(
 
     lastActivity_[sessionId] = std::chrono::steady_clock::now();
 
-    if (pendingInputs_.size() >= MAX_PENDING_DUNGEON_INPUTS)
+    if (pendingMovements_.size() >= MAX_PENDING_DUNGEON_MOVEMENTS)
     {
         return;
     }
 
-    const auto sequenceIt = lastSequences_.find(sessionId);
-    if (sequenceIt != lastSequences_.end() &&
-        input.sequence <= sequenceIt->second)
+    const auto sequenceIt = lastMovementSequences_.find(sessionId);
+    if (sequenceIt != lastMovementSequences_.end() &&
+        movement.sequence <= sequenceIt->second)
     {
         return;
     }
 
-    lastSequences_[sessionId] = input.sequence;
-    pendingInputs_.push_back({sessionId, input});
+    lastMovementSequences_[sessionId] = movement.sequence;
+    pendingMovements_.push_back({sessionId, movement});
 }
 
 void DungeonUdpSession::HandlePlayerAttack(

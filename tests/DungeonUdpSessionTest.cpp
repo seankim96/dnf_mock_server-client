@@ -71,17 +71,18 @@ void TestUdpHelloRegistersEndpoint()
     hello.token = token.value();
     const auto validHello = dnf::EncodeUdpHello(hello);
 
-    dnf::PlayerInputMessage input;
-    input.dungeonId = 5001;
-    input.sequence = 1;
-    input.moveX = 1.0f;
-    const auto firstInput = dnf::EncodePlayerInput(input);
+    dnf::PlayerMovementMessage movement;
+    movement.dungeonId = 5001;
+    movement.sequence = 1;
+    movement.moveX = 1.0f;
+    const auto firstMovement = dnf::EncodePlayerMovement(movement);
 
-    input.sequence = 2;
-    const auto secondInput = dnf::EncodePlayerInput(input);
+    movement.sequence = 2;
+    const auto secondMovement = dnf::EncodePlayerMovement(movement);
 
-    input.sequence = 3;
-    const auto foreignEndpointInput = dnf::EncodePlayerInput(input);
+    movement.sequence = 3;
+    const auto foreignEndpointMovement =
+        dnf::EncodePlayerMovement(movement);
 
     std::thread serverThread(
         [&serverIoContext]
@@ -89,15 +90,15 @@ void TestUdpHelloRegistersEndpoint()
             serverIoContext.run();
         });
 
-    boost::system::error_code preAuthenticationInputError;
+    boost::system::error_code preAuthenticationMovementError;
     firstClient.send_to(
-        boost::asio::buffer(firstInput),
+        boost::asio::buffer(firstMovement),
         serverEndpoint,
         0,
-        preAuthenticationInputError);
+        preAuthenticationMovementError);
     std::this_thread::sleep_for(std::chrono::milliseconds(30));
-    const bool preAuthenticationInputRejected =
-        manager.PendingInputCount(5001) == 0;
+    const bool preAuthenticationMovementRejected =
+        manager.PendingMovementCount(5001) == 0;
 
     boost::system::error_code firstSendError;
     firstClient.send_to(
@@ -129,16 +130,16 @@ void TestUdpHelloRegistersEndpoint()
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
 
-    boost::system::error_code firstInputError;
+    boost::system::error_code firstMovementError;
     firstClient.send_to(
-        boost::asio::buffer(firstInput),
+        boost::asio::buffer(firstMovement),
         serverEndpoint,
         0,
-        firstInputError);
+        firstMovementError);
 
     for (int attempt = 0; attempt < 100; ++attempt)
     {
-        if (manager.PendingInputCount(5001) == 1)
+        if (manager.PendingMovementCount(5001) == 1)
         {
             break;
         }
@@ -146,23 +147,23 @@ void TestUdpHelloRegistersEndpoint()
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
 
-    boost::system::error_code duplicateInputError;
+    boost::system::error_code duplicateMovementError;
     firstClient.send_to(
-        boost::asio::buffer(firstInput),
+        boost::asio::buffer(firstMovement),
         serverEndpoint,
         0,
-        duplicateInputError);
+        duplicateMovementError);
 
-    boost::system::error_code secondInputError;
+    boost::system::error_code secondMovementError;
     firstClient.send_to(
-        boost::asio::buffer(secondInput),
+        boost::asio::buffer(secondMovement),
         serverEndpoint,
         0,
-        secondInputError);
+        secondMovementError);
 
     for (int attempt = 0; attempt < 100; ++attempt)
     {
-        if (manager.PendingInputCount(5001) == 2)
+        if (manager.PendingMovementCount(5001) == 2)
         {
             break;
         }
@@ -177,28 +178,28 @@ void TestUdpHelloRegistersEndpoint()
         0,
         replaySendError);
 
-    boost::system::error_code foreignInputError;
+    boost::system::error_code foreignMovementError;
     secondClient.send_to(
-        boost::asio::buffer(foreignEndpointInput),
+        boost::asio::buffer(foreignEndpointMovement),
         serverEndpoint,
         0,
-        foreignInputError);
+        foreignMovementError);
     std::this_thread::sleep_for(std::chrono::milliseconds(30));
     const auto endpointAfterReplay = manager.FindEndpoint(5001, 100);
     const bool allParticipantsAuthenticated =
         manager.AllParticipantsAuthenticated(5001);
     const std::size_t pendingCountAfterForeignInput =
-        manager.PendingInputCount(5001);
+        manager.PendingMovementCount(5001);
 
-    dnf::AuthenticatedPlayerInput receivedFirstInput;
-    dnf::AuthenticatedPlayerInput receivedSecondInput;
-    dnf::AuthenticatedPlayerInput unexpectedInput;
+    dnf::AuthenticatedPlayerMovement receivedFirstMovement;
+    dnf::AuthenticatedPlayerMovement receivedSecondMovement;
+    dnf::AuthenticatedPlayerMovement unexpectedMovement;
     const bool poppedFirst =
-        manager.TryPopInput(5001, receivedFirstInput);
+        manager.TryPopMovement(5001, receivedFirstMovement);
     const bool poppedSecond =
-        manager.TryPopInput(5001, receivedSecondInput);
+        manager.TryPopMovement(5001, receivedSecondMovement);
     const bool poppedUnexpected =
-        manager.TryPopInput(5001, unexpectedInput);
+        manager.TryPopMovement(5001, unexpectedMovement);
 
     const std::vector<std::uint8_t> snapshotBytes = {1, 2, 3, 4};
     assert(manager.BroadcastSnapshot(5001, snapshotBytes));
@@ -237,15 +238,15 @@ void TestUdpHelloRegistersEndpoint()
         receiveBuffer.begin(),
         receiveBuffer.begin() + snapshotSize);
 
-    assert(!preAuthenticationInputError);
+    assert(!preAuthenticationMovementError);
     assert(!firstSendError);
     assert(!validSendError);
-    assert(!firstInputError);
-    assert(!duplicateInputError);
-    assert(!secondInputError);
+    assert(!firstMovementError);
+    assert(!duplicateMovementError);
+    assert(!secondMovementError);
     assert(!replaySendError);
-    assert(!foreignInputError);
-    assert(preAuthenticationInputRejected);
+    assert(!foreignMovementError);
+    assert(preAuthenticationMovementRejected);
     assert(wrongTokenRejected);
     assert(registeredEndpoint.has_value());
     assert(registeredEndpoint->address() ==
@@ -257,10 +258,10 @@ void TestUdpHelloRegistersEndpoint()
     assert(poppedFirst);
     assert(poppedSecond);
     assert(!poppedUnexpected);
-    assert(receivedFirstInput.sessionId == 100);
-    assert(receivedFirstInput.input.sequence == 1);
-    assert(receivedSecondInput.sessionId == 100);
-    assert(receivedSecondInput.input.sequence == 2);
+    assert(receivedFirstMovement.sessionId == 100);
+    assert(receivedFirstMovement.movement.sequence == 1);
+    assert(receivedSecondMovement.sessionId == 100);
+    assert(receivedSecondMovement.movement.sequence == 2);
     assert(!snapshotReceiveError);
     assert(snapshotSender.port() == port.value());
     assert(receivedSnapshot == snapshotBytes);

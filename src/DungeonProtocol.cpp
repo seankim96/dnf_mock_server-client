@@ -13,13 +13,13 @@ namespace dnf
 {
 namespace
 {
-bool IsValid(const PlayerInputMessage& input)
+bool IsValid(const PlayerMovementMessage& movement)
 {
-    return input.dungeonId != 0 &&
-           std::isfinite(input.moveX) &&
-           std::isfinite(input.moveY) &&
-           input.moveX >= -1.0f && input.moveX <= 1.0f &&
-           input.moveY >= -1.0f && input.moveY <= 1.0f;
+    return movement.dungeonId != 0 &&
+           std::isfinite(movement.moveX) &&
+           std::isfinite(movement.moveY) &&
+           movement.moveX >= -1.0f && movement.moveX <= 1.0f &&
+           movement.moveY >= -1.0f && movement.moveY <= 1.0f;
 }
 
 bool IsValid(const PlayerAttackMessage& attack)
@@ -51,29 +51,29 @@ bool IsValid(const UdpHeartbeatMessage& heartbeat)
 }
 } // namespace
 
-std::vector<std::uint8_t> EncodePlayerInput(
-    const PlayerInputMessage& input)
+std::vector<std::uint8_t> EncodePlayerMovement(
+    const PlayerMovementMessage& movement)
 {
-    if (!IsValid(input))
+    if (!IsValid(movement))
     {
-        throw std::invalid_argument("Invalid player input");
+        throw std::invalid_argument("Invalid player movement");
     }
 
     flatbuffers::FlatBufferBuilder builder;
 
-    const auto playerInput = Dnf::Protocol::CreatePlayerInput(
+    const auto playerMovement = Dnf::Protocol::CreatePlayerMovement(
         builder,
-        input.sequence,
-        input.moveX,
-        input.moveY,
-        input.jump);
+        movement.sequence,
+        movement.moveX,
+        movement.moveY,
+        movement.jump);
 
     const auto message = Dnf::Protocol::CreateDungeonMessage(
         builder,
         DUNGEON_PROTOCOL_VERSION,
-        input.dungeonId,
-        Dnf::Protocol::DungeonPayload_PlayerInput,
-        playerInput.Union());
+        movement.dungeonId,
+        Dnf::Protocol::DungeonPayload_PlayerMovement,
+        playerMovement.Union());
 
     Dnf::Protocol::FinishDungeonMessageBuffer(builder, message);
 
@@ -82,9 +82,9 @@ std::vector<std::uint8_t> EncodePlayerInput(
         builder.GetBufferPointer() + builder.GetSize());
 }
 
-bool DecodePlayerInput(
+bool DecodePlayerMovement(
     const std::vector<std::uint8_t>& bytes,
-    PlayerInputMessage& output)
+    PlayerMovementMessage& output)
 {
     if (bytes.empty())
     {
@@ -102,24 +102,24 @@ bool DecodePlayerInput(
 
     if (message->protocol_version() != DUNGEON_PROTOCOL_VERSION ||
         message->payload_type() !=
-            Dnf::Protocol::DungeonPayload_PlayerInput)
+            Dnf::Protocol::DungeonPayload_PlayerMovement)
     {
         return false;
     }
 
-    const Dnf::Protocol::PlayerInput* playerInput =
-        message->payload_as_PlayerInput();
-    if (playerInput == nullptr)
+    const Dnf::Protocol::PlayerMovement* playerMovement =
+        message->payload_as_PlayerMovement();
+    if (playerMovement == nullptr)
     {
         return false;
     }
 
-    PlayerInputMessage decoded;
+    PlayerMovementMessage decoded;
     decoded.dungeonId = message->dungeon_id();
-    decoded.sequence = playerInput->sequence();
-    decoded.moveX = playerInput->move_x();
-    decoded.moveY = playerInput->move_y();
-    decoded.jump = playerInput->jump();
+    decoded.sequence = playerMovement->sequence();
+    decoded.moveX = playerMovement->move_x();
+    decoded.moveY = playerMovement->move_y();
+    decoded.jump = playerMovement->jump();
 
     if (!IsValid(decoded))
     {

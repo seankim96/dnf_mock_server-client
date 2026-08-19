@@ -10,11 +10,14 @@
 
 namespace
 {
-void TestPlayerInput()
+void TestPlayerMovement()
 {
+    assert(static_cast<std::uint8_t>(
+               Dnf::Protocol::DungeonPayload_PlayerMovement) == 1);
+
     flatbuffers::FlatBufferBuilder builder;
 
-    const auto input = Dnf::Protocol::CreatePlayerInput(
+    const auto movement = Dnf::Protocol::CreatePlayerMovement(
         builder,
         42,
         1.0f,
@@ -25,8 +28,8 @@ void TestPlayerInput()
         builder,
         1,
         5001,
-        Dnf::Protocol::DungeonPayload_PlayerInput,
-        input.Union());
+        Dnf::Protocol::DungeonPayload_PlayerMovement,
+        movement.Union());
 
     Dnf::Protocol::FinishDungeonMessageBuffer(builder, message);
 
@@ -40,12 +43,12 @@ void TestPlayerInput()
     assert(received->protocol_version() == 1);
     assert(received->dungeon_id() == 5001);
 
-    const auto* receivedInput = received->payload_as_PlayerInput();
-    assert(receivedInput != nullptr);
-    assert(receivedInput->sequence() == 42);
-    assert(receivedInput->move_x() == 1.0f);
-    assert(receivedInput->move_y() == -1.0f);
-    assert(receivedInput->jump());
+    const auto* receivedMovement = received->payload_as_PlayerMovement();
+    assert(receivedMovement != nullptr);
+    assert(receivedMovement->sequence() == 42);
+    assert(receivedMovement->move_x() == 1.0f);
+    assert(receivedMovement->move_y() == -1.0f);
+    assert(receivedMovement->jump());
 
     const std::vector<std::uint8_t> truncatedBuffer(
         builder.GetBufferPointer(),
@@ -121,7 +124,7 @@ void TestDungeonSnapshot()
 
 int main()
 {
-    TestPlayerInput();
+    TestPlayerMovement();
     TestDungeonSnapshot();
 
     std::cout << "All FlatBuffers protocol tests passed.\n";

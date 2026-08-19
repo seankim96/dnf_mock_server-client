@@ -6,7 +6,7 @@ struct Vec3 {
   z:float;
 }
 
-table PlayerInput {
+table PlayerMovement {
   sequence:uint;
   move_x:float;
   move_y:float;
@@ -51,7 +51,7 @@ table PlayerAttack {
 }
 
 union DungeonPayload {
-  PlayerInput,
+  PlayerMovement,
   DungeonSnapshot,
   UdpHello,
   UdpHeartbeat,

@@ -1,4 +1,4 @@
-#include "DungeonInputProcessor.h"
+#include "DungeonMovementProcessor.h"
 
 #include <algorithm>
 #include <cmath>
@@ -6,7 +6,7 @@
 
 namespace dnf
 {
-DungeonInputProcessor::DungeonInputProcessor(
+DungeonMovementProcessor::DungeonMovementProcessor(
     DungeonManager& dungeonManager,
     DungeonUdpManager& udpManager)
     : dungeonManager_(dungeonManager),
@@ -14,11 +14,11 @@ DungeonInputProcessor::DungeonInputProcessor(
 {
 }
 
-InputProcessResult DungeonInputProcessor::Process(
+MovementProcessResult DungeonMovementProcessor::Process(
     DungeonId dungeonId,
     float deltaSeconds)
 {
-    InputProcessResult result;
+    MovementProcessResult result;
 
     const auto dungeon = dungeonManager_.FindDungeon(dungeonId);
     if (dungeon == nullptr ||
@@ -29,19 +29,20 @@ InputProcessResult DungeonInputProcessor::Process(
         return result;
     }
 
-    std::unordered_map<SessionId, PlayerInputMessage> latestInputs;
+    std::unordered_map<SessionId, PlayerMovementMessage> latestMovements;
 
-    AuthenticatedPlayerInput queuedInput;
-    while (udpManager_.TryPopInput(dungeonId, queuedInput))
+    AuthenticatedPlayerMovement queuedMovement;
+    while (udpManager_.TryPopMovement(dungeonId, queuedMovement))
     {
-        latestInputs[queuedInput.sessionId] = queuedInput.input;
+        latestMovements[queuedMovement.sessionId] =
+            queuedMovement.movement;
         ++result.receivedCount;
     }
 
     const float safeDeltaSeconds =
         std::min(deltaSeconds, MAX_DUNGEON_DELTA_SECONDS);
 
-    for (const auto& [sessionId, input] : latestInputs)
+    for (const auto& [sessionId, movement] : latestMovements)
     {
         const auto player = dungeon->FindPlayer(sessionId);
         if (player == nullptr)
@@ -58,8 +59,8 @@ InputProcessResult DungeonInputProcessor::Process(
             continue;
         }
 
-        float moveX = input.moveX;
-        float moveY = input.moveY;
+        float moveX = movement.moveX;
+        float moveY = movement.moveY;
         const float moveLength = std::sqrt(moveX * moveX + moveY * moveY);
 
         if (moveLength > 1.0f)

@@ -10,21 +10,21 @@ namespace dnf
 constexpr float DUNGEON_PLAYER_MOVE_SPEED = 300.0f;
 constexpr float MAX_DUNGEON_DELTA_SECONDS = 0.1f;
 
-struct InputProcessResult
+struct MovementProcessResult
 {
     std::size_t receivedCount = 0;
     std::size_t appliedCount = 0;
     std::size_t rejectedCount = 0;
 };
 
-class DungeonInputProcessor
+class DungeonMovementProcessor
 {
 public:
-    DungeonInputProcessor(
+    DungeonMovementProcessor(
         DungeonManager& dungeonManager,
         DungeonUdpManager& udpManager);
 
-    InputProcessResult Process(
+    MovementProcessResult Process(
         DungeonId dungeonId,
         float deltaSeconds);
 
