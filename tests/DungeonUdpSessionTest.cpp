@@ -16,6 +16,22 @@
 
 namespace
 {
+template <typename Predicate>
+bool WaitUntil(Predicate predicate)
+{
+    for (int attempt = 0; attempt < 100; ++attempt)
+    {
+        if (predicate())
+        {
+            return true;
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    }
+
+    return false;
+}
+
 void TestUdpHelloRegistersEndpoint()
 {
     using boost::asio::ip::udp;
@@ -283,11 +299,93 @@ void TestUdpHelloRegistersEndpoint()
     manager.Release(5001);
     serverThread.join();
 }
+
+void TestAuthenticatedAttackIsQueued()
+{
+    using boost::asio::ip::udp;
+
+    boost::asio::io_context serverIoContext;
+    dnf::DungeonUdpManager manager(serverIoContext);
+
+    const auto port = manager.Allocate(6001, {200});
+    const auto token = manager.FindToken(6001, 200);
+    assert(port.has_value());
+    assert(token.has_value());
+
+    boost::asio::io_context clientIoContext;
+    udp::socket client(clientIoContext);
+    client.open(udp::v4());
+    client.bind(udp::endpoint(udp::v4(), 0));
+
+    const udp::endpoint serverEndpoint(
+        boost::asio::ip::address_v4::loopback(),
+        port.value());
+
+    dnf::PlayerAttackMessage firstAttack;
+    firstAttack.dungeonId = 6001;
+    firstAttack.sequence = 1;
+    firstAttack.skillId = 1001;
+    firstAttack.directionX = 1.0f;
+
+    auto secondAttack = firstAttack;
+    secondAttack.sequence = 2;
+
+    const auto firstAttackBytes = dnf::EncodePlayerAttack(firstAttack);
+    const auto secondAttackBytes = dnf::EncodePlayerAttack(secondAttack);
+    const auto helloBytes = dnf::EncodeUdpHello({6001, 200, token.value()});
+
+    std::thread serverThread(
+        [&serverIoContext]
+        {
+            serverIoContext.run();
+        });
+
+    client.send_to(boost::asio::buffer(firstAttackBytes), serverEndpoint);
+    std::this_thread::sleep_for(std::chrono::milliseconds(30));
+    assert(manager.PendingAttackCount(6001) == 0);
+
+    client.send_to(boost::asio::buffer(helloBytes), serverEndpoint);
+    assert(WaitUntil(
+        [&manager]
+        {
+            return manager.FindEndpoint(6001, 200).has_value();
+        }));
+
+    client.send_to(boost::asio::buffer(firstAttackBytes), serverEndpoint);
+    client.send_to(boost::asio::buffer(firstAttackBytes), serverEndpoint);
+    client.send_to(boost::asio::buffer(secondAttackBytes), serverEndpoint);
+
+    assert(WaitUntil(
+        [&manager]
+        {
+            return manager.PendingAttackCount(6001) == 2;
+        }));
+
+    dnf::AuthenticatedPlayerAttack receivedFirst;
+    dnf::AuthenticatedPlayerAttack receivedSecond;
+    dnf::AuthenticatedPlayerAttack unexpected;
+
+    assert(manager.TryPopAttack(6001, receivedFirst));
+    assert(manager.TryPopAttack(6001, receivedSecond));
+    assert(!manager.TryPopAttack(6001, unexpected));
+    assert(!manager.TryPopAttack(9999, unexpected));
+    assert(manager.PendingAttackCount(9999) == 0);
+
+    assert(receivedFirst.sessionId == 200);
+    assert(receivedFirst.attack.sequence == 1);
+    assert(receivedFirst.attack.skillId == 1001);
+    assert(receivedSecond.sessionId == 200);
+    assert(receivedSecond.attack.sequence == 2);
+
+    manager.Release(6001);
+    serverThread.join();
+}
 } // namespace
 
 int main()
 {
     TestUdpHelloRegistersEndpoint();
+    TestAuthenticatedAttackIsQueued();
 
     std::cout << "All dungeon UDP session tests passed.\n";
     return 0;

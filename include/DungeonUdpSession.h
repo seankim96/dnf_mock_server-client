@@ -24,11 +24,18 @@ namespace dnf
 {
 constexpr std::size_t MAX_DUNGEON_DATAGRAM_SIZE = 1200;
 constexpr std::size_t MAX_PENDING_DUNGEON_INPUTS = 256;
+constexpr std::size_t MAX_PENDING_DUNGEON_ATTACKS = 256;
 
 struct AuthenticatedPlayerInput
 {
     SessionId sessionId = 0;
     PlayerInputMessage input;
+};
+
+struct AuthenticatedPlayerAttack
+{
+    SessionId sessionId = 0;
+    PlayerAttackMessage attack;
 };
 
 class DungeonUdpSession
@@ -56,6 +63,8 @@ public:
     bool SendSnapshot(std::vector<std::uint8_t> bytes);
     bool TryPopInput(AuthenticatedPlayerInput& output);
     std::size_t PendingInputCount() const;
+    bool TryPopAttack(AuthenticatedPlayerAttack& output);
+    std::size_t PendingAttackCount() const;
 
 private:
     void StartReceive();
@@ -65,6 +74,7 @@ private:
     void HandleHello(const UdpHelloMessage& hello);
     void HandleHeartbeat(const UdpHeartbeatMessage& heartbeat);
     void HandlePlayerInput(const PlayerInputMessage& input);
+    void HandlePlayerAttack(const PlayerAttackMessage& attack);
     void SendSnapshotOnStrand(
         std::shared_ptr<const std::vector<std::uint8_t>> bytes);
 
@@ -84,6 +94,8 @@ private:
         SessionId,
         std::chrono::steady_clock::time_point> lastActivity_;
     std::unordered_map<SessionId, std::uint32_t> lastSequences_;
+    std::unordered_map<SessionId, std::uint32_t> lastAttackSequences_;
     std::deque<AuthenticatedPlayerInput> pendingInputs_;
+    std::deque<AuthenticatedPlayerAttack> pendingAttacks_;
 };
 } // namespace dnf

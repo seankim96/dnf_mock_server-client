@@ -45,6 +45,10 @@ public:
         DungeonId dungeonId,
         AuthenticatedPlayerInput& output);
     std::size_t PendingInputCount(DungeonId dungeonId) const;
+    bool TryPopAttack(
+        DungeonId dungeonId,
+        AuthenticatedPlayerAttack& output);
+    std::size_t PendingAttackCount(DungeonId dungeonId) const;
     bool Release(DungeonId dungeonId);
     std::size_t AllocationCount() const;
 

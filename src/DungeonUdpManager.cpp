@@ -222,6 +222,35 @@ std::size_t DungeonUdpManager::PendingInputCount(
     return sessionIt->second->PendingInputCount();
 }
 
+bool DungeonUdpManager::TryPopAttack(
+    DungeonId dungeonId,
+    AuthenticatedPlayerAttack& output)
+{
+    std::lock_guard lock(mutex_);
+
+    const auto sessionIt = sessions_.find(dungeonId);
+    if (sessionIt == sessions_.end())
+    {
+        return false;
+    }
+
+    return sessionIt->second->TryPopAttack(output);
+}
+
+std::size_t DungeonUdpManager::PendingAttackCount(
+    DungeonId dungeonId) const
+{
+    std::lock_guard lock(mutex_);
+
+    const auto sessionIt = sessions_.find(dungeonId);
+    if (sessionIt == sessions_.end())
+    {
+        return 0;
+    }
+
+    return sessionIt->second->PendingAttackCount();
+}
+
 bool DungeonUdpManager::Release(DungeonId dungeonId)
 {
     std::shared_ptr<DungeonUdpSession> session;

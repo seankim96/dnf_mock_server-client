@@ -131,6 +131,7 @@ std::vector<SessionId> DungeonUdpSession::RemoveInactiveEndpoints(
         const SessionId sessionId = activityIt->first;
         endpoints_.erase(sessionId);
         lastSequences_.erase(sessionId);
+        lastAttackSequences_.erase(sessionId);
         pendingInputs_.erase(
             std::remove_if(
                 pendingInputs_.begin(),
@@ -140,6 +141,15 @@ std::vector<SessionId> DungeonUdpSession::RemoveInactiveEndpoints(
                     return input.sessionId == sessionId;
                 }),
             pendingInputs_.end());
+        pendingAttacks_.erase(
+            std::remove_if(
+                pendingAttacks_.begin(),
+                pendingAttacks_.end(),
+                [sessionId](const AuthenticatedPlayerAttack& attack)
+                {
+                    return attack.sessionId == sessionId;
+                }),
+            pendingAttacks_.end());
 
         removedSessions.push_back(sessionId);
         activityIt = lastActivity_.erase(activityIt);
@@ -187,6 +197,26 @@ std::size_t DungeonUdpSession::PendingInputCount() const
 {
     std::lock_guard lock(stateMutex_);
     return pendingInputs_.size();
+}
+
+bool DungeonUdpSession::TryPopAttack(AuthenticatedPlayerAttack& output)
+{
+    std::lock_guard lock(stateMutex_);
+
+    if (pendingAttacks_.empty())
+    {
+        return false;
+    }
+
+    output = std::move(pendingAttacks_.front());
+    pendingAttacks_.pop_front();
+    return true;
+}
+
+std::size_t DungeonUdpSession::PendingAttackCount() const
+{
+    std::lock_guard lock(stateMutex_);
+    return pendingAttacks_.size();
 }
 
 void DungeonUdpSession::StartReceive()
@@ -241,11 +271,20 @@ void DungeonUdpSession::HandleReceive(
             }
             else
             {
-                UdpHeartbeatMessage heartbeat;
-                if (DecodeUdpHeartbeat(bytes, heartbeat) &&
-                    heartbeat.dungeonId == dungeonId_)
+                PlayerAttackMessage attack;
+                if (DecodePlayerAttack(bytes, attack) &&
+                    attack.dungeonId == dungeonId_)
                 {
-                    HandleHeartbeat(heartbeat);
+                    HandlePlayerAttack(attack);
+                }
+                else
+                {
+                    UdpHeartbeatMessage heartbeat;
+                    if (DecodeUdpHeartbeat(bytes, heartbeat) &&
+                        heartbeat.dungeonId == dungeonId_)
+                    {
+                        HandleHeartbeat(heartbeat);
+                    }
                 }
             }
         }
@@ -328,6 +367,44 @@ void DungeonUdpSession::HandlePlayerInput(
 
     lastSequences_[sessionId] = input.sequence;
     pendingInputs_.push_back({sessionId, input});
+}
+
+void DungeonUdpSession::HandlePlayerAttack(
+    const PlayerAttackMessage& attack)
+{
+    std::lock_guard lock(stateMutex_);
+
+    SessionId sessionId = 0;
+    for (const auto& [registeredSessionId, endpoint] : endpoints_)
+    {
+        if (endpoint == senderEndpoint_)
+        {
+            sessionId = registeredSessionId;
+            break;
+        }
+    }
+
+    if (sessionId == 0)
+    {
+        return;
+    }
+
+    lastActivity_[sessionId] = std::chrono::steady_clock::now();
+
+    if (pendingAttacks_.size() >= MAX_PENDING_DUNGEON_ATTACKS)
+    {
+        return;
+    }
+
+    const auto sequenceIt = lastAttackSequences_.find(sessionId);
+    if (sequenceIt != lastAttackSequences_.end() &&
+        attack.sequence <= sequenceIt->second)
+    {
+        return;
+    }
+
+    lastAttackSequences_[sessionId] = attack.sequence;
+    pendingAttacks_.push_back({sessionId, attack});
 }
 
 void DungeonUdpSession::SendSnapshotOnStrand(
