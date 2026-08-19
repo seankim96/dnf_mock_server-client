@@ -24,6 +24,17 @@ enum class DungeonState
     Finished
 };
 
+enum class UsePortalResult
+{
+    Success,
+    DungeonNotRunning,
+    PlayerNotFound,
+    NotInsidePortal,
+    RoomNotCleared,
+    TargetRoomNotFound,
+    TargetPositionBlocked
+};
+
 class DungeonInstance
 {
 public:
@@ -43,6 +54,7 @@ public:
     bool HasParticipant(SessionId sessionId) const;
     std::shared_ptr<RoomState> FindRoom(RoomId roomId) const;
     std::shared_ptr<DungeonPlayerState> FindPlayer(SessionId sessionId) const;
+    UsePortalResult TryUsePortal(SessionId sessionId);
     bool Start();
     bool Finish();
 

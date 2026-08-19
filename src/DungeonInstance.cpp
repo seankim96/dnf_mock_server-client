@@ -124,6 +124,74 @@ std::shared_ptr<DungeonPlayerState> DungeonInstance::FindPlayer(
     return playerIt->second;
 }
 
+UsePortalResult DungeonInstance::TryUsePortal(SessionId sessionId)
+{
+    if (State() != DungeonState::Running)
+    {
+        return UsePortalResult::DungeonNotRunning;
+    }
+
+    const auto player = FindPlayer(sessionId);
+    if (player == nullptr)
+    {
+        return UsePortalResult::PlayerNotFound;
+    }
+
+    const DungeonPlayerSnapshot playerSnapshot = player->Snapshot();
+    const auto room = FindRoom(playerSnapshot.roomId);
+    if (room == nullptr)
+    {
+        return UsePortalResult::TargetRoomNotFound;
+    }
+
+    const auto roomTemplateIt = std::find_if(
+        dungeonTemplate_.rooms.begin(),
+        dungeonTemplate_.rooms.end(),
+        [roomId = playerSnapshot.roomId](const RoomTemplate& roomTemplate)
+        {
+            return roomTemplate.id == roomId;
+        });
+
+    if (roomTemplateIt == dungeonTemplate_.rooms.end())
+    {
+        return UsePortalResult::TargetRoomNotFound;
+    }
+
+    const auto portalIt = std::find_if(
+        roomTemplateIt->portals.begin(),
+        roomTemplateIt->portals.end(),
+        [&playerSnapshot](const PortalTemplate& portal)
+        {
+            return IsInsideCollisionBox(
+                portal.triggerArea,
+                playerSnapshot.position);
+        });
+
+    if (portalIt == roomTemplateIt->portals.end())
+    {
+        return UsePortalResult::NotInsidePortal;
+    }
+
+    if (portalIt->requiresRoomClear && !room->IsCleared())
+    {
+        return UsePortalResult::RoomNotCleared;
+    }
+
+    const auto targetRoom = FindRoom(portalIt->targetRoomId);
+    if (targetRoom == nullptr)
+    {
+        return UsePortalResult::TargetRoomNotFound;
+    }
+
+    if (player->EnterRoom(*targetRoom, portalIt->targetPosition) !=
+        MovePlayerResult::Success)
+    {
+        return UsePortalResult::TargetPositionBlocked;
+    }
+
+    return UsePortalResult::Success;
+}
+
 bool DungeonInstance::Start()
 {
     std::lock_guard lock(stateMutex_);

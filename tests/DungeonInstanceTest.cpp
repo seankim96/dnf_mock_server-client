@@ -78,6 +78,68 @@ void TestInvalidParticipantCount()
 
     assert(errorOccurred);
 }
+
+void TestPortalRequiresRoomClear()
+{
+    dnf::EnemyCatalog enemyCatalog;
+    dnf::EnemyTemplate enemy;
+    enemy.id = 2001;
+    enemy.name = "Goblin";
+    enemy.maxHp = 100;
+    enemy.collision = {
+        {-20.0f, -15.0f, 0.0f},
+        {20.0f, 15.0f, 80.0f}};
+    assert(enemyCatalog.AddEnemy(enemy));
+
+    dnf::DungeonTemplate dungeonTemplate = MakeDungeonTemplate();
+
+    dnf::PortalTemplate portal;
+    portal.id = 1;
+    portal.triggerArea = {
+        {90.0f, 240.0f, 0.0f},
+        {110.0f, 260.0f, 100.0f}};
+    portal.targetRoomId = 2;
+    portal.targetPosition = {200.0f, 300.0f, 0.0f};
+    portal.requiresRoomClear = true;
+    dungeonTemplate.rooms[0].portals.push_back(portal);
+
+    dnf::EnemySpawnTemplate spawn;
+    spawn.id = 1;
+    spawn.enemyTemplateId = enemy.id;
+    spawn.position = {500.0f, 250.0f, 0.0f};
+    spawn.wave = 1;
+    dungeonTemplate.rooms[0].enemySpawns.push_back(spawn);
+
+    dnf::DungeonInstance dungeon(
+        10,
+        dungeonTemplate,
+        20,
+        {100},
+        enemyCatalog);
+
+    assert(dungeon.TryUsePortal(100) ==
+           dnf::UsePortalResult::DungeonNotRunning);
+    assert(dungeon.Start());
+    assert(dungeon.TryUsePortal(999) ==
+           dnf::UsePortalResult::PlayerNotFound);
+    assert(dungeon.TryUsePortal(100) ==
+           dnf::UsePortalResult::RoomNotCleared);
+
+    const auto firstRoom = dungeon.FindRoom(1);
+    assert(firstRoom->StartNextWave());
+    const auto enemies = firstRoom->Enemies();
+    assert(enemies.size() == 1);
+    assert(firstRoom->ApplyEnemyDamage(enemies[0].entityId, 100));
+
+    assert(dungeon.TryUsePortal(100) == dnf::UsePortalResult::Success);
+
+    const auto player = dungeon.FindPlayer(100);
+    assert(player->CurrentRoom() == 2);
+    assert(player->CurrentPosition().x == 200.0f);
+    assert(player->CurrentPosition().y == 300.0f);
+    assert(dungeon.TryUsePortal(100) ==
+           dnf::UsePortalResult::NotInsidePortal);
+}
 } // namespace
 
 int main()
@@ -85,6 +147,7 @@ int main()
     TestDungeonInformation();
     TestDungeonState();
     TestInvalidParticipantCount();
+    TestPortalRequiresRoomClear();
 
     std::cout << "All dungeon instance tests passed.\n";
     return 0;

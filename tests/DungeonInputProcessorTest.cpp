@@ -58,7 +58,25 @@ void TestInputMovesDungeonPlayer()
         {140.0f, 290.0f, 100.0f}};
     room.obstacles.push_back(obstacle);
 
-    assert(dungeonCatalog.AddDungeon(1001, "Forest", {room}));
+    dnf::RoomTemplate secondRoom;
+    secondRoom.id = 2;
+    secondRoom.width = 1200.0f;
+    secondRoom.depth = 500.0f;
+    secondRoom.playerSpawn = {50.0f, 50.0f, 0.0f};
+
+    dnf::PortalTemplate portal;
+    portal.id = 1;
+    portal.triggerArea = {
+        {90.0f, 300.0f, 0.0f},
+        {110.0f, 320.0f, 100.0f}};
+    portal.targetRoomId = 2;
+    portal.targetPosition = secondRoom.playerSpawn;
+    room.portals.push_back(portal);
+
+    assert(dungeonCatalog.AddDungeon(
+        1001,
+        "Forest",
+        {room, secondRoom}));
 
     dnf::DungeonManager dungeonManager(
         partyManager,
@@ -145,6 +163,22 @@ void TestInputMovesDungeonPlayer()
     assert(blocked.rejectedCount == 1);
     assert(IsNear(blockedPosition.x, 100.0f));
     assert(IsNear(blockedPosition.y, 280.0f));
+
+    input.sequence = 4;
+    input.moveX = 0.0f;
+    input.moveY = 1.0f;
+    const auto portalInput = dnf::EncodePlayerInput(input);
+    client.send_to(boost::asio::buffer(portalInput), serverEndpoint);
+    WaitForInputCount(udpManager, dungeonId, 1);
+
+    const dnf::InputProcessResult enteredPortal =
+        processor.Process(dungeonId, 0.1f);
+    const dnf::DungeonPlayerSnapshot nextRoom = player->Snapshot();
+
+    assert(enteredPortal.appliedCount == 1);
+    assert(nextRoom.roomId == 2);
+    assert(IsNear(nextRoom.position.x, 50.0f));
+    assert(IsNear(nextRoom.position.y, 50.0f));
 
     udpManager.Release(dungeonId);
     serverThread.join();

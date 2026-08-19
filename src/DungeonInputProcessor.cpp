@@ -76,6 +76,7 @@ InputProcessResult DungeonInputProcessor::Process(
 
         if (player->MoveTo(*room, nextPosition) == MovePlayerResult::Success)
         {
+            dungeon->TryUsePortal(sessionId);
             ++result.appliedCount;
         }
         else
