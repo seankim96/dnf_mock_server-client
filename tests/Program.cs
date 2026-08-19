@@ -13,6 +13,7 @@ TestInvalidPacketSize();
 TestGamePayloads();
 TestDungeonProtocol();
 await TestTcpConnectionAsync();
+await TestUdpSessionAsync();
 
 Console.WriteLine("All client smoke tests passed.");
 
@@ -174,6 +175,25 @@ static void TestDungeonProtocol()
     Assert(movement.Sequence == 10 && movement.MoveX == 0.5f &&
         movement.MoveY == -0.25f, "Player movement values are incorrect.");
 
+    byte[] snapshotBytes = CreateTestSnapshotBytes();
+
+    Assert(DungeonProtocolCodec.TryDecodeSnapshot(
+        snapshotBytes,
+        out DungeonSnapshotData? decoded) && decoded is not null,
+        "Dungeon snapshot was not decoded.");
+
+    if (decoded is null)
+    {
+        throw new InvalidOperationException("Decoded snapshot is null.");
+    }
+
+    Assert(decoded.ServerTick == 45 && decoded.Players.Count == 1 &&
+        decoded.Players[0].X == 100.0f && decoded.Players[0].Y == 250.0f,
+        "Dungeon snapshot values are incorrect.");
+}
+
+static byte[] CreateTestSnapshotBytes()
+{
     var builder = new FlatBufferBuilder(256);
     PlayerSnapshot.StartPlayerSnapshot(builder);
     PlayerSnapshot.AddSessionId(builder, 3);
@@ -199,20 +219,46 @@ static void TestDungeonProtocol()
         DungeonPayload.DungeonSnapshot,
         snapshot.Value);
     DungeonMessage.FinishDungeonMessageBuffer(builder, snapshotMessage);
+    return builder.SizedByteArray();
+}
 
-    Assert(DungeonProtocolCodec.TryDecodeSnapshot(
-        builder.SizedByteArray(),
-        out DungeonSnapshotData? decoded) && decoded is not null,
-        "Dungeon snapshot was not decoded.");
+static async Task TestUdpSessionAsync()
+{
+    using var server = new UdpClient(new IPEndPoint(IPAddress.Loopback, 0));
+    int port = ((IPEndPoint)server.Client.LocalEndPoint!).Port;
+    using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+    using var client = new DungeonUdpService();
+    var snapshotCompletion =
+        new TaskCompletionSource<DungeonSnapshotData>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
 
-    if (decoded is null)
-    {
-        throw new InvalidOperationException("Decoded snapshot is null.");
-    }
+    client.SnapshotReceived += snapshot => snapshotCompletion.TrySetResult(snapshot);
+    await client.ConnectAsync("127.0.0.1", port, 9, 3, 77, timeout.Token);
 
-    Assert(decoded.ServerTick == 45 && decoded.Players.Count == 1 &&
-        decoded.Players[0].X == 100.0f && decoded.Players[0].Y == 250.0f,
-        "Dungeon snapshot values are incorrect.");
+    UdpReceiveResult helloResult = await server.ReceiveAsync(timeout.Token);
+    var helloBuffer = new ByteBuffer(helloResult.Buffer);
+    DungeonMessage helloMessage = DungeonMessage.GetRootAsDungeonMessage(helloBuffer);
+    Assert(helloMessage.PayloadType == DungeonPayload.UdpHello,
+        "UDP service did not send hello first.");
+
+    byte[] snapshotBytes = CreateTestSnapshotBytes();
+    await server.SendAsync(snapshotBytes, helloResult.RemoteEndPoint, timeout.Token);
+    DungeonSnapshotData receivedSnapshot =
+        await snapshotCompletion.Task.WaitAsync(timeout.Token);
+    Assert(receivedSnapshot.ServerTick == 45,
+        "UDP service did not publish the received snapshot.");
+
+    await client.SendMovementAsync(1.0f, 0.0f, false, timeout.Token);
+    UdpReceiveResult movementResult = await server.ReceiveAsync(timeout.Token);
+    var movementBuffer = new ByteBuffer(movementResult.Buffer);
+    DungeonMessage movementMessage =
+        DungeonMessage.GetRootAsDungeonMessage(movementBuffer);
+    Assert(movementMessage.PayloadType == DungeonPayload.PlayerMovement &&
+        movementMessage.PayloadAsPlayerMovement().Sequence == 1,
+        "UDP service movement sequence is incorrect.");
+
+    client.Disconnect();
+    Assert(!client.IsRunning, "UDP service did not disconnect.");
 }
 
 static async Task TestTcpConnectionAsync()
