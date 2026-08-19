@@ -58,6 +58,9 @@ std::vector<std::uint8_t> PacketDispatcher::Dispatch(
     case LeavePartyRequest:
         return HandleLeavePartyRequest(request);
 
+    case PartySnapshotRequest:
+        return HandlePartySnapshotRequest(request);
+
     default:
         throw std::runtime_error("No handler for packet type");
     }
@@ -358,5 +361,38 @@ std::vector<std::uint8_t> PacketDispatcher::HandleLeavePartyRequest(
         LeavePartyResponse,
         request.header.requestId,
         EncodeLeavePartyResponsePayload(result));
+}
+
+std::vector<std::uint8_t> PacketDispatcher::HandlePartySnapshotRequest(
+    const Packet& request) const
+{
+    ValidatePartySnapshotRequestPayload(request.payload);
+
+    PartySnapshotResult result = PartySnapshotResult::NotInParty;
+    PartyId partyId = 0;
+    SessionId leaderSessionId = 0;
+    std::vector<SessionId> members;
+
+    const auto joinedPartyId = partyManager_.GetJoinedParty(sessionId_);
+    if (joinedPartyId.has_value())
+    {
+        const auto party = partyManager_.GetParty(joinedPartyId.value());
+        if (party.has_value())
+        {
+            result = PartySnapshotResult::Success;
+            partyId = party->id;
+            leaderSessionId = party->leaderSessionId;
+            members = party->members;
+        }
+    }
+
+    return EncodePacket(
+        PartySnapshotResponse,
+        request.header.requestId,
+        EncodePartySnapshotResponsePayload(
+            result,
+            partyId,
+            leaderSessionId,
+            members));
 }
 } // namespace dnf

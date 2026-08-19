@@ -357,6 +357,57 @@ void TestLeavePartyRequest()
            dnf::LeavePartyResult::NotInParty);
 }
 
+dnf::PartySnapshotData SendPartySnapshotRequest(
+    TestContext& context,
+    dnf::SessionId sessionId)
+{
+    dnf::Packet request;
+    request.header.type = dnf::PartySnapshotRequest;
+    request.header.requestId = 74;
+
+    dnf::PacketDispatcher dispatcher(
+        context.channelManager,
+        context.partyManager,
+        context.dungeonManager,
+        context.dungeonUdpManager,
+        sessionId);
+
+    dnf::ReceiveBuffer buffer;
+    buffer.Append(dispatcher.Dispatch(request));
+
+    dnf::Packet response;
+    assert(buffer.TryPop(response));
+    assert(response.header.type == dnf::PartySnapshotResponse);
+    assert(response.header.requestId == 74);
+    return dnf::DecodePartySnapshotResponsePayload(response.payload);
+}
+
+void TestPartySnapshotRequest()
+{
+    TestContext context;
+
+    const auto noParty = SendPartySnapshotRequest(context, 700);
+    assert(noParty.result == dnf::PartySnapshotResult::NotInParty);
+
+    const dnf::PartyId partyId =
+        context.partyManager.CreateParty(700).value();
+    assert(context.partyManager.JoinParty(partyId, 701) ==
+           dnf::JoinPartyResult::Success);
+
+    const auto snapshot = SendPartySnapshotRequest(context, 701);
+    assert(snapshot.result == dnf::PartySnapshotResult::Success);
+    assert(snapshot.partyId == partyId);
+    assert(snapshot.leaderSessionId == 700);
+    assert(snapshot.members.size() == 2);
+    assert(snapshot.members[0] == 700);
+    assert(snapshot.members[1] == 701);
+
+    assert(context.partyManager.LeaveParty(700));
+    const auto transferred = SendPartySnapshotRequest(context, 701);
+    assert(transferred.leaderSessionId == 701);
+    assert(transferred.members.size() == 1);
+}
+
 dnf::EnterDungeonResponseData SendEnterDungeonRequest(
     TestContext& context,
     dnf::SessionId sessionId,
@@ -555,6 +606,7 @@ int main()
     TestJoinPartyRequest();
     TestJoinMissingPartyRequest();
     TestLeavePartyRequest();
+    TestPartySnapshotRequest();
     TestPartyLeaderEntersDungeon();
     TestDungeonEntryPermission();
     TestDungeonEntryFailures();
