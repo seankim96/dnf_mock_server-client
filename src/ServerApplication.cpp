@@ -37,6 +37,24 @@ ServerApplication::ServerApplication(std::uint16_t port)
 
 void ServerApplication::LoadGameData()
 {
+    SkillTemplate iceSlash;
+    iceSlash.id = 1001;
+    iceSlash.name = "Ice Slash";
+    iceSlash.cooldownTicks = 90;
+    iceSlash.manaCost = 20;
+    iceSlash.startupTicks = 5;
+    iceSlash.activeTicks = 3;
+    iceSlash.recoveryTicks = 10;
+    iceSlash.hitBox = {150.0f, 0.0f, 60.0f, 120.0f};
+    iceSlash.effects = {
+        {SkillEffectType::Damage, SkillStat::None, 1.5f, 0},
+        {SkillEffectType::Debuff, SkillStat::MoveSpeed, 0.3f, 150}};
+
+    if (!skillCatalog_.AddSkill(iceSlash))
+    {
+        throw std::runtime_error("Failed to load skill catalog");
+    }
+
     EnemyTemplate goblin;
     goblin.id = 2001;
     goblin.name = "Goblin";
@@ -108,6 +126,7 @@ void ServerApplication::Run()
     }
 
     std::cout << "Game data ready"
+              << " skill=1001"
               << " enemy=2001"
               << " dungeon=1001" << '\n';
 
@@ -135,6 +154,11 @@ void ServerApplication::Run()
     {
         thread.join();
     }
+}
+
+const SkillCatalog& ServerApplication::Skills() const
+{
+    return skillCatalog_;
 }
 
 const EnemyCatalog& ServerApplication::Enemies() const

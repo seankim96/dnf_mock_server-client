@@ -9,6 +9,11 @@ void TestGameDataIsLoaded()
 {
     dnf::ServerApplication application(0);
 
+    const auto iceSlash = application.Skills().GetSkill(1001);
+    assert(iceSlash.has_value());
+    assert(iceSlash->name == "Ice Slash");
+    assert(iceSlash->effects.size() == 2);
+
     const auto goblin = application.Enemies().GetEnemy(2001);
     assert(goblin.has_value());
     assert(goblin->name == "Goblin");

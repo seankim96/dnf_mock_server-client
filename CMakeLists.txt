@@ -47,6 +47,7 @@ add_library(dnf_core
     src/RoomState.cpp
     src/ServerApplication.cpp
     src/SessionManager.cpp
+    src/SkillCatalog.cpp
     src/TcpServer.cpp
     src/TcpSession.cpp
 )
@@ -124,6 +125,11 @@ add_executable(enemy_catalog_test tests/EnemyCatalogTest.cpp)
 target_link_libraries(enemy_catalog_test PRIVATE dnf_core)
 
 add_test(NAME enemy_catalog_test COMMAND enemy_catalog_test)
+
+add_executable(skill_catalog_test tests/SkillCatalogTest.cpp)
+target_link_libraries(skill_catalog_test PRIVATE dnf_core)
+
+add_test(NAME skill_catalog_test COMMAND skill_catalog_test)
 
 add_executable(room_state_test tests/RoomStateTest.cpp)
 target_link_libraries(room_state_test PRIVATE dnf_core)

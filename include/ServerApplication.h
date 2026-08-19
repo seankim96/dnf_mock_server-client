@@ -8,6 +8,7 @@
 #include "EnemyCatalog.h"
 #include "PartyManager.h"
 #include "SessionManager.h"
+#include "SkillCatalog.h"
 #include "TcpServer.h"
 
 #include <boost/asio/io_context.hpp>
@@ -23,6 +24,7 @@ public:
 
     void Run();
 
+    const SkillCatalog& Skills() const;
     const EnemyCatalog& Enemies() const;
     const DungeonCatalog& DungeonTemplates() const;
     const DungeonManager& DungeonInstances() const;
@@ -35,6 +37,7 @@ private:
     DungeonUdpManager dungeonUdpManager_;
     ChannelManager channelManager_;
     PartyManager partyManager_;
+    SkillCatalog skillCatalog_;
     EnemyCatalog enemyCatalog_;
     DungeonCatalog dungeonCatalog_;
     DungeonManager dungeonManager_;
