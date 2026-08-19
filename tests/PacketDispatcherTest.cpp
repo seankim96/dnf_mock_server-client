@@ -364,6 +364,7 @@ dnf::PartySnapshotData SendPartySnapshotRequest(
     dnf::Packet request;
     request.header.type = dnf::PartySnapshotRequest;
     request.header.requestId = 74;
+    request.payload = dnf::EncodePartySnapshotRequestPayload();
 
     dnf::PacketDispatcher dispatcher(
         context.channelManager,

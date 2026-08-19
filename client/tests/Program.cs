@@ -211,40 +211,50 @@ static void TestGamePayloads()
         () => GamePayloadCodec.DecodeLeavePartyResponse(new byte[] { 2 }),
         "Unknown leave party result was accepted.");
 
-    Assert(GamePayloadCodec.EncodePartySnapshotRequest().Length == 0,
-        "Party snapshot request payload must be empty.");
+    byte[] partySnapshotRequest =
+        GamePayloadCodec.EncodePartySnapshotRequest();
+    var partySnapshotRequestBuffer = new ByteBuffer(partySnapshotRequest);
+    Assert(TcpSchema.TcpMessage.VerifyTcpMessage(partySnapshotRequestBuffer),
+        "Party snapshot request FlatBuffer is invalid.");
+    TcpSchema.TcpMessage partySnapshotRequestMessage =
+        TcpSchema.TcpMessage.GetRootAsTcpMessage(partySnapshotRequestBuffer);
+    Assert(partySnapshotRequestMessage.PayloadType ==
+        TcpSchema.TcpPayload.PartySnapshotRequest,
+        "Party snapshot request type is incorrect.");
+
     PartySnapshotData partySnapshot =
         GamePayloadCodec.DecodePartySnapshotResponse(
-            new byte[]
-            {
-                0,
-                0, 0, 0, 0, 0, 0, 0, 9,
-                0, 0, 0, 0, 0, 0, 0, 42,
-                2,
-                0, 0, 0, 0, 0, 0, 0, 42,
-                0, 0, 0, 0, 0, 0, 0, 43
-            });
+            CreatePartySnapshotResponseBytes(
+                TcpSchema.PartySnapshotResult.Success,
+                9,
+                42,
+                new ulong[] { 42, 43 }));
     Assert(partySnapshot.Result == PartySnapshotResult.Success &&
         partySnapshot.PartyId == 9 && partySnapshot.LeaderSessionId == 42 &&
         partySnapshot.Members.SequenceEqual(new ulong[] { 42, 43 }),
         "Party snapshot response is incorrect.");
     PartySnapshotData noPartySnapshot =
         GamePayloadCodec.DecodePartySnapshotResponse(
-            new byte[18] { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
+            CreatePartySnapshotResponseBytes(
+                TcpSchema.PartySnapshotResult.NotInParty,
+                0,
+                0,
+                Array.Empty<ulong>()));
     Assert(noPartySnapshot.Result == PartySnapshotResult.NotInParty &&
         noPartySnapshot.Members.Count == 0,
         "Not-in-party snapshot response is incorrect.");
     AssertThrows<InvalidDataException>(
         () => GamePayloadCodec.DecodePartySnapshotResponse(
-            new byte[]
-            {
-                0,
-                0, 0, 0, 0, 0, 0, 0, 9,
-                0, 0, 0, 0, 0, 0, 0, 42,
-                1,
-                0, 0, 0, 0, 0, 0, 0, 43
-            }),
+            CreatePartySnapshotResponseBytes(
+                TcpSchema.PartySnapshotResult.Success,
+                9,
+                42,
+                new ulong[] { 43 })),
         "Party snapshot without the leader was accepted.");
+    AssertThrows<InvalidDataException>(
+        () => GamePayloadCodec.DecodePartySnapshotResponse(
+            partySnapshotRequest),
+        "Party snapshot request was accepted as a response.");
 
     byte[] dungeonPayload =
     {
@@ -323,6 +333,30 @@ static void TestTcpFlatBufferSchema()
         decoded.PayloadType == TcpSchema.TcpPayload.LoginRequest &&
         decoded.PayloadAsLoginRequest().PlayerName == "Player_1",
         "TCP FlatBuffer login payload is incorrect.");
+}
+
+static byte[] CreatePartySnapshotResponseBytes(
+    TcpSchema.PartySnapshotResult result,
+    ulong partyId,
+    ulong leaderSessionId,
+    ulong[] members)
+{
+    var builder = new FlatBufferBuilder(128);
+    VectorOffset memberIds =
+        TcpSchema.PartySnapshotResponse.CreateMemberSessionIdsVector(
+            builder,
+            members);
+    Offset<TcpSchema.PartySnapshotResponse> response =
+        TcpSchema.PartySnapshotResponse.CreatePartySnapshotResponse(
+            builder,
+            result,
+            partyId,
+            leaderSessionId,
+            memberIds);
+    return TcpFlatBufferCodec.FinishPayload(
+        builder,
+        TcpSchema.TcpPayload.PartySnapshotResponse,
+        response.Value);
 }
 
 static byte[] CreateTestSnapshotBytes()
@@ -516,21 +550,25 @@ static async Task TestTcpConnectionAsync()
         TcpPacketCodec.DecodeHeader(requestHeaderBytes);
     Assert(snapshotRequestHeader.Type == TcpPacketType.PartySnapshotRequest,
         "Party snapshot TCP request type is incorrect.");
-    Assert(snapshotRequestHeader.PacketSize == TcpPacketCodec.HeaderSize,
-        "Party snapshot TCP request payload must be empty.");
+    int snapshotRequestPayloadSize =
+        snapshotRequestHeader.PacketSize - TcpPacketCodec.HeaderSize;
+    var snapshotRequestPayload = new byte[snapshotRequestPayloadSize];
+    await serverStream.ReadExactlyAsync(snapshotRequestPayload, timeout.Token);
+    var snapshotRequestBuffer = new ByteBuffer(snapshotRequestPayload);
+    Assert(TcpSchema.TcpMessage.VerifyTcpMessage(snapshotRequestBuffer),
+        "Party snapshot TCP request FlatBuffer is invalid.");
+    Assert(TcpSchema.TcpMessage.GetRootAsTcpMessage(snapshotRequestBuffer)
+        .PayloadType == TcpSchema.TcpPayload.PartySnapshotRequest,
+        "Party snapshot TCP request FlatBuffer type is incorrect.");
 
     byte[] snapshotResponseBytes = TcpPacketCodec.EncodePacket(
         TcpPacketType.PartySnapshotResponse,
         snapshotRequestHeader.RequestId,
-        new byte[]
-        {
-            0,
-            0, 0, 0, 0, 0, 0, 0, 9,
-            0, 0, 0, 0, 0, 0, 0, 42,
-            2,
-            0, 0, 0, 0, 0, 0, 0, 42,
-            0, 0, 0, 0, 0, 0, 0, 43
-        });
+        CreatePartySnapshotResponseBytes(
+            TcpSchema.PartySnapshotResult.Success,
+            9,
+            42,
+            new ulong[] { 42, 43 }));
     await serverStream.WriteAsync(snapshotResponseBytes, timeout.Token);
 
     TcpPacket snapshotResponse = await snapshotResponseTask;

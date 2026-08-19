@@ -83,6 +83,8 @@ LeavePartyResult DecodeLeavePartyResponsePayload(
 void ValidatePartySnapshotRequestPayload(
     const std::vector<std::uint8_t>& payload);
 
+std::vector<std::uint8_t> EncodePartySnapshotRequestPayload();
+
 std::vector<std::uint8_t> EncodePartySnapshotResponsePayload(
     PartySnapshotResult result,
     PartyId partyId,

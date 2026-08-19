@@ -238,10 +238,13 @@ void TestLeavePartyResponse()
 
 void TestPartySnapshotRequest()
 {
+    const auto payload = dnf::EncodePartySnapshotRequestPayload();
+    assert(!payload.empty());
+
     const auto packetBytes = dnf::EncodePacket(
         dnf::PartySnapshotRequest,
         74,
-        {});
+        payload);
 
     dnf::ReceiveBuffer buffer;
     buffer.Append(packetBytes);
@@ -250,6 +253,17 @@ void TestPartySnapshotRequest()
     assert(buffer.TryPop(request));
     assert(request.header.type == dnf::PartySnapshotRequest);
     dnf::ValidatePartySnapshotRequestPayload(request.payload);
+
+    bool threw = false;
+    try
+    {
+        dnf::ValidatePartySnapshotRequestPayload({1});
+    }
+    catch (const std::runtime_error&)
+    {
+        threw = true;
+    }
+    assert(threw);
 }
 
 void TestPartySnapshotResponse()
@@ -260,9 +274,7 @@ void TestPartySnapshotResponse()
         100,
         {100, 200});
 
-    assert(payload.size() == 34);
-    assert(payload[0] == 0);
-    assert(payload[17] == 2);
+    assert(!payload.empty());
 
     const auto snapshot =
         dnf::DecodePartySnapshotResponsePayload(payload);
@@ -305,9 +317,7 @@ void TestInvalidPartySnapshot()
     try
     {
         dnf::DecodePartySnapshotResponsePayload(
-            {0, 0, 0, 0, 0, 0, 0, 0, 10,
-             0, 0, 0, 0, 0, 0, 0, 100,
-             1});
+            dnf::EncodePartySnapshotRequestPayload());
     }
     catch (const std::runtime_error&)
     {

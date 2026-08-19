@@ -52,6 +52,7 @@ add_library(dnf_core
     src/ServerApplication.cpp
     src/SessionManager.cpp
     src/SkillCatalog.cpp
+    src/TcpFlatBufferCodec.cpp
     src/TcpServer.cpp
     src/TcpSession.cpp
 )

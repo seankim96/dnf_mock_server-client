@@ -3,6 +3,8 @@ using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using Google.FlatBuffers;
+using TcpSchema = Dnf.Protocol.Tcp;
 
 namespace DnfMockClient.Protocol;
 
@@ -185,29 +187,33 @@ public static class GamePayloadCodec
 
     public static byte[] EncodePartySnapshotRequest()
     {
-        return Array.Empty<byte>();
+        var builder = new FlatBufferBuilder(64);
+        TcpSchema.PartySnapshotRequest.StartPartySnapshotRequest(builder);
+        Offset<TcpSchema.PartySnapshotRequest> request =
+            TcpSchema.PartySnapshotRequest.EndPartySnapshotRequest(builder);
+        return TcpFlatBufferCodec.FinishPayload(
+            builder,
+            TcpSchema.TcpPayload.PartySnapshotRequest,
+            request.Value);
     }
 
     public static PartySnapshotData DecodePartySnapshotResponse(byte[] payload)
     {
-        const int fixedSize = 18;
-
-        if (payload.Length < fixedSize ||
-            !Enum.IsDefined(typeof(PartySnapshotResult), payload[0]))
+        TcpSchema.PartySnapshotResponse response =
+            TcpFlatBufferCodec.DecodePayload<TcpSchema.PartySnapshotResponse>(
+                payload,
+                TcpSchema.TcpPayload.PartySnapshotResponse);
+        if (!Enum.IsDefined(
+                typeof(TcpSchema.PartySnapshotResult),
+                response.Result))
         {
             throw new InvalidDataException("Invalid party snapshot response payload.");
         }
 
-        var result = (PartySnapshotResult)payload[0];
-        ulong partyId = ReadUInt64(payload, 1);
-        ulong leaderSessionId = ReadUInt64(payload, 9);
-        int memberCount = payload[17];
-        int expectedSize = fixedSize + memberCount * 8;
-
-        if (payload.Length != expectedSize)
-        {
-            throw new InvalidDataException("Invalid party snapshot response size.");
-        }
+        var result = (PartySnapshotResult)(byte)response.Result;
+        ulong partyId = response.PartyId;
+        ulong leaderSessionId = response.LeaderSessionId;
+        int memberCount = response.MemberSessionIdsLength;
 
         var members = new List<ulong>(memberCount);
         var uniqueMembers = new HashSet<ulong>();
@@ -215,7 +221,7 @@ public static class GamePayloadCodec
 
         for (int index = 0; index < memberCount; index++)
         {
-            ulong memberSessionId = ReadUInt64(payload, fixedSize + index * 8);
+            ulong memberSessionId = response.MemberSessionIds(index);
             if (memberSessionId == 0 || !uniqueMembers.Add(memberSessionId))
             {
                 throw new InvalidDataException("Invalid party member data.");
