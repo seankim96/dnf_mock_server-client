@@ -7,9 +7,27 @@ namespace dnf
 {
 namespace
 {
+bool IsValidTarget(const SkillEffect& effect)
+{
+    switch (effect.type)
+    {
+    case SkillEffectType::Damage:
+    case SkillEffectType::Debuff:
+        return effect.target == SkillTargetType::Enemy;
+
+    case SkillEffectType::Heal:
+    case SkillEffectType::Buff:
+        return effect.target == SkillTargetType::Self ||
+               effect.target == SkillTargetType::Party;
+    }
+
+    return false;
+}
+
 bool IsValidEffect(const SkillEffect& effect)
 {
-    if (!std::isfinite(effect.value) || effect.value <= 0.0f)
+    if (!IsValidTarget(effect) || !std::isfinite(effect.value) ||
+        effect.value <= 0.0f)
     {
         return false;
     }

@@ -19,6 +19,13 @@ enum class SkillEffectType
     Debuff
 };
 
+enum class SkillTargetType
+{
+    Self,
+    Party,
+    Enemy
+};
+
 enum class SkillStat
 {
     None,
@@ -30,6 +37,7 @@ enum class SkillStat
 struct SkillEffect
 {
     SkillEffectType type = SkillEffectType::Damage;
+    SkillTargetType target = SkillTargetType::Enemy;
     SkillStat stat = SkillStat::None;
     float value = 0.0f;
     std::uint32_t durationTicks = 0;

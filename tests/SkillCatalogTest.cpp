@@ -17,8 +17,16 @@ dnf::SkillTemplate MakeIceSlash()
     skill.recoveryTicks = 10;
     skill.hitBox = {150.0f, 0.0f, 60.0f, 120.0f};
     skill.effects = {
-        {dnf::SkillEffectType::Damage, dnf::SkillStat::None, 1.5f, 0},
-        {dnf::SkillEffectType::Debuff, dnf::SkillStat::MoveSpeed, 0.3f, 150}};
+        {dnf::SkillEffectType::Damage,
+         dnf::SkillTargetType::Enemy,
+         dnf::SkillStat::None,
+         1.5f,
+         0},
+        {dnf::SkillEffectType::Debuff,
+         dnf::SkillTargetType::Enemy,
+         dnf::SkillStat::MoveSpeed,
+         0.3f,
+         150}};
     return skill;
 }
 
@@ -35,8 +43,37 @@ void TestAddAndGetCompositeSkill()
     assert(skill->name == "Ice Slash");
     assert(skill->effects.size() == 2);
     assert(skill->effects[0].type == dnf::SkillEffectType::Damage);
+    assert(skill->effects[0].target == dnf::SkillTargetType::Enemy);
     assert(skill->effects[1].type == dnf::SkillEffectType::Debuff);
+    assert(skill->effects[1].target == dnf::SkillTargetType::Enemy);
     assert(skill->effects[1].stat == dnf::SkillStat::MoveSpeed);
+}
+
+void TestSelfAndPartyTargets()
+{
+    dnf::SkillCatalog catalog;
+
+    auto skill = MakeIceSlash();
+    skill.id = 1002;
+    skill.name = "Healing Shout";
+    skill.effects = {
+        {dnf::SkillEffectType::Heal,
+         dnf::SkillTargetType::Party,
+         dnf::SkillStat::None,
+         100.0f,
+         0},
+        {dnf::SkillEffectType::Buff,
+         dnf::SkillTargetType::Self,
+         dnf::SkillStat::Defense,
+         0.2f,
+         150}};
+
+    assert(catalog.AddSkill(skill));
+
+    const auto addedSkill = catalog.GetSkill(1002);
+    assert(addedSkill.has_value());
+    assert(addedSkill->effects[0].target == dnf::SkillTargetType::Party);
+    assert(addedSkill->effects[1].target == dnf::SkillTargetType::Self);
 }
 
 void TestInvalidSkill()
@@ -56,6 +93,10 @@ void TestInvalidSkill()
     assert(!catalog.AddSkill(skill));
 
     skill = MakeIceSlash();
+    skill.effects[1].type = dnf::SkillEffectType::Buff;
+    assert(!catalog.AddSkill(skill));
+
+    skill = MakeIceSlash();
     skill.hitBox.forwardRange = 0.0f;
     assert(!catalog.AddSkill(skill));
 
@@ -66,6 +107,7 @@ void TestInvalidSkill()
 int main()
 {
     TestAddAndGetCompositeSkill();
+    TestSelfAndPartyTargets();
     TestInvalidSkill();
 
     std::cout << "All skill catalog tests passed.\n";

@@ -47,8 +47,16 @@ void ServerApplication::LoadGameData()
     iceSlash.recoveryTicks = 10;
     iceSlash.hitBox = {150.0f, 0.0f, 60.0f, 120.0f};
     iceSlash.effects = {
-        {SkillEffectType::Damage, SkillStat::None, 1.5f, 0},
-        {SkillEffectType::Debuff, SkillStat::MoveSpeed, 0.3f, 150}};
+        {SkillEffectType::Damage,
+         SkillTargetType::Enemy,
+         SkillStat::None,
+         1.5f,
+         0},
+        {SkillEffectType::Debuff,
+         SkillTargetType::Enemy,
+         SkillStat::MoveSpeed,
+         0.3f,
+         150}};
 
     if (!skillCatalog_.AddSkill(iceSlash))
     {
