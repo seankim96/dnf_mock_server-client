@@ -26,6 +26,9 @@ public partial class Main : Control
     private OptionButton _channelSelect = null!;
     private Button _refreshChannelsButton = null!;
     private Button _joinChannelButton = null!;
+    private Control _partyPanel = null!;
+    private Button _createPartyButton = null!;
+    private Label _partyInfoLabel = null!;
     private Control _dungeonPanel = null!;
     private LineEdit _dungeonTemplateInput = null!;
     private Button _enterDungeonButton = null!;
@@ -45,6 +48,7 @@ public partial class Main : Control
     private bool _busy;
     private bool _loggedIn;
     private bool _joinedChannel;
+    private bool _inParty;
     private bool _movementSendInProgress;
     private bool _attackPressed;
     private bool _receivedFirstSnapshot;
@@ -127,6 +131,9 @@ public partial class Main : Control
         _channelSelect = GetNode<OptionButton>("%ChannelSelect");
         _refreshChannelsButton = GetNode<Button>("%RefreshChannelsButton");
         _joinChannelButton = GetNode<Button>("%JoinChannelButton");
+        _partyPanel = GetNode<Control>("%PartyPanel");
+        _createPartyButton = GetNode<Button>("%CreatePartyButton");
+        _partyInfoLabel = GetNode<Label>("%PartyInfoLabel");
         _dungeonPanel = GetNode<Control>("%DungeonPanel");
         _dungeonTemplateInput = GetNode<LineEdit>("%DungeonTemplateInput");
         _enterDungeonButton = GetNode<Button>("%EnterDungeonButton");
@@ -149,6 +156,7 @@ public partial class Main : Control
         _loginButton.Pressed += OnLoginButtonPressed;
         _refreshChannelsButton.Pressed += OnRefreshChannelsButtonPressed;
         _joinChannelButton.Pressed += OnJoinChannelButtonPressed;
+        _createPartyButton.Pressed += OnCreatePartyButtonPressed;
         _enterDungeonButton.Pressed += OnEnterDungeonButtonPressed;
         _leaveDungeonButton.Pressed += OnLeaveDungeonButtonPressed;
     }
@@ -159,6 +167,7 @@ public partial class Main : Control
         _loginButton.Pressed -= OnLoginButtonPressed;
         _refreshChannelsButton.Pressed -= OnRefreshChannelsButtonPressed;
         _joinChannelButton.Pressed -= OnJoinChannelButtonPressed;
+        _createPartyButton.Pressed -= OnCreatePartyButtonPressed;
         _enterDungeonButton.Pressed -= OnEnterDungeonButtonPressed;
         _leaveDungeonButton.Pressed -= OnLeaveDungeonButtonPressed;
     }
@@ -347,6 +356,43 @@ public partial class Main : Control
         }
     }
 
+    private async void OnCreatePartyButtonPressed()
+    {
+        BeginOperation(TimeSpan.FromSeconds(5));
+
+        try
+        {
+            TcpPacket packet = await _connection.SendRequestAsync(
+                TcpPacketType.CreatePartyRequest,
+                GamePayloadCodec.EncodeCreatePartyRequest(),
+                _operationCancellation!.Token);
+            CreatePartyResponse response =
+                GamePayloadCodec.DecodeCreatePartyResponse(packet.Payload);
+
+            if (response.Result != CreatePartyResult.Success)
+            {
+                SetStatus($"파티 생성 실패: {response.Result}", Colors.Orange);
+                AddLog($"CreatePartyResponse: {response.Result}");
+                return;
+            }
+
+            _inParty = true;
+            _partyInfoLabel.Text =
+                $"Party {response.PartyId} / Leader {response.LeaderSessionId}";
+            SetStatus($"파티 {response.PartyId} 생성 성공", Colors.LightGreen);
+            AddLog(
+                $"파티 생성: id={response.PartyId}, leader={response.LeaderSessionId}");
+        }
+        catch (Exception exception) when (IsExpectedOperationError(exception))
+        {
+            ShowOperationError(exception);
+        }
+        finally
+        {
+            EndOperation();
+        }
+    }
+
     private async Task LoadChannelsAsync(
         CancellationToken cancellationToken)
     {
@@ -393,9 +439,11 @@ public partial class Main : Control
         _udpService.Disconnect();
         _loggedIn = false;
         _joinedChannel = false;
+        _inParty = false;
         _localSessionId = 0;
         _receivedFirstSnapshot = false;
         _channelSelect.Clear();
+        _partyInfoLabel.Text = "파티 없음";
         _lobbyScreen.Visible = true;
         _dungeonScreen.Visible = false;
     }
@@ -419,9 +467,12 @@ public partial class Main : Control
             _channelSelect.ItemCount == 0 || _busy;
         _channelPanel.Modulate = _loggedIn ? Colors.White : Colors.DimGray;
 
-        _dungeonTemplateInput.Editable = _joinedChannel && !_busy;
-        _enterDungeonButton.Disabled = !_joinedChannel || _busy;
-        _dungeonPanel.Modulate = _joinedChannel ? Colors.White : Colors.DimGray;
+        _createPartyButton.Disabled = !_joinedChannel || _inParty || _busy;
+        _partyPanel.Modulate = _joinedChannel ? Colors.White : Colors.DimGray;
+
+        _dungeonTemplateInput.Editable = _inParty && !_busy;
+        _enterDungeonButton.Disabled = !_inParty || _busy;
+        _dungeonPanel.Modulate = _inParty ? Colors.White : Colors.DimGray;
     }
 
     private void ShowOperationError(Exception exception)

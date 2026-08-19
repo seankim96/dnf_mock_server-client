@@ -139,6 +139,7 @@ public sealed class TcpConnectionService : IDisposable
             TcpPacketType.EnterDungeonRequest => TcpPacketType.EnterDungeonResponse,
             TcpPacketType.DungeonConnectionInfoRequest =>
                 TcpPacketType.DungeonConnectionInfoResponse,
+            TcpPacketType.CreatePartyRequest => TcpPacketType.CreatePartyResponse,
             _ => throw new ArgumentException("Not a TCP request type.", nameof(requestType))
         };
     }

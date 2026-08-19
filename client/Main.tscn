@@ -182,6 +182,36 @@ layout_mode = 2
 size_flags_horizontal = 3
 text = "채널 입장"
 
+[node name="PartyPanel" type="PanelContainer" parent="Margin/RootVBox/Content/LeftScroll/Steps"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Margin" type="MarginContainer" parent="Margin/RootVBox/Content/LeftScroll/Steps/PartyPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 12
+
+[node name="VBox" type="VBoxContainer" parent="Margin/RootVBox/Content/LeftScroll/Steps/PartyPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Heading" type="Label" parent="Margin/RootVBox/Content/LeftScroll/Steps/PartyPanel/Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "4. 파티"
+
+[node name="PartyInfoLabel" type="Label" parent="Margin/RootVBox/Content/LeftScroll/Steps/PartyPanel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "파티 없음"
+
+[node name="CreatePartyButton" type="Button" parent="Margin/RootVBox/Content/LeftScroll/Steps/PartyPanel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "1인 파티 생성"
+
 [node name="DungeonPanel" type="PanelContainer" parent="Margin/RootVBox/Content/LeftScroll/Steps"]
 unique_name_in_owner = true
 layout_mode = 2
@@ -200,7 +230,7 @@ theme_override_constants/separation = 8
 [node name="Heading" type="Label" parent="Margin/RootVBox/Content/LeftScroll/Steps/DungeonPanel/Margin/VBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "4. 던전 입장"
+text = "5. 던전 입장"
 
 [node name="DungeonTemplateInput" type="LineEdit" parent="Margin/RootVBox/Content/LeftScroll/Steps/DungeonPanel/Margin/VBox"]
 unique_name_in_owner = true

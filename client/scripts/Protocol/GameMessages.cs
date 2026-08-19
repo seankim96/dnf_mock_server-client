@@ -56,6 +56,29 @@ public sealed class JoinChannelResponse
     public uint ChannelId { get; }
 }
 
+public enum CreatePartyResult : byte
+{
+    Success = 0,
+    AlreadyInParty = 1
+}
+
+public sealed class CreatePartyResponse
+{
+    public CreatePartyResponse(
+        CreatePartyResult result,
+        ulong partyId,
+        ulong leaderSessionId)
+    {
+        Result = result;
+        PartyId = partyId;
+        LeaderSessionId = leaderSessionId;
+    }
+
+    public CreatePartyResult Result { get; }
+    public ulong PartyId { get; }
+    public ulong LeaderSessionId { get; }
+}
+
 public enum EnterDungeonResult : byte
 {
     Success = 0,

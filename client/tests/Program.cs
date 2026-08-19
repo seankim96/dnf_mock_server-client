@@ -157,6 +157,28 @@ static void TestGamePayloads()
     Assert(joinResponse.Result == JoinChannelResult.Success &&
         joinResponse.ChannelId == 3, "Join channel response is incorrect.");
 
+    Assert(GamePayloadCodec.EncodeCreatePartyRequest().Length == 0,
+        "Create party request payload must be empty.");
+    CreatePartyResponse createParty = GamePayloadCodec.DecodeCreatePartyResponse(
+        new byte[]
+        {
+            0,
+            0, 0, 0, 0, 0, 0, 0, 9,
+            0, 0, 0, 0, 0, 0, 0, 42
+        });
+    Assert(createParty.Result == CreatePartyResult.Success &&
+        createParty.PartyId == 9 && createParty.LeaderSessionId == 42,
+        "Create party response is incorrect.");
+    CreatePartyResponse failedParty = GamePayloadCodec.DecodeCreatePartyResponse(
+        new byte[17] { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
+    Assert(failedParty.Result == CreatePartyResult.AlreadyInParty &&
+        failedParty.PartyId == 0 && failedParty.LeaderSessionId == 0,
+        "Failed create party response is incorrect.");
+    AssertThrows<InvalidDataException>(
+        () => GamePayloadCodec.DecodeCreatePartyResponse(
+            new byte[17] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }),
+        "Successful create party response with zero IDs was accepted.");
+
     byte[] dungeonPayload =
     {
         0,
@@ -329,6 +351,34 @@ static async Task TestTcpConnectionAsync()
     Assert(response.Payload.SequenceEqual(
         new byte[] { 0, 0, 0, 0, 0, 0, 0, 0, 42 }),
         "TCP response payload is incorrect.");
+
+    Task<TcpPacket> partyResponseTask = connection.SendRequestAsync(
+        TcpPacketType.CreatePartyRequest,
+        GamePayloadCodec.EncodeCreatePartyRequest(),
+        timeout.Token);
+
+    await serverStream.ReadExactlyAsync(requestHeaderBytes, timeout.Token);
+    TcpPacketHeader partyRequestHeader =
+        TcpPacketCodec.DecodeHeader(requestHeaderBytes);
+    Assert(partyRequestHeader.Type == TcpPacketType.CreatePartyRequest,
+        "Create party TCP request type is incorrect.");
+    Assert(partyRequestHeader.PacketSize == TcpPacketCodec.HeaderSize,
+        "Create party TCP request payload must be empty.");
+
+    byte[] partyResponseBytes = TcpPacketCodec.EncodePacket(
+        TcpPacketType.CreatePartyResponse,
+        partyRequestHeader.RequestId,
+        new byte[]
+        {
+            0,
+            0, 0, 0, 0, 0, 0, 0, 9,
+            0, 0, 0, 0, 0, 0, 0, 42
+        });
+    await serverStream.WriteAsync(partyResponseBytes, timeout.Token);
+
+    TcpPacket partyResponse = await partyResponseTask;
+    Assert(partyResponse.Header.Type == TcpPacketType.CreatePartyResponse,
+        "Create party TCP response type is incorrect.");
 
     connection.Disconnect();
 
