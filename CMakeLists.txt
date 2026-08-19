@@ -45,6 +45,7 @@ add_library(dnf_core
     src/Packet.cpp
     src/PacketDispatcher.cpp
     src/PartyManager.cpp
+    src/PartyProtocol.cpp
     src/ReceiveBuffer.cpp
     src/RoomState.cpp
     src/ServerApplication.cpp
@@ -100,6 +101,11 @@ add_executable(party_manager_test tests/PartyManagerTest.cpp)
 target_link_libraries(party_manager_test PRIVATE dnf_core)
 
 add_test(NAME party_manager_test COMMAND party_manager_test)
+
+add_executable(party_protocol_test tests/PartyProtocolTest.cpp)
+target_link_libraries(party_protocol_test PRIVATE dnf_core)
+
+add_test(NAME party_protocol_test COMMAND party_protocol_test)
 
 add_executable(dungeon_instance_test tests/DungeonInstanceTest.cpp)
 target_link_libraries(dungeon_instance_test PRIVATE dnf_core)
