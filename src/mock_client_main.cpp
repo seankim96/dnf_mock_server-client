@@ -1,4 +1,5 @@
 #include "ChannelProtocol.h"
+#include "LoginProtocol.h"
 #include "Packet.h"
 #include "TcpClient.h"
 
@@ -83,17 +84,21 @@ int main(int argc, char* argv[])
         }
 
         if (response.header.type != dnf::LoginResponse ||
-            response.header.requestId != 1 ||
-            response.payload.size() != 1)
+            response.header.requestId != 1)
         {
             throw std::runtime_error("Invalid LoginResponse");
         }
 
+        const auto loginResponse =
+            dnf::DecodeLoginResponsePayload(response.payload);
+
         std::cout << "LoginResponse received\n";
         std::cout << "Request ID: " << response.header.requestId << '\n';
-        std::cout << "Result: " << static_cast<int>(response.payload[0]) << '\n';
+        std::cout << "Result: "
+                  << static_cast<int>(loginResponse.result) << '\n';
+        std::cout << "Session ID: " << loginResponse.sessionId << '\n';
 
-        if (response.payload[0] != 0)
+        if (loginResponse.result != dnf::LoginSuccess)
         {
             return 1;
         }

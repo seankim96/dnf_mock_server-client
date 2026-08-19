@@ -6,6 +6,7 @@
 #include "DungeonLifecycleService.h"
 #include "DungeonManager.h"
 #include "DungeonUdpManager.h"
+#include "LoginProtocol.h"
 #include "LoginValidator.h"
 #include "PartyManager.h"
 
@@ -58,8 +59,11 @@ std::vector<std::uint8_t> PacketDispatcher::HandleLoginRequest(
     const LoginValidator validator;
     const LoginValidationResult validation = validator.Validate(request.payload);
 
-    const std::vector<std::uint8_t> responsePayload = {
-        static_cast<std::uint8_t>(validation.result)};
+    const SessionId responseSessionId =
+        validation.result == LoginSuccess ? sessionId_ : 0;
+    const auto responsePayload = EncodeLoginResponsePayload(
+        validation.result,
+        responseSessionId);
 
     return EncodePacket(
         LoginResponse,

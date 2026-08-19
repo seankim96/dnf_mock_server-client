@@ -4,6 +4,7 @@
 #include "DungeonManager.h"
 #include "DungeonUdpManager.h"
 #include "EnemyCatalog.h"
+#include "LoginProtocol.h"
 #include "PacketDispatcher.h"
 #include "PartyManager.h"
 #include "ReceiveBuffer.h"
@@ -62,7 +63,11 @@ void TestLoginRequest()
     assert(buffer.TryPop(response) == true);
     assert(response.header.type == dnf::LoginResponse);
     assert(response.header.requestId == 42);
-    assert(response.payload == std::vector<std::uint8_t>({0}));
+
+    const auto loginResponse =
+        dnf::DecodeLoginResponsePayload(response.payload);
+    assert(loginResponse.result == dnf::LoginSuccess);
+    assert(loginResponse.sessionId == 100);
 }
 
 void TestChannelListRequest()
@@ -182,7 +187,10 @@ void TestInvalidLoginRequest()
 
     dnf::Packet response;
     assert(buffer.TryPop(response) == true);
-    assert(response.payload == std::vector<std::uint8_t>({1}));
+    const auto loginResponse =
+        dnf::DecodeLoginResponsePayload(response.payload);
+    assert(loginResponse.result == dnf::EmptyPlayerName);
+    assert(loginResponse.sessionId == 0);
 }
 
 dnf::EnterDungeonResponseData SendEnterDungeonRequest(

@@ -40,6 +40,7 @@ add_library(dnf_core
     src/DungeonUdpManager.cpp
     src/DungeonUdpSession.cpp
     src/EnemyCatalog.cpp
+    src/LoginProtocol.cpp
     src/LoginValidator.cpp
     src/Packet.cpp
     src/PacketDispatcher.cpp
@@ -91,6 +92,11 @@ add_executable(login_validator_test tests/LoginValidatorTest.cpp)
 target_link_libraries(login_validator_test PRIVATE dnf_core)
 
 add_test(NAME login_validator_test COMMAND login_validator_test)
+
+add_executable(login_protocol_test tests/LoginProtocolTest.cpp)
+target_link_libraries(login_protocol_test PRIVATE dnf_core)
+
+add_test(NAME login_protocol_test COMMAND login_protocol_test)
 
 add_executable(channel_manager_test tests/ChannelManagerTest.cpp)
 target_link_libraries(channel_manager_test PRIVATE dnf_core)
