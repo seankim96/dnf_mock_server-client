@@ -55,6 +55,9 @@ std::vector<std::uint8_t> PacketDispatcher::Dispatch(
     case JoinPartyRequest:
         return HandleJoinPartyRequest(request);
 
+    case LeavePartyRequest:
+        return HandleLeavePartyRequest(request);
+
     default:
         throw std::runtime_error("No handler for packet type");
     }
@@ -339,5 +342,21 @@ std::vector<std::uint8_t> PacketDispatcher::HandleJoinPartyRequest(
             result,
             partyId,
             leaderSessionId));
+}
+
+std::vector<std::uint8_t> PacketDispatcher::HandleLeavePartyRequest(
+    const Packet& request) const
+{
+    ValidateLeavePartyRequestPayload(request.payload);
+
+    const bool leftParty = partyManager_.LeaveParty(sessionId_);
+    const LeavePartyResult result = leftParty
+        ? LeavePartyResult::Success
+        : LeavePartyResult::NotInParty;
+
+    return EncodePacket(
+        LeavePartyResponse,
+        request.header.requestId,
+        EncodeLeavePartyResponsePayload(result));
 }
 } // namespace dnf

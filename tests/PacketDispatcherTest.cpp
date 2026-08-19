@@ -311,6 +311,52 @@ void TestJoinMissingPartyRequest()
     assert(response.leaderSessionId == 0);
 }
 
+dnf::LeavePartyResult SendLeavePartyRequest(
+    TestContext& context,
+    dnf::SessionId sessionId)
+{
+    dnf::Packet request;
+    request.header.type = dnf::LeavePartyRequest;
+    request.header.requestId = 73;
+
+    dnf::PacketDispatcher dispatcher(
+        context.channelManager,
+        context.partyManager,
+        context.dungeonManager,
+        context.dungeonUdpManager,
+        sessionId);
+
+    dnf::ReceiveBuffer buffer;
+    buffer.Append(dispatcher.Dispatch(request));
+
+    dnf::Packet response;
+    assert(buffer.TryPop(response));
+    assert(response.header.type == dnf::LeavePartyResponse);
+    assert(response.header.requestId == 73);
+    return dnf::DecodeLeavePartyResponsePayload(response.payload);
+}
+
+void TestLeavePartyRequest()
+{
+    TestContext context;
+    const dnf::PartyId partyId =
+        context.partyManager.CreateParty(700).value();
+    assert(context.partyManager.JoinParty(partyId, 701) ==
+           dnf::JoinPartyResult::Success);
+
+    assert(SendLeavePartyRequest(context, 700) ==
+           dnf::LeavePartyResult::Success);
+    assert(!context.partyManager.GetJoinedParty(700).has_value());
+
+    const auto party = context.partyManager.GetParty(partyId);
+    assert(party.has_value());
+    assert(party->leaderSessionId == 701);
+    assert(party->members.size() == 1);
+
+    assert(SendLeavePartyRequest(context, 700) ==
+           dnf::LeavePartyResult::NotInParty);
+}
+
 dnf::EnterDungeonResponseData SendEnterDungeonRequest(
     TestContext& context,
     dnf::SessionId sessionId,
@@ -508,6 +554,7 @@ int main()
     TestDuplicateCreatePartyRequest();
     TestJoinPartyRequest();
     TestJoinMissingPartyRequest();
+    TestLeavePartyRequest();
     TestPartyLeaderEntersDungeon();
     TestDungeonEntryPermission();
     TestDungeonEntryFailures();

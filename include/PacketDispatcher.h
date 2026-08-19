@@ -41,6 +41,8 @@ private:
         const Packet& request) const;
     std::vector<std::uint8_t> HandleJoinPartyRequest(
         const Packet& request) const;
+    std::vector<std::uint8_t> HandleLeavePartyRequest(
+        const Packet& request) const;
 
     ChannelManager& channelManager_;
     PartyManager& partyManager_;
