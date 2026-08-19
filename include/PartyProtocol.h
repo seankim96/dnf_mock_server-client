@@ -20,6 +20,13 @@ struct CreatePartyResponseData
     SessionId leaderSessionId = 0;
 };
 
+struct JoinPartyResponseData
+{
+    JoinPartyResult result = JoinPartyResult::Success;
+    PartyId partyId = 0;
+    SessionId leaderSessionId = 0;
+};
+
 void ValidateCreatePartyRequestPayload(
     const std::vector<std::uint8_t>& payload);
 
@@ -29,5 +36,18 @@ std::vector<std::uint8_t> EncodeCreatePartyResponsePayload(
     SessionId leaderSessionId);
 
 CreatePartyResponseData DecodeCreatePartyResponsePayload(
+    const std::vector<std::uint8_t>& payload);
+
+std::vector<std::uint8_t> EncodeJoinPartyRequestPayload(PartyId partyId);
+
+PartyId DecodeJoinPartyRequestPayload(
+    const std::vector<std::uint8_t>& payload);
+
+std::vector<std::uint8_t> EncodeJoinPartyResponsePayload(
+    JoinPartyResult result,
+    PartyId partyId,
+    SessionId leaderSessionId);
+
+JoinPartyResponseData DecodeJoinPartyResponsePayload(
     const std::vector<std::uint8_t>& payload);
 } // namespace dnf

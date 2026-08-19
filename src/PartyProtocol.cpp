@@ -6,7 +6,8 @@ namespace dnf
 {
 namespace
 {
-constexpr std::size_t CREATE_PARTY_RESPONSE_SIZE = 17;
+constexpr std::size_t PARTY_ID_SIZE = 8;
+constexpr std::size_t PARTY_RESPONSE_SIZE = 17;
 
 void AppendUint64(std::vector<std::uint8_t>& bytes, std::uint64_t value)
 {
@@ -30,7 +31,7 @@ std::uint64_t ReadUint64(
     return value;
 }
 
-bool IsValidResponse(
+bool IsValidCreatePartyResponse(
     CreatePartyResult result,
     PartyId partyId,
     SessionId leaderSessionId)
@@ -42,6 +43,22 @@ bool IsValidResponse(
     }
 
     const bool succeeded = result == CreatePartyResult::Success;
+    return succeeded == (partyId != 0) &&
+           succeeded == (leaderSessionId != 0);
+}
+
+bool IsValidJoinPartyResponse(
+    JoinPartyResult result,
+    PartyId partyId,
+    SessionId leaderSessionId)
+{
+    if (result < JoinPartyResult::Success ||
+        result > JoinPartyResult::AlreadyJoined)
+    {
+        return false;
+    }
+
+    const bool succeeded = result == JoinPartyResult::Success;
     return succeeded == (partyId != 0) &&
            succeeded == (leaderSessionId != 0);
 }
@@ -62,13 +79,13 @@ std::vector<std::uint8_t> EncodeCreatePartyResponsePayload(
     PartyId partyId,
     SessionId leaderSessionId)
 {
-    if (!IsValidResponse(result, partyId, leaderSessionId))
+    if (!IsValidCreatePartyResponse(result, partyId, leaderSessionId))
     {
         throw std::invalid_argument("Invalid create party response");
     }
 
     std::vector<std::uint8_t> payload;
-    payload.reserve(CREATE_PARTY_RESPONSE_SIZE);
+    payload.reserve(PARTY_RESPONSE_SIZE);
     payload.push_back(static_cast<std::uint8_t>(result));
     AppendUint64(payload, partyId);
     AppendUint64(payload, leaderSessionId);
@@ -78,7 +95,7 @@ std::vector<std::uint8_t> EncodeCreatePartyResponsePayload(
 CreatePartyResponseData DecodeCreatePartyResponsePayload(
     const std::vector<std::uint8_t>& payload)
 {
-    if (payload.size() != CREATE_PARTY_RESPONSE_SIZE)
+    if (payload.size() != PARTY_RESPONSE_SIZE)
     {
         throw std::runtime_error(
             "Invalid create party response payload size");
@@ -88,9 +105,78 @@ CreatePartyResponseData DecodeCreatePartyResponsePayload(
     const PartyId partyId = ReadUint64(payload, 1);
     const SessionId leaderSessionId = ReadUint64(payload, 9);
 
-    if (!IsValidResponse(result, partyId, leaderSessionId))
+    if (!IsValidCreatePartyResponse(result, partyId, leaderSessionId))
     {
         throw std::runtime_error("Invalid create party response data");
+    }
+
+    return {result, partyId, leaderSessionId};
+}
+
+std::vector<std::uint8_t> EncodeJoinPartyRequestPayload(PartyId partyId)
+{
+    if (partyId == 0)
+    {
+        throw std::invalid_argument("Party ID must not be zero");
+    }
+
+    std::vector<std::uint8_t> payload;
+    payload.reserve(PARTY_ID_SIZE);
+    AppendUint64(payload, partyId);
+    return payload;
+}
+
+PartyId DecodeJoinPartyRequestPayload(
+    const std::vector<std::uint8_t>& payload)
+{
+    if (payload.size() != PARTY_ID_SIZE)
+    {
+        throw std::runtime_error("Invalid join party request payload size");
+    }
+
+    const PartyId partyId = ReadUint64(payload, 0);
+    if (partyId == 0)
+    {
+        throw std::runtime_error("Invalid join party request data");
+    }
+
+    return partyId;
+}
+
+std::vector<std::uint8_t> EncodeJoinPartyResponsePayload(
+    JoinPartyResult result,
+    PartyId partyId,
+    SessionId leaderSessionId)
+{
+    if (!IsValidJoinPartyResponse(result, partyId, leaderSessionId))
+    {
+        throw std::invalid_argument("Invalid join party response");
+    }
+
+    std::vector<std::uint8_t> payload;
+    payload.reserve(PARTY_RESPONSE_SIZE);
+    payload.push_back(static_cast<std::uint8_t>(result));
+    AppendUint64(payload, partyId);
+    AppendUint64(payload, leaderSessionId);
+    return payload;
+}
+
+JoinPartyResponseData DecodeJoinPartyResponsePayload(
+    const std::vector<std::uint8_t>& payload)
+{
+    if (payload.size() != PARTY_RESPONSE_SIZE)
+    {
+        throw std::runtime_error(
+            "Invalid join party response payload size");
+    }
+
+    const auto result = static_cast<JoinPartyResult>(payload[0]);
+    const PartyId partyId = ReadUint64(payload, 1);
+    const SessionId leaderSessionId = ReadUint64(payload, 9);
+
+    if (!IsValidJoinPartyResponse(result, partyId, leaderSessionId))
+    {
+        throw std::runtime_error("Invalid join party response data");
     }
 
     return {result, partyId, leaderSessionId};
