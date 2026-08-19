@@ -19,6 +19,12 @@ enum class LeavePartyResult : std::uint8_t
     NotInParty
 };
 
+enum class PartySnapshotResult : std::uint8_t
+{
+    Success,
+    NotInParty
+};
+
 struct CreatePartyResponseData
 {
     CreatePartyResult result = CreatePartyResult::Success;
@@ -31,6 +37,14 @@ struct JoinPartyResponseData
     JoinPartyResult result = JoinPartyResult::Success;
     PartyId partyId = 0;
     SessionId leaderSessionId = 0;
+};
+
+struct PartySnapshotData
+{
+    PartySnapshotResult result = PartySnapshotResult::NotInParty;
+    PartyId partyId = 0;
+    SessionId leaderSessionId = 0;
+    std::vector<SessionId> members;
 };
 
 void ValidateCreatePartyRequestPayload(
@@ -64,5 +78,17 @@ std::vector<std::uint8_t> EncodeLeavePartyResponsePayload(
     LeavePartyResult result);
 
 LeavePartyResult DecodeLeavePartyResponsePayload(
+    const std::vector<std::uint8_t>& payload);
+
+void ValidatePartySnapshotRequestPayload(
+    const std::vector<std::uint8_t>& payload);
+
+std::vector<std::uint8_t> EncodePartySnapshotResponsePayload(
+    PartySnapshotResult result,
+    PartyId partyId,
+    SessionId leaderSessionId,
+    const std::vector<SessionId>& members);
+
+PartySnapshotData DecodePartySnapshotResponsePayload(
     const std::vector<std::uint8_t>& payload);
 } // namespace dnf

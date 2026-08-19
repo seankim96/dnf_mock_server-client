@@ -235,6 +235,86 @@ void TestLeavePartyResponse()
     }
     assert(threw);
 }
+
+void TestPartySnapshotRequest()
+{
+    const auto packetBytes = dnf::EncodePacket(
+        dnf::PartySnapshotRequest,
+        74,
+        {});
+
+    dnf::ReceiveBuffer buffer;
+    buffer.Append(packetBytes);
+
+    dnf::Packet request;
+    assert(buffer.TryPop(request));
+    assert(request.header.type == dnf::PartySnapshotRequest);
+    dnf::ValidatePartySnapshotRequestPayload(request.payload);
+}
+
+void TestPartySnapshotResponse()
+{
+    const auto payload = dnf::EncodePartySnapshotResponsePayload(
+        dnf::PartySnapshotResult::Success,
+        10,
+        100,
+        {100, 200});
+
+    assert(payload.size() == 34);
+    assert(payload[0] == 0);
+    assert(payload[17] == 2);
+
+    const auto snapshot =
+        dnf::DecodePartySnapshotResponsePayload(payload);
+    assert(snapshot.result == dnf::PartySnapshotResult::Success);
+    assert(snapshot.partyId == 10);
+    assert(snapshot.leaderSessionId == 100);
+    assert(snapshot.members.size() == 2);
+    assert(snapshot.members[0] == 100);
+    assert(snapshot.members[1] == 200);
+
+    const auto failurePayload = dnf::EncodePartySnapshotResponsePayload(
+        dnf::PartySnapshotResult::NotInParty,
+        0,
+        0,
+        {});
+    const auto failure =
+        dnf::DecodePartySnapshotResponsePayload(failurePayload);
+    assert(failure.result == dnf::PartySnapshotResult::NotInParty);
+    assert(failure.members.empty());
+}
+
+void TestInvalidPartySnapshot()
+{
+    bool threw = false;
+    try
+    {
+        dnf::EncodePartySnapshotResponsePayload(
+            dnf::PartySnapshotResult::Success,
+            10,
+            100,
+            {200});
+    }
+    catch (const std::invalid_argument&)
+    {
+        threw = true;
+    }
+    assert(threw);
+
+    threw = false;
+    try
+    {
+        dnf::DecodePartySnapshotResponsePayload(
+            {0, 0, 0, 0, 0, 0, 0, 0, 10,
+             0, 0, 0, 0, 0, 0, 0, 100,
+             1});
+    }
+    catch (const std::runtime_error&)
+    {
+        threw = true;
+    }
+    assert(threw);
+}
 } // namespace
 
 int main()
@@ -248,6 +328,9 @@ int main()
     TestInvalidJoinPartyPayload();
     TestLeavePartyRequest();
     TestLeavePartyResponse();
+    TestPartySnapshotRequest();
+    TestPartySnapshotResponse();
+    TestInvalidPartySnapshot();
 
     std::cout << "All party protocol tests passed.\n";
     return 0;
