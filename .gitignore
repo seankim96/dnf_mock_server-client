@@ -1,0 +1,6 @@
+.godot/
+.mono/
+bin/
+obj/
+tests/bin/
+tests/obj/
