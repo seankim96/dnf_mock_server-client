@@ -53,6 +53,7 @@ add_library(dnf_core
     src/PacketDispatcher.cpp
     src/PartyManager.cpp
     src/PartyProtocol.cpp
+    src/PlayerLoginService.cpp
     src/PlayerProfile.cpp
     src/PlayerSkillBook.cpp
     src/ReceiveBuffer.cpp
@@ -186,6 +187,17 @@ add_executable(player_profile_test tests/PlayerProfileTest.cpp)
 target_link_libraries(player_profile_test PRIVATE dnf_core)
 
 add_test(NAME player_profile_test COMMAND player_profile_test)
+
+add_executable(
+    player_login_service_test
+    tests/PlayerLoginServiceTest.cpp
+)
+target_link_libraries(player_login_service_test PRIVATE dnf_core)
+
+add_test(
+    NAME player_login_service_test
+    COMMAND player_login_service_test
+)
 
 add_executable(sqlite_database_test tests/SqliteDatabaseTest.cpp)
 target_link_libraries(sqlite_database_test PRIVATE dnf_core)
