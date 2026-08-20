@@ -184,12 +184,53 @@ static void TestGamePayloads()
         "Channel list entry with a zero ID was accepted.");
 
     byte[] joinPayload = GamePayloadCodec.EncodeJoinChannelRequest(3);
-    Assert(joinPayload.SequenceEqual(new byte[] { 0, 0, 0, 3 }),
+    var joinChannelRequestBuffer = new ByteBuffer(joinPayload);
+    Assert(TcpSchema.TcpMessage.VerifyTcpMessage(joinChannelRequestBuffer),
+        "Join channel request FlatBuffer is invalid.");
+    TcpSchema.TcpMessage joinChannelRequestMessage =
+        TcpSchema.TcpMessage.GetRootAsTcpMessage(joinChannelRequestBuffer);
+    Assert(joinChannelRequestMessage.PayloadType ==
+        TcpSchema.TcpPayload.JoinChannelRequest &&
+        joinChannelRequestMessage.PayloadAsJoinChannelRequest().ChannelId == 3,
         "Join channel request payload is incorrect.");
+    AssertThrows<ArgumentOutOfRangeException>(
+        () => GamePayloadCodec.EncodeJoinChannelRequest(0),
+        "Join channel request accepted a zero channel ID.");
     JoinChannelResponse joinResponse = GamePayloadCodec.DecodeJoinChannelResponse(
-        new byte[] { 0, 0, 0, 0, 3 });
+        JoinChannelResponseBytes(
+            TcpSchema.JoinChannelResult.Success,
+            3));
     Assert(joinResponse.Result == JoinChannelResult.Success &&
         joinResponse.ChannelId == 3, "Join channel response is incorrect.");
+    JoinChannelResponse missingChannel =
+        GamePayloadCodec.DecodeJoinChannelResponse(
+            JoinChannelResponseBytes(
+                TcpSchema.JoinChannelResult.ChannelNotFound,
+                0));
+    Assert(missingChannel.Result == JoinChannelResult.ChannelNotFound &&
+        missingChannel.ChannelId == 0,
+        "Failed join channel response is incorrect.");
+    AssertThrows<InvalidDataException>(
+        () => GamePayloadCodec.DecodeJoinChannelResponse(
+            JoinChannelResponseBytes(
+                TcpSchema.JoinChannelResult.Success,
+                0)),
+        "Successful join channel response with a zero ID was accepted.");
+    AssertThrows<InvalidDataException>(
+        () => GamePayloadCodec.DecodeJoinChannelResponse(
+            JoinChannelResponseBytes(
+                TcpSchema.JoinChannelResult.ChannelFull,
+                3)),
+        "Failed join channel response with a channel ID was accepted.");
+    AssertThrows<InvalidDataException>(
+        () => GamePayloadCodec.DecodeJoinChannelResponse(
+            JoinChannelResponseBytes(
+                (TcpSchema.JoinChannelResult)4,
+                0)),
+        "Unknown join channel result was accepted.");
+    AssertThrows<InvalidDataException>(
+        () => GamePayloadCodec.DecodeJoinChannelResponse(joinPayload),
+        "Join channel request was accepted as a response.");
 
     byte[] createPartyRequest = GamePayloadCodec.EncodeCreatePartyRequest();
     var createPartyRequestBuffer = new ByteBuffer(createPartyRequest);
@@ -471,6 +512,22 @@ static byte[] ChannelListResponseBytes(
         response.Value);
 }
 
+static byte[] JoinChannelResponseBytes(
+    TcpSchema.JoinChannelResult result,
+    uint channelId)
+{
+    var builder = new FlatBufferBuilder(64);
+    Offset<TcpSchema.JoinChannelResponse> response =
+        TcpSchema.JoinChannelResponse.CreateJoinChannelResponse(
+            builder,
+            result,
+            channelId);
+    return TcpFlatBufferCodec.FinishPayload(
+        builder,
+        TcpSchema.TcpPayload.JoinChannelResponse,
+        response.Value);
+}
+
 static byte[] CreatePartyResponseBytes(
     TcpSchema.CreatePartyResult result,
     ulong partyId,
@@ -688,6 +745,47 @@ static async Task TestTcpConnectionAsync()
     Assert(receivedChannels.Count == 1 &&
         receivedChannels[0].DisplayName == "Channel 1",
         "Channel list TCP response payload is incorrect.");
+
+    Task<TcpPacket> joinChannelResponseTask = connection.SendRequestAsync(
+        TcpPacketType.JoinChannelRequest,
+        GamePayloadCodec.EncodeJoinChannelRequest(1),
+        timeout.Token);
+
+    await serverStream.ReadExactlyAsync(requestHeaderBytes, timeout.Token);
+    TcpPacketHeader joinChannelRequestHeader =
+        TcpPacketCodec.DecodeHeader(requestHeaderBytes);
+    int joinChannelRequestPayloadSize =
+        joinChannelRequestHeader.PacketSize - TcpPacketCodec.HeaderSize;
+    var joinChannelRequestPayload = new byte[joinChannelRequestPayloadSize];
+    await serverStream.ReadExactlyAsync(
+        joinChannelRequestPayload,
+        timeout.Token);
+    Assert(joinChannelRequestHeader.Type == TcpPacketType.JoinChannelRequest,
+        "Join channel TCP request type is incorrect.");
+    var joinChannelRequestBuffer = new ByteBuffer(joinChannelRequestPayload);
+    Assert(TcpSchema.TcpMessage.VerifyTcpMessage(joinChannelRequestBuffer),
+        "Join channel TCP request FlatBuffer is invalid.");
+    TcpSchema.TcpMessage joinChannelRequest =
+        TcpSchema.TcpMessage.GetRootAsTcpMessage(joinChannelRequestBuffer);
+    Assert(joinChannelRequest.PayloadType ==
+        TcpSchema.TcpPayload.JoinChannelRequest &&
+        joinChannelRequest.PayloadAsJoinChannelRequest().ChannelId == 1,
+        "Join channel TCP request payload is incorrect.");
+
+    byte[] joinChannelResponseBytes = TcpPacketCodec.EncodePacket(
+        TcpPacketType.JoinChannelResponse,
+        joinChannelRequestHeader.RequestId,
+        JoinChannelResponseBytes(
+            TcpSchema.JoinChannelResult.Success,
+            1));
+    await serverStream.WriteAsync(joinChannelResponseBytes, timeout.Token);
+
+    TcpPacket joinChannelResponse = await joinChannelResponseTask;
+    JoinChannelResponse receivedJoinChannel =
+        GamePayloadCodec.DecodeJoinChannelResponse(joinChannelResponse.Payload);
+    Assert(receivedJoinChannel.Result == JoinChannelResult.Success &&
+        receivedJoinChannel.ChannelId == 1,
+        "Join channel TCP response payload is incorrect.");
 
     Task<TcpPacket> partyResponseTask = connection.SendRequestAsync(
         TcpPacketType.CreatePartyRequest,

@@ -109,21 +109,38 @@ public static class GamePayloadCodec
             throw new ArgumentOutOfRangeException(nameof(channelId));
         }
 
-        var payload = new byte[4];
-        BinaryPrimitives.WriteUInt32BigEndian(payload, channelId);
-        return payload;
+        var builder = new FlatBufferBuilder(64);
+        Offset<TcpSchema.JoinChannelRequest> request =
+            TcpSchema.JoinChannelRequest.CreateJoinChannelRequest(
+                builder,
+                channelId);
+        return TcpFlatBufferCodec.FinishPayload(
+            builder,
+            TcpSchema.TcpPayload.JoinChannelRequest,
+            request.Value);
     }
 
     public static JoinChannelResponse DecodeJoinChannelResponse(byte[] payload)
     {
-        if (payload.Length != 5 ||
-            !Enum.IsDefined(typeof(JoinChannelResult), payload[0]))
+        TcpSchema.JoinChannelResponse response =
+            TcpFlatBufferCodec.DecodePayload<TcpSchema.JoinChannelResponse>(
+                payload,
+                TcpSchema.TcpPayload.JoinChannelResponse);
+        if (!Enum.IsDefined(
+                typeof(TcpSchema.JoinChannelResult),
+                response.Result))
         {
             throw new InvalidDataException("Invalid join channel response payload.");
         }
 
-        var result = (JoinChannelResult)payload[0];
-        uint channelId = ReadUInt32(payload, 1);
+        var result = (JoinChannelResult)(byte)response.Result;
+        uint channelId = response.ChannelId;
+        bool succeeded = result == JoinChannelResult.Success;
+        if (succeeded != (channelId != 0))
+        {
+            throw new InvalidDataException("Invalid join channel response data.");
+        }
+
         return new JoinChannelResponse(result, channelId);
     }
 

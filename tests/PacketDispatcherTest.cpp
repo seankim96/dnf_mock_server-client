@@ -169,6 +169,45 @@ void TestJoinChannelRequest()
     assert(result.result == dnf::JoinChannelResult::Success);
     assert(result.channelId == 1);
     assert(context.channelManager.GetJoinedChannel(700).value() == 1);
+
+    dnf::Packet missingRequest;
+    missingRequest.header.type = dnf::JoinChannelRequest;
+    missingRequest.header.requestId = 46;
+    missingRequest.payload = dnf::EncodeJoinChannelRequestPayload(999);
+    buffer.Append(dispatcher.Dispatch(missingRequest));
+
+    dnf::Packet missingResponse;
+    assert(buffer.TryPop(missingResponse));
+    const auto missingResult =
+        dnf::DecodeJoinChannelResponsePayload(missingResponse.payload);
+    assert(missingResult.result ==
+           dnf::JoinChannelResult::ChannelNotFound);
+    assert(missingResult.channelId == 0);
+
+    bool threw = false;
+    try
+    {
+        dnf::DecodeJoinChannelResponsePayload(
+            dnf::EncodeJoinChannelRequestPayload(1));
+    }
+    catch (const std::runtime_error&)
+    {
+        threw = true;
+    }
+    assert(threw);
+
+    threw = false;
+    try
+    {
+        dnf::EncodeJoinChannelResponsePayload(
+            dnf::JoinChannelResult::Success,
+            0);
+    }
+    catch (const std::invalid_argument&)
+    {
+        threw = true;
+    }
+    assert(threw);
 }
 
 void TestInvalidLoginRequest()

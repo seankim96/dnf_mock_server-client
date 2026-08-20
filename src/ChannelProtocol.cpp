@@ -12,22 +12,18 @@ namespace
 {
 namespace tcp = Dnf::Protocol::Tcp;
 
-void AppendUint32(std::vector<std::uint8_t>& bytes, std::uint32_t value)
+bool IsValidJoinChannelResponse(
+    JoinChannelResult result,
+    ChannelId channelId)
 {
-    bytes.push_back(static_cast<std::uint8_t>(value >> 24));
-    bytes.push_back(static_cast<std::uint8_t>(value >> 16));
-    bytes.push_back(static_cast<std::uint8_t>(value >> 8));
-    bytes.push_back(static_cast<std::uint8_t>(value));
-}
+    if (result < JoinChannelResult::Success ||
+        result > JoinChannelResult::AlreadyJoined)
+    {
+        return false;
+    }
 
-std::uint32_t ReadUint32(
-    const std::vector<std::uint8_t>& bytes,
-    std::size_t offset)
-{
-    return (static_cast<std::uint32_t>(bytes[offset]) << 24) |
-           (static_cast<std::uint32_t>(bytes[offset + 1]) << 16) |
-           (static_cast<std::uint32_t>(bytes[offset + 2]) << 8) |
-           static_cast<std::uint32_t>(bytes[offset + 3]);
+    const bool succeeded = result == JoinChannelResult::Success;
+    return succeeded == (channelId != 0);
 }
 } // namespace
 
@@ -128,46 +124,74 @@ std::vector<ChannelListEntry> DecodeChannelListResponsePayload(
 std::vector<std::uint8_t> EncodeJoinChannelRequestPayload(
     ChannelId channelId)
 {
-    std::vector<std::uint8_t> payload;
-    payload.reserve(4);
-    AppendUint32(payload, channelId);
-    return payload;
+    if (channelId == 0)
+    {
+        throw std::invalid_argument("Channel ID must not be zero");
+    }
+
+    flatbuffers::FlatBufferBuilder builder;
+    const auto request = tcp::CreateJoinChannelRequest(builder, channelId);
+    return FinishTcpPayload(
+        builder,
+        tcp::TcpPayload_JoinChannelRequest,
+        request.Union());
 }
 
 ChannelId DecodeJoinChannelRequestPayload(
     const std::vector<std::uint8_t>& payload)
 {
-    if (payload.size() != 4)
+    const auto* message = DecodeTcpPayload(
+        payload,
+        tcp::TcpPayload_JoinChannelRequest);
+    const auto* request = message->payload_as_JoinChannelRequest();
+    if (request == nullptr || request->channel_id() == 0)
     {
-        throw std::runtime_error("Invalid join channel request payload");
+        throw std::runtime_error("Invalid join channel request data");
     }
 
-    return ReadUint32(payload, 0);
+    return request->channel_id();
 }
 
 std::vector<std::uint8_t> EncodeJoinChannelResponsePayload(
     JoinChannelResult result,
     ChannelId channelId)
 {
-    std::vector<std::uint8_t> payload;
-    payload.reserve(5);
-    payload.push_back(static_cast<std::uint8_t>(result));
-    AppendUint32(payload, channelId);
-    return payload;
+    if (!IsValidJoinChannelResponse(result, channelId))
+    {
+        throw std::invalid_argument("Invalid join channel response");
+    }
+
+    flatbuffers::FlatBufferBuilder builder;
+    const auto response = tcp::CreateJoinChannelResponse(
+        builder,
+        static_cast<tcp::JoinChannelResult>(result),
+        channelId);
+    return FinishTcpPayload(
+        builder,
+        tcp::TcpPayload_JoinChannelResponse,
+        response.Union());
 }
 
 JoinChannelResponseData DecodeJoinChannelResponsePayload(
     const std::vector<std::uint8_t>& payload)
 {
-    if (payload.size() != 5 ||
-        payload[0] > static_cast<std::uint8_t>(JoinChannelResult::AlreadyJoined))
+    const auto* message = DecodeTcpPayload(
+        payload,
+        tcp::TcpPayload_JoinChannelResponse);
+    const auto* response = message->payload_as_JoinChannelResponse();
+    if (response == nullptr)
     {
         throw std::runtime_error("Invalid join channel response payload");
     }
 
-    JoinChannelResponseData response;
-    response.result = static_cast<JoinChannelResult>(payload[0]);
-    response.channelId = ReadUint32(payload, 1);
-    return response;
+    const auto result =
+        static_cast<JoinChannelResult>(response->result());
+    const ChannelId channelId = response->channel_id();
+    if (!IsValidJoinChannelResponse(result, channelId))
+    {
+        throw std::runtime_error("Invalid join channel response data");
+    }
+
+    return {result, channelId};
 }
 } // namespace dnf

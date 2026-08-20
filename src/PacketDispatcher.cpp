@@ -107,8 +107,10 @@ std::vector<std::uint8_t> PacketDispatcher::HandleJoinChannelRequest(
         DecodeJoinChannelRequestPayload(request.payload);
     const JoinChannelResult result =
         channelManager_.JoinChannel(sessionId_, channelId);
+    const ChannelId joinedChannelId =
+        result == JoinChannelResult::Success ? channelId : 0;
     const auto responsePayload =
-        EncodeJoinChannelResponsePayload(result, channelId);
+        EncodeJoinChannelResponsePayload(result, joinedChannelId);
 
     return EncodePacket(
         JoinChannelResponse,
