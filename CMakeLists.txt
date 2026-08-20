@@ -50,6 +50,7 @@ add_library(dnf_core
     src/PacketDispatcher.cpp
     src/PartyManager.cpp
     src/PartyProtocol.cpp
+    src/PlayerProfile.cpp
     src/PlayerSkillBook.cpp
     src/ReceiveBuffer.cpp
     src/RoomState.cpp
@@ -163,6 +164,11 @@ add_executable(player_skill_book_test tests/PlayerSkillBookTest.cpp)
 target_link_libraries(player_skill_book_test PRIVATE dnf_core)
 
 add_test(NAME player_skill_book_test COMMAND player_skill_book_test)
+
+add_executable(player_profile_test tests/PlayerProfileTest.cpp)
+target_link_libraries(player_profile_test PRIVATE dnf_core)
+
+add_test(NAME player_profile_test COMMAND player_profile_test)
 
 add_executable(room_state_test tests/RoomStateTest.cpp)
 target_link_libraries(room_state_test PRIVATE dnf_core)
