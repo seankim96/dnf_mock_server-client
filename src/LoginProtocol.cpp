@@ -1,4 +1,7 @@
 #include "LoginProtocol.h"
+#include "TcpFlatBufferCodec.h"
+
+#include <flatbuffers/flatbuffer_builder.h>
 
 #include <stdexcept>
 
@@ -6,7 +9,7 @@ namespace dnf
 {
 namespace
 {
-constexpr std::size_t LOGIN_RESPONSE_SIZE = 9;
+namespace tcp = Dnf::Protocol::Tcp;
 
 bool IsValidResult(LoginResult result)
 {
@@ -24,29 +27,34 @@ bool IsValidResponse(LoginResult result, SessionId sessionId)
     const bool succeeded = result == LoginSuccess;
     return succeeded == (sessionId != 0);
 }
-
-void AppendUint64(std::vector<std::uint8_t>& bytes, std::uint64_t value)
-{
-    for (int shift = 56; shift >= 0; shift -= 8)
-    {
-        bytes.push_back(static_cast<std::uint8_t>(value >> shift));
-    }
-}
-
-std::uint64_t ReadUint64(
-    const std::vector<std::uint8_t>& bytes,
-    std::size_t offset)
-{
-    std::uint64_t value = 0;
-
-    for (std::size_t index = 0; index < 8; ++index)
-    {
-        value = (value << 8) | bytes[offset + index];
-    }
-
-    return value;
-}
 } // namespace
+
+std::vector<std::uint8_t> EncodeLoginRequestPayload(
+    const std::string& playerName)
+{
+    flatbuffers::FlatBufferBuilder builder;
+    const auto name = builder.CreateString(playerName);
+    const auto request = tcp::CreateLoginRequest(builder, name);
+    return FinishTcpPayload(
+        builder,
+        tcp::TcpPayload_LoginRequest,
+        request.Union());
+}
+
+std::string DecodeLoginRequestPayload(
+    const std::vector<std::uint8_t>& payload)
+{
+    const auto* message = DecodeTcpPayload(
+        payload,
+        tcp::TcpPayload_LoginRequest);
+    const auto* request = message->payload_as_LoginRequest();
+    if (request == nullptr || request->player_name() == nullptr)
+    {
+        throw std::runtime_error("Invalid login request payload");
+    }
+
+    return request->player_name()->str();
+}
 
 std::vector<std::uint8_t> EncodeLoginResponsePayload(
     LoginResult result,
@@ -57,23 +65,31 @@ std::vector<std::uint8_t> EncodeLoginResponsePayload(
         throw std::invalid_argument("Invalid login response");
     }
 
-    std::vector<std::uint8_t> payload;
-    payload.reserve(LOGIN_RESPONSE_SIZE);
-    payload.push_back(static_cast<std::uint8_t>(result));
-    AppendUint64(payload, sessionId);
-    return payload;
+    flatbuffers::FlatBufferBuilder builder;
+    const auto response = tcp::CreateLoginResponse(
+        builder,
+        static_cast<tcp::LoginResult>(result),
+        sessionId);
+    return FinishTcpPayload(
+        builder,
+        tcp::TcpPayload_LoginResponse,
+        response.Union());
 }
 
 LoginResponseData DecodeLoginResponsePayload(
     const std::vector<std::uint8_t>& payload)
 {
-    if (payload.size() != LOGIN_RESPONSE_SIZE)
+    const auto* message = DecodeTcpPayload(
+        payload,
+        tcp::TcpPayload_LoginResponse);
+    const auto* response = message->payload_as_LoginResponse();
+    if (response == nullptr)
     {
-        throw std::runtime_error("Invalid login response payload size");
+        throw std::runtime_error("Invalid login response payload");
     }
 
-    const auto result = static_cast<LoginResult>(payload[0]);
-    const SessionId sessionId = ReadUint64(payload, 1);
+    const auto result = static_cast<LoginResult>(response->result());
+    const SessionId sessionId = response->session_id();
 
     if (!IsValidResponse(result, sessionId))
     {

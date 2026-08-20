@@ -4,7 +4,7 @@ namespace dnf
 {
 namespace
 {
-bool IsAllowedCharacter(std::uint8_t character)
+bool IsAllowedCharacter(char character)
 {
     const bool isUppercase = character >= 'A' && character <= 'Z';
     const bool isLowercase = character >= 'a' && character <= 'z';
@@ -15,19 +15,19 @@ bool IsAllowedCharacter(std::uint8_t character)
 } // namespace
 
 LoginValidationResult LoginValidator::Validate(
-    const std::vector<std::uint8_t>& payload) const
+    const std::string& playerName) const
 {
-    if (payload.empty())
+    if (playerName.empty())
     {
         return {EmptyPlayerName, {}};
     }
 
-    if (payload.size() > MAX_PLAYER_NAME_LENGTH)
+    if (playerName.size() > MAX_PLAYER_NAME_LENGTH)
     {
         return {PlayerNameTooLong, {}};
     }
 
-    for (std::uint8_t character : payload)
+    for (char character : playerName)
     {
         if (!IsAllowedCharacter(character))
         {
@@ -35,7 +35,6 @@ LoginValidationResult LoginValidator::Validate(
         }
     }
 
-    const std::string playerName(payload.begin(), payload.end());
     return {LoginSuccess, playerName};
 }
 } // namespace dnf

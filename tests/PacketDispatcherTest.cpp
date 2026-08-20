@@ -47,7 +47,7 @@ void TestLoginRequest()
     dnf::Packet request;
     request.header.type = dnf::LoginRequest;
     request.header.requestId = 42;
-    request.payload = {'M', 'o', 'c', 'k'};
+    request.payload = dnf::EncodeLoginRequestPayload("Mock");
 
     dnf::PacketDispatcher dispatcher(
         context.channelManager,
@@ -173,7 +173,7 @@ void TestInvalidLoginRequest()
     dnf::Packet request;
     request.header.type = dnf::LoginRequest;
     request.header.requestId = 43;
-    request.payload = {};
+    request.payload = dnf::EncodeLoginRequestPayload("");
 
     dnf::PacketDispatcher dispatcher(
         context.channelManager,

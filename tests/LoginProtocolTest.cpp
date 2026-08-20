@@ -6,15 +6,30 @@
 
 namespace
 {
+void TestLoginRequest()
+{
+    const auto payload = dnf::EncodeLoginRequestPayload("Mock_Player");
+    assert(!payload.empty());
+    assert(dnf::DecodeLoginRequestPayload(payload) == "Mock_Player");
+
+    bool threw = false;
+    try
+    {
+        dnf::DecodeLoginRequestPayload({0});
+    }
+    catch (const std::runtime_error&)
+    {
+        threw = true;
+    }
+    assert(threw);
+}
+
 void TestSuccessfulLoginResponse()
 {
     const auto payload =
         dnf::EncodeLoginResponsePayload(dnf::LoginSuccess, 0x0102030405060708);
 
-    assert(payload.size() == 9);
-    assert(payload[0] == 0);
-    assert(payload[1] == 0x01);
-    assert(payload[8] == 0x08);
+    assert(!payload.empty());
 
     const auto response = dnf::DecodeLoginResponsePayload(payload);
     assert(response.result == dnf::LoginSuccess);
@@ -48,7 +63,21 @@ void TestInvalidLoginResponse()
     threw = false;
     try
     {
-        dnf::DecodeLoginResponsePayload({0});
+        dnf::EncodeLoginResponsePayload(
+            static_cast<dnf::LoginResult>(4),
+            0);
+    }
+    catch (const std::invalid_argument&)
+    {
+        threw = true;
+    }
+    assert(threw);
+
+    threw = false;
+    try
+    {
+        dnf::DecodeLoginResponsePayload(
+            dnf::EncodeLoginRequestPayload("Mock"));
     }
     catch (const std::runtime_error&)
     {
@@ -60,6 +89,7 @@ void TestInvalidLoginResponse()
 
 int main()
 {
+    TestLoginRequest();
     TestSuccessfulLoginResponse();
     TestFailedLoginResponse();
     TestInvalidLoginResponse();

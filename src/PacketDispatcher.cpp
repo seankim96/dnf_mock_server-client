@@ -69,8 +69,10 @@ std::vector<std::uint8_t> PacketDispatcher::Dispatch(
 std::vector<std::uint8_t> PacketDispatcher::HandleLoginRequest(
     const Packet& request) const
 {
+    const std::string playerName =
+        DecodeLoginRequestPayload(request.payload);
     const LoginValidator validator;
-    const LoginValidationResult validation = validator.Validate(request.payload);
+    const LoginValidationResult validation = validator.Validate(playerName);
 
     const SessionId responseSessionId =
         validation.result == LoginSuccess ? sessionId_ : 0;

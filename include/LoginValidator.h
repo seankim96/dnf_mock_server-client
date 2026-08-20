@@ -3,7 +3,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <string>
-#include <vector>
 
 namespace dnf
 {
@@ -27,6 +26,6 @@ class LoginValidator
 {
 public:
     LoginValidationResult Validate(
-        const std::vector<std::uint8_t>& payload) const;
+        const std::string& playerName) const;
 };
 } // namespace dnf

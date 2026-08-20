@@ -117,26 +117,39 @@ static void TestInvalidPacketSize()
 static void TestGamePayloads()
 {
     byte[] loginPayload = GamePayloadCodec.EncodeLoginRequest("Player_1");
-    Assert(loginPayload.SequenceEqual("Player_1"u8.ToArray()),
+    var loginRequestBuffer = new ByteBuffer(loginPayload);
+    Assert(TcpSchema.TcpMessage.VerifyTcpMessage(loginRequestBuffer),
+        "Login request FlatBuffer is invalid.");
+    TcpSchema.TcpMessage loginRequestMessage =
+        TcpSchema.TcpMessage.GetRootAsTcpMessage(loginRequestBuffer);
+    Assert(loginRequestMessage.PayloadType == TcpSchema.TcpPayload.LoginRequest &&
+        loginRequestMessage.PayloadAsLoginRequest().PlayerName == "Player_1",
         "Login request payload is incorrect.");
     LoginResponseData login = GamePayloadCodec.DecodeLoginResponse(
-        new byte[] { 0, 0, 0, 0, 0, 0, 0, 0, 42 });
+        LoginResponseBytes(TcpSchema.LoginResult.Success, 42));
     Assert(login.Result == LoginResult.Success && login.SessionId == 42,
         "Login response payload is incorrect.");
 
     LoginResponseData failedLogin = GamePayloadCodec.DecodeLoginResponse(
-        new byte[] { 1, 0, 0, 0, 0, 0, 0, 0, 0 });
+        LoginResponseBytes(TcpSchema.LoginResult.EmptyPlayerName, 0));
     Assert(failedLogin.Result == LoginResult.EmptyPlayerName &&
         failedLogin.SessionId == 0, "Failed login payload is incorrect.");
 
     AssertThrows<InvalidDataException>(
         () => GamePayloadCodec.DecodeLoginResponse(
-            new byte[] { 0, 0, 0, 0, 0, 0, 0, 0, 0 }),
+            LoginResponseBytes(TcpSchema.LoginResult.Success, 0)),
         "Successful login with a zero session ID was accepted.");
     AssertThrows<InvalidDataException>(
         () => GamePayloadCodec.DecodeLoginResponse(
-            new byte[] { 1, 0, 0, 0, 0, 0, 0, 0, 42 }),
+            LoginResponseBytes(TcpSchema.LoginResult.EmptyPlayerName, 42)),
         "Failed login with a non-zero session ID was accepted.");
+    AssertThrows<InvalidDataException>(
+        () => GamePayloadCodec.DecodeLoginResponse(
+            LoginResponseBytes((TcpSchema.LoginResult)4, 0)),
+        "Unknown login result was accepted.");
+    AssertThrows<InvalidDataException>(
+        () => GamePayloadCodec.DecodeLoginResponse(loginPayload),
+        "Login request was accepted as a response.");
 
     byte[] channelListPayload =
     {
@@ -394,6 +407,22 @@ static byte[] CreatePartySnapshotResponseBytes(
         response.Value);
 }
 
+static byte[] LoginResponseBytes(
+    TcpSchema.LoginResult result,
+    ulong sessionId)
+{
+    var builder = new FlatBufferBuilder(64);
+    Offset<TcpSchema.LoginResponse> response =
+        TcpSchema.LoginResponse.CreateLoginResponse(
+            builder,
+            result,
+            sessionId);
+    return TcpFlatBufferCodec.FinishPayload(
+        builder,
+        TcpSchema.TcpPayload.LoginResponse,
+        response.Value);
+}
+
 static byte[] CreatePartyResponseBytes(
     TcpSchema.CreatePartyResult result,
     ulong partyId,
@@ -533,7 +562,7 @@ static async Task TestTcpConnectionAsync()
 
     Task<TcpPacket> responseTask = connection.SendRequestAsync(
         TcpPacketType.LoginRequest,
-        new byte[] { (byte)'P', (byte)'1' },
+        GamePayloadCodec.EncodeLoginRequest("P1"),
         timeout.Token);
 
     NetworkStream serverStream = acceptedClient.GetStream();
@@ -547,13 +576,19 @@ static async Task TestTcpConnectionAsync()
 
     Assert(requestHeader.Type == TcpPacketType.LoginRequest,
         "TCP request type is incorrect.");
-    Assert(requestPayload.SequenceEqual(new byte[] { (byte)'P', (byte)'1' }),
-        "TCP request payload is incorrect.");
+    var loginRequestBuffer = new ByteBuffer(requestPayload);
+    Assert(TcpSchema.TcpMessage.VerifyTcpMessage(loginRequestBuffer),
+        "TCP login request FlatBuffer is invalid.");
+    TcpSchema.TcpMessage loginRequestMessage =
+        TcpSchema.TcpMessage.GetRootAsTcpMessage(loginRequestBuffer);
+    Assert(loginRequestMessage.PayloadType == TcpSchema.TcpPayload.LoginRequest &&
+        loginRequestMessage.PayloadAsLoginRequest().PlayerName == "P1",
+        "TCP login request payload is incorrect.");
 
     byte[] responseBytes = TcpPacketCodec.EncodePacket(
         TcpPacketType.LoginResponse,
         requestHeader.RequestId,
-        new byte[] { 0, 0, 0, 0, 0, 0, 0, 0, 42 });
+        LoginResponseBytes(TcpSchema.LoginResult.Success, 42));
 
     await serverStream.WriteAsync(responseBytes[..3], timeout.Token);
     await serverStream.WriteAsync(responseBytes[3..], timeout.Token);
@@ -561,9 +596,11 @@ static async Task TestTcpConnectionAsync()
     TcpPacket response = await responseTask;
     Assert(response.Header.Type == TcpPacketType.LoginResponse,
         "TCP response type is incorrect.");
-    Assert(response.Payload.SequenceEqual(
-        new byte[] { 0, 0, 0, 0, 0, 0, 0, 0, 42 }),
-        "TCP response payload is incorrect.");
+    LoginResponseData loginResponse =
+        GamePayloadCodec.DecodeLoginResponse(response.Payload);
+    Assert(loginResponse.Result == LoginResult.Success &&
+        loginResponse.SessionId == 42,
+        "TCP login response payload is incorrect.");
 
     Task<TcpPacket> partyResponseTask = connection.SendRequestAsync(
         TcpPacketType.CreatePartyRequest,

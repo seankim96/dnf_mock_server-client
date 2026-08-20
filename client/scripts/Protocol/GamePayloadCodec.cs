@@ -2,7 +2,6 @@ using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using Google.FlatBuffers;
 using TcpSchema = Dnf.Protocol.Tcp;
 
@@ -27,18 +26,29 @@ public static class GamePayloadCodec
             }
         }
 
-        return Encoding.ASCII.GetBytes(playerName);
+        var builder = new FlatBufferBuilder(128);
+        StringOffset name = builder.CreateString(playerName);
+        Offset<TcpSchema.LoginRequest> request =
+            TcpSchema.LoginRequest.CreateLoginRequest(builder, name);
+        return TcpFlatBufferCodec.FinishPayload(
+            builder,
+            TcpSchema.TcpPayload.LoginRequest,
+            request.Value);
     }
 
     public static LoginResponseData DecodeLoginResponse(byte[] payload)
     {
-        if (payload.Length != 9 || !Enum.IsDefined(typeof(LoginResult), payload[0]))
+        TcpSchema.LoginResponse response =
+            TcpFlatBufferCodec.DecodePayload<TcpSchema.LoginResponse>(
+                payload,
+                TcpSchema.TcpPayload.LoginResponse);
+        if (!Enum.IsDefined(typeof(TcpSchema.LoginResult), response.Result))
         {
             throw new InvalidDataException("Invalid login response payload.");
         }
 
-        var result = (LoginResult)payload[0];
-        ulong sessionId = ReadUInt64(payload, 1);
+        var result = (LoginResult)(byte)response.Result;
+        ulong sessionId = response.SessionId;
         bool succeeded = result == LoginResult.Success;
 
         if (succeeded != (sessionId != 0))
