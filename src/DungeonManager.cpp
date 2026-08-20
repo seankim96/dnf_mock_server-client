@@ -82,6 +82,18 @@ std::vector<DungeonTemplate> DungeonManager::GetDungeonTemplates() const
     return dungeonCatalog_.GetDungeonList();
 }
 
+std::optional<DungeonTemplate> DungeonManager::GetDungeonTemplate(
+    DungeonTemplateId templateId) const
+{
+    return dungeonCatalog_.GetDungeon(templateId);
+}
+
+std::optional<EnemyTemplate> DungeonManager::GetEnemyTemplate(
+    EnemyTemplateId enemyTemplateId) const
+{
+    return enemyCatalog_.GetEnemy(enemyTemplateId);
+}
+
 bool DungeonManager::StartDungeon(DungeonId dungeonId)
 {
     std::lock_guard lock(mutex_);

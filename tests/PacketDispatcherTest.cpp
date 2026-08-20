@@ -3,6 +3,7 @@
 #include "DungeonCatalogProtocol.h"
 #include "DungeonConnectionProtocol.h"
 #include "DungeonManager.h"
+#include "DungeonStaticDataProtocol.h"
 #include "DungeonUdpManager.h"
 #include "EnemyCatalog.h"
 #include "LoginProtocol.h"
@@ -28,8 +29,34 @@ struct TestContext
           dungeonCatalog(enemyCatalog),
           dungeonManager(partyManager, dungeonCatalog, enemyCatalog)
     {
-        const dnf::RoomTemplate room{
+        dnf::EnemyTemplate goblin;
+        goblin.id = 2001;
+        goblin.name = "Goblin";
+        goblin.maxHp = 100;
+        goblin.moveSpeed = 120.0f;
+        goblin.collision = {
+            {-20.0f, -15.0f, 0.0f},
+            {20.0f, 15.0f, 80.0f}};
+        assert(enemyCatalog.AddEnemy(goblin));
+
+        dnf::RoomTemplate room{
             1, 1200.0f, 500.0f, {100.0f, 250.0f, 0.0f}};
+
+        dnf::ObstacleTemplate crate;
+        crate.id = 1;
+        crate.collision = {
+            {500.0f, 100.0f, 0.0f},
+            {580.0f, 180.0f, 100.0f}};
+        crate.destructible = true;
+        crate.maxHp = 100;
+        room.obstacles.push_back(crate);
+
+        dnf::EnemySpawnTemplate spawn;
+        spawn.id = 1;
+        spawn.enemyTemplateId = goblin.id;
+        spawn.position = {800.0f, 250.0f, 0.0f};
+        room.enemySpawns.push_back(spawn);
+
         assert(dungeonCatalog.AddDungeon(1001, "Forest", {room}));
     }
 
@@ -547,6 +574,71 @@ dnf::DungeonConnectionInfoData SendConnectionInfoRequest(
         response.payload);
 }
 
+dnf::DungeonStaticDataResponseData SendDungeonStaticDataRequest(
+    TestContext& context,
+    dnf::SessionId sessionId,
+    dnf::DungeonId dungeonId)
+{
+    dnf::Packet request;
+    request.header.type = dnf::DungeonStaticDataRequest;
+    request.header.requestId = 62;
+    request.payload =
+        dnf::EncodeDungeonStaticDataRequestPayload(dungeonId);
+
+    dnf::PacketDispatcher dispatcher(
+        context.channelManager,
+        context.partyManager,
+        context.dungeonManager,
+        context.dungeonUdpManager,
+        sessionId);
+
+    dnf::ReceiveBuffer buffer;
+    buffer.Append(dispatcher.Dispatch(request));
+
+    dnf::Packet response;
+    assert(buffer.TryPop(response));
+    assert(response.header.type == dnf::DungeonStaticDataResponse);
+    assert(response.header.requestId == 62);
+    return dnf::DecodeDungeonStaticDataResponsePayload(response.payload);
+}
+
+void TestDungeonStaticDataRequest()
+{
+    TestContext context;
+    const dnf::PartyId partyId =
+        context.partyManager.CreateParty(700).value();
+    assert(context.partyManager.JoinParty(partyId, 701) ==
+           dnf::JoinPartyResult::Success);
+
+    const auto admission = SendEnterDungeonRequest(context, 700, 1001);
+    assert(admission.result == dnf::EnterDungeonResult::Success);
+
+    const auto staticData = SendDungeonStaticDataRequest(
+        context,
+        701,
+        admission.dungeonId);
+    assert(staticData.result == dnf::DungeonStaticDataResult::Success);
+    assert(staticData.dungeonId == admission.dungeonId);
+    assert(staticData.dungeonTemplateId == 1001);
+    assert(staticData.rooms.size() == 1);
+    assert(staticData.rooms[0].width == 1200.0f);
+    assert(staticData.rooms[0].obstacles.size() == 1);
+    assert(staticData.rooms[0].enemySpawns.size() == 1);
+    assert(staticData.enemyTemplates.size() == 1);
+    assert(staticData.enemyTemplates[0].name == "Goblin");
+
+    const auto outsider = SendDungeonStaticDataRequest(
+        context,
+        999,
+        admission.dungeonId);
+    assert(outsider.result ==
+           dnf::DungeonStaticDataResult::NotDungeonParticipant);
+
+    const auto missing = SendDungeonStaticDataRequest(context, 700, 9999);
+    assert(missing.result ==
+           dnf::DungeonStaticDataResult::DungeonNotFound);
+}
+
 void TestPartyLeaderEntersDungeon()
 {
     TestContext context;
@@ -693,6 +785,7 @@ int main()
     TestLeavePartyRequest();
     TestPartySnapshotRequest();
     TestPartyLeaderEntersDungeon();
+    TestDungeonStaticDataRequest();
     TestDungeonEntryPermission();
     TestDungeonEntryFailures();
     TestUdpAllocationRollback();

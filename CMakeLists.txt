@@ -31,6 +31,7 @@ add_library(dnf_core
     src/DungeonCatalog.cpp
     src/DungeonCatalogProtocol.cpp
     src/DungeonConnectionProtocol.cpp
+    src/DungeonStaticDataProtocol.cpp
     src/DungeonMovementProcessor.cpp
     src/DungeonInstance.cpp
     src/DungeonLifecycleService.cpp
@@ -206,6 +207,17 @@ target_link_libraries(dungeon_connection_protocol_test PRIVATE dnf_core)
 add_test(
     NAME dungeon_connection_protocol_test
     COMMAND dungeon_connection_protocol_test
+)
+
+add_executable(
+    dungeon_static_data_protocol_test
+    tests/DungeonStaticDataProtocolTest.cpp
+)
+target_link_libraries(dungeon_static_data_protocol_test PRIVATE dnf_core)
+
+add_test(
+    NAME dungeon_static_data_protocol_test
+    COMMAND dungeon_static_data_protocol_test
 )
 
 add_executable(dungeon_udp_session_test tests/DungeonUdpSessionTest.cpp)

@@ -18,6 +18,7 @@ bool IsValidPacketType(std::uint16_t type)
            type == LeavePartyRequest ||
            type == PartySnapshotRequest ||
            type == DungeonCatalogRequest ||
+           type == DungeonStaticDataRequest ||
            type == LoginResponse ||
            type == ChannelListResponse ||
            type == JoinChannelResponse ||
@@ -27,7 +28,8 @@ bool IsValidPacketType(std::uint16_t type)
            type == JoinPartyResponse ||
            type == LeavePartyResponse ||
            type == PartySnapshotResponse ||
-           type == DungeonCatalogResponse;
+           type == DungeonCatalogResponse ||
+           type == DungeonStaticDataResponse;
 }
 
 void ValidateHeader(std::uint16_t packetSize, std::uint16_t type)

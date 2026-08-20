@@ -16,6 +16,8 @@
     <Compile Include="../scripts/Protocol/GamePayloadCodec.cs" Link="Protocol/GamePayloadCodec.cs" />
     <Compile Include="../scripts/Protocol/TcpFlatBufferCodec.cs" Link="Protocol/TcpFlatBufferCodec.cs" />
     <Compile Include="../scripts/Protocol/DungeonSnapshotData.cs" Link="Protocol/DungeonSnapshotData.cs" />
+    <Compile Include="../scripts/Protocol/DungeonStaticData.cs" Link="Protocol/DungeonStaticData.cs" />
+    <Compile Include="../scripts/Protocol/DungeonStaticDataCodec.cs" Link="Protocol/DungeonStaticDataCodec.cs" />
     <Compile Include="../scripts/Protocol/DungeonProtocolCodec.cs" Link="Protocol/DungeonProtocolCodec.cs" />
     <Compile Include="../scripts/Generated/DungeonMessage_generated.cs" Link="Generated/DungeonMessage_generated.cs" />
     <Compile Include="../scripts/Generated/TcpMessage_generated.cs" Link="Generated/TcpMessage_generated.cs" />

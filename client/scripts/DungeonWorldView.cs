@@ -6,6 +6,7 @@ namespace DnfMockClient;
 public partial class DungeonWorldView : Control
 {
     private DungeonSnapshotData? _snapshot;
+    private DungeonStaticData? _staticData;
     private ulong _localSessionId;
 
     public void SetLocalSessionId(ulong sessionId)
@@ -20,9 +21,28 @@ public partial class DungeonWorldView : Control
         QueueRedraw();
     }
 
+    public void SetStaticData(DungeonStaticData staticData)
+    {
+        _staticData = staticData;
+        QueueRedraw();
+    }
+
+    public void ClearStaticData()
+    {
+        _staticData = null;
+        _snapshot = null;
+        QueueRedraw();
+    }
+
     public override void _Draw()
     {
         DrawRect(new Rect2(Vector2.Zero, Size), new Color("121725"));
+
+        if (_staticData is null)
+        {
+            DrawCenteredText("TCP 정적 데이터를 기다리는 중...");
+            return;
+        }
 
         if (_snapshot is null)
         {
@@ -31,9 +51,14 @@ public partial class DungeonWorldView : Control
         }
 
         uint roomId = FindCurrentRoomId(_snapshot);
-        Vector2 roomSize = roomId == 2
-            ? new Vector2(1500.0f, 600.0f)
-            : new Vector2(1200.0f, 500.0f);
+        RoomStaticData? room = FindRoom(roomId);
+        if (room is null)
+        {
+            DrawCenteredText($"Room {roomId} 정적 데이터가 없습니다.");
+            return;
+        }
+
+        var roomSize = new Vector2(room.Width, room.Depth);
         var arena = new Rect2(
             new Vector2(30.0f, 36.0f),
             Size - new Vector2(60.0f, 72.0f));
@@ -41,6 +66,7 @@ public partial class DungeonWorldView : Control
         DrawRect(arena, new Color("202b3a"), true);
         DrawRect(arena, new Color("52627a"), false, 2.0f);
         DrawGrid(arena);
+        DrawStaticGeometry(room, roomSize, arena);
 
         foreach (EnemySnapshotData enemy in _snapshot.Enemies)
         {
@@ -55,7 +81,11 @@ public partial class DungeonWorldView : Control
             DrawRect(body, new Color("dc5b64"), true);
             DrawRect(body, new Color("ff9b9f"), false, 2.0f);
 
-            float hpRatio = Mathf.Clamp(enemy.CurrentHp / 100.0f, 0.0f, 1.0f);
+            uint maxHp = FindEnemyMaxHp(enemy.EnemyTemplateId);
+            float hpRatio = Mathf.Clamp(
+                enemy.CurrentHp / (float)maxHp,
+                0.0f,
+                1.0f);
             var hpBackground = new Rect2(position + new Vector2(-18.0f, -28.0f),
                 new Vector2(36.0f, 5.0f));
             DrawRect(hpBackground, new Color("3c1f25"), true);
@@ -109,6 +139,35 @@ public partial class DungeonWorldView : Control
         }
     }
 
+    private void DrawStaticGeometry(
+        RoomStaticData room,
+        Vector2 roomSize,
+        Rect2 arena)
+    {
+        foreach (PortalStaticData portal in room.Portals)
+        {
+            Rect2 portalRect = ToScreenRect(
+                portal.TriggerArea,
+                roomSize,
+                arena);
+            DrawRect(portalRect, new Color(0.20f, 0.75f, 0.85f, 0.18f), true);
+            DrawRect(portalRect, new Color("4fd1e1"), false, 2.0f);
+        }
+
+        foreach (ObstacleStaticData obstacle in room.Obstacles)
+        {
+            Rect2 obstacleRect = ToScreenRect(
+                obstacle.Collision,
+                roomSize,
+                arena);
+            Color color = obstacle.Destructible
+                ? new Color("a87345")
+                : new Color("667085");
+            DrawRect(obstacleRect, color, true);
+            DrawRect(obstacleRect, color.Lightened(0.25f), false, 2.0f);
+        }
+    }
+
     private void DrawCenteredText(string text)
     {
         Vector2 textSize = ThemeDB.FallbackFont.GetStringSize(
@@ -137,6 +196,58 @@ public partial class DungeonWorldView : Control
         }
 
         return snapshot.Players.Count > 0 ? snapshot.Players[0].RoomId : 1;
+    }
+
+    private RoomStaticData? FindRoom(uint roomId)
+    {
+        if (_staticData is null)
+        {
+            return null;
+        }
+
+        foreach (RoomStaticData room in _staticData.Rooms)
+        {
+            if (room.RoomId == roomId)
+            {
+                return room;
+            }
+        }
+
+        return null;
+    }
+
+    private uint FindEnemyMaxHp(uint enemyTemplateId)
+    {
+        if (_staticData is not null)
+        {
+            foreach (EnemyTemplateStaticData enemy in _staticData.EnemyTemplates)
+            {
+                if (enemy.EnemyTemplateId == enemyTemplateId)
+                {
+                    return enemy.MaxHp;
+                }
+            }
+        }
+
+        return 1;
+    }
+
+    private static Rect2 ToScreenRect(
+        StaticCollisionBoxData collision,
+        Vector2 roomSize,
+        Rect2 arena)
+    {
+        Vector2 minimum = ToScreen(
+            collision.Minimum.X,
+            collision.Minimum.Y,
+            roomSize,
+            arena);
+        Vector2 maximum = ToScreen(
+            collision.Maximum.X,
+            collision.Maximum.Y,
+            roomSize,
+            arena);
+        return new Rect2(minimum, maximum - minimum);
     }
 
     private static Vector2 ToScreen(

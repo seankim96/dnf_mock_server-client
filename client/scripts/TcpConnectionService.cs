@@ -146,6 +146,8 @@ public sealed class TcpConnectionService : IDisposable
                 TcpPacketType.PartySnapshotResponse,
             TcpPacketType.DungeonCatalogRequest =>
                 TcpPacketType.DungeonCatalogResponse,
+            TcpPacketType.DungeonStaticDataRequest =>
+                TcpPacketType.DungeonStaticDataResponse,
             _ => throw new ArgumentException("Not a TCP request type.", nameof(requestType))
         };
     }

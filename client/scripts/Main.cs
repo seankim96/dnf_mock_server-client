@@ -358,6 +358,20 @@ public partial class Main : Control
             SetStatus($"던전 {response.DungeonId} 생성 성공", Colors.LightGreen);
             AddLog($"던전 생성: id={response.DungeonId}, UDP={response.UdpPort}");
 
+            DungeonStaticData staticData =
+                await LoadDungeonStaticDataAsync(
+                    response.DungeonId,
+                    _operationCancellation.Token);
+            if (staticData.Result != DungeonStaticDataResult.Success)
+            {
+                SetStatus(
+                    $"던전 정적 데이터 조회 실패: {staticData.Result}",
+                    Colors.Orange);
+                return;
+            }
+
+            _dungeonWorldView.SetStaticData(staticData);
+
             await StartDungeonUdpAsync(response, _localSessionId,
                 _operationCancellation.Token);
         }
@@ -610,6 +624,23 @@ public partial class Main : Control
         AddLog($"던전 카탈로그 수신: {catalog.Dungeons.Count}개");
     }
 
+    private async Task<DungeonStaticData> LoadDungeonStaticDataAsync(
+        ulong dungeonId,
+        CancellationToken cancellationToken)
+    {
+        TcpPacket packet = await _connection.SendRequestAsync(
+            TcpPacketType.DungeonStaticDataRequest,
+            DungeonStaticDataCodec.EncodeRequest(dungeonId),
+            cancellationToken);
+        DungeonStaticData staticData =
+            DungeonStaticDataCodec.DecodeResponse(packet.Payload);
+
+        AddLog(
+            $"던전 정적 데이터 수신: rooms={staticData.Rooms.Count}, " +
+            $"enemies={staticData.EnemyTemplates.Count}");
+        return staticData;
+    }
+
     private void BeginOperation(TimeSpan timeout)
     {
         _operationCancellation?.Dispose();
@@ -633,6 +664,7 @@ public partial class Main : Control
     private void ResetSessionState()
     {
         _udpService.Disconnect();
+        _dungeonWorldView.ClearStaticData();
         _loggedIn = false;
         _joinedChannel = false;
         _localSessionId = 0;
@@ -746,6 +778,7 @@ public partial class Main : Control
     private void OnLeaveDungeonButtonPressed()
     {
         _udpService.Disconnect();
+        _dungeonWorldView.ClearStaticData();
         _dungeonScreen.Visible = false;
         _lobbyScreen.Visible = true;
         SetStatus("던전 화면을 닫았습니다.", Colors.LightGray);

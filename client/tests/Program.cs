@@ -420,6 +420,73 @@ static void TestGamePayloads()
             dungeonCatalogRequest),
         "Dungeon catalog request was accepted as a response.");
 
+    byte[] staticDataRequest = DungeonStaticDataCodec.EncodeRequest(5001);
+    var staticDataRequestBuffer = new ByteBuffer(staticDataRequest);
+    Assert(TcpSchema.TcpMessage.VerifyTcpMessage(staticDataRequestBuffer),
+        "Dungeon static data request FlatBuffer is invalid.");
+    TcpSchema.TcpMessage staticDataRequestMessage =
+        TcpSchema.TcpMessage.GetRootAsTcpMessage(staticDataRequestBuffer);
+    Assert(staticDataRequestMessage.PayloadType ==
+        TcpSchema.TcpPayload.DungeonStaticDataRequest &&
+        staticDataRequestMessage.PayloadAsDungeonStaticDataRequest()
+            .DungeonId == 5001,
+        "Dungeon static data request is incorrect.");
+    AssertThrows<ArgumentOutOfRangeException>(
+        () => DungeonStaticDataCodec.EncodeRequest(0),
+        "Dungeon static data request accepted a zero ID.");
+
+    DungeonStaticData staticData = DungeonStaticDataCodec.DecodeResponse(
+        DungeonStaticDataResponseBytes(
+            TcpSchema.DungeonStaticDataResult.Success,
+            5001,
+            1001));
+    Assert(staticData.Result == DungeonStaticDataResult.Success &&
+        staticData.DungeonId == 5001 &&
+        staticData.DungeonTemplateId == 1001 &&
+        staticData.Rooms.Count == 2 &&
+        staticData.Rooms[0].Portals[0].TargetRoomId == 2 &&
+        staticData.Rooms[0].Obstacles[0].Destructible &&
+        staticData.Rooms[0].EnemySpawns[0].EnemyTemplateId == 2001 &&
+        staticData.EnemyTemplates.Count == 1 &&
+        staticData.EnemyTemplates[0].DisplayName == "Goblin",
+        "Dungeon static data response is incorrect.");
+
+    DungeonStaticData missingStaticData =
+        DungeonStaticDataCodec.DecodeResponse(
+            DungeonStaticDataResponseBytes(
+                TcpSchema.DungeonStaticDataResult.DungeonNotFound,
+                0,
+                0));
+    Assert(missingStaticData.Result ==
+        DungeonStaticDataResult.DungeonNotFound &&
+        missingStaticData.Rooms.Count == 0,
+        "Failed dungeon static data response is incorrect.");
+    AssertThrows<InvalidDataException>(
+        () => DungeonStaticDataCodec.DecodeResponse(
+            DungeonStaticDataResponseBytes(
+                TcpSchema.DungeonStaticDataResult.Success,
+                0,
+                0)),
+        "Incomplete successful static data was accepted.");
+    AssertThrows<InvalidDataException>(
+        () => DungeonStaticDataCodec.DecodeResponse(
+            DungeonStaticDataResponseBytes(
+                TcpSchema.DungeonStaticDataResult.Success,
+                5001,
+                1001,
+                9999)),
+        "Static data with a missing enemy template was accepted.");
+    AssertThrows<InvalidDataException>(
+        () => DungeonStaticDataCodec.DecodeResponse(
+            DungeonStaticDataResponseBytes(
+                (TcpSchema.DungeonStaticDataResult)3,
+                0,
+                0)),
+        "Unknown dungeon static data result was accepted.");
+    AssertThrows<InvalidDataException>(
+        () => DungeonStaticDataCodec.DecodeResponse(staticDataRequest),
+        "Dungeon static data request was accepted as a response.");
+
     byte[] enterDungeonRequest =
         GamePayloadCodec.EncodeEnterDungeonRequest(1001);
     var enterDungeonRequestBuffer = new ByteBuffer(enterDungeonRequest);
@@ -657,6 +724,153 @@ static byte[] DungeonCatalogResponseBytes(
     return TcpFlatBufferCodec.FinishPayload(
         builder,
         TcpSchema.TcpPayload.DungeonCatalogResponse,
+        response.Value);
+}
+
+static byte[] DungeonStaticDataResponseBytes(
+    TcpSchema.DungeonStaticDataResult result,
+    ulong dungeonId,
+    uint dungeonTemplateId,
+    uint spawnEnemyTemplateId = 2001)
+{
+    var builder = new FlatBufferBuilder(1024);
+    var roomEntries = Array.Empty<Offset<TcpSchema.RoomStaticData>>();
+    var enemyEntries =
+        Array.Empty<Offset<TcpSchema.EnemyTemplateStaticData>>();
+
+    if (dungeonId != 0)
+    {
+        TcpSchema.PortalStaticData.StartPortalStaticData(builder);
+        TcpSchema.PortalStaticData.AddPortalId(builder, 1);
+        TcpSchema.PortalStaticData.AddTargetRoomId(builder, 2);
+        TcpSchema.PortalStaticData.AddRequiresRoomClear(builder, true);
+        Offset<TcpSchema.StaticVec3> targetPosition =
+            TcpSchema.StaticVec3.CreateStaticVec3(
+                builder, 100.0f, 300.0f, 0.0f);
+        TcpSchema.PortalStaticData.AddTargetPosition(builder, targetPosition);
+        Offset<TcpSchema.StaticCollisionBox> triggerArea =
+            TcpSchema.StaticCollisionBox.CreateStaticCollisionBox(
+                builder,
+                1100.0f, 200.0f, 0.0f,
+                1200.0f, 300.0f, 200.0f);
+        TcpSchema.PortalStaticData.AddTriggerArea(builder, triggerArea);
+        Offset<TcpSchema.PortalStaticData> portal =
+            TcpSchema.PortalStaticData.EndPortalStaticData(builder);
+
+        TcpSchema.ObstacleStaticData.StartObstacleStaticData(builder);
+        TcpSchema.ObstacleStaticData.AddObstacleId(builder, 1);
+        TcpSchema.ObstacleStaticData.AddDestructible(builder, true);
+        TcpSchema.ObstacleStaticData.AddMaxHp(builder, 100);
+        Offset<TcpSchema.StaticCollisionBox> obstacleCollision =
+            TcpSchema.StaticCollisionBox.CreateStaticCollisionBox(
+                builder,
+                500.0f, 100.0f, 0.0f,
+                580.0f, 180.0f, 100.0f);
+        TcpSchema.ObstacleStaticData.AddCollision(
+            builder,
+            obstacleCollision);
+        Offset<TcpSchema.ObstacleStaticData> obstacle =
+            TcpSchema.ObstacleStaticData.EndObstacleStaticData(builder);
+
+        TcpSchema.EnemySpawnStaticData.StartEnemySpawnStaticData(builder);
+        TcpSchema.EnemySpawnStaticData.AddEnemySpawnId(builder, 1);
+        TcpSchema.EnemySpawnStaticData.AddEnemyTemplateId(
+            builder,
+            spawnEnemyTemplateId);
+        TcpSchema.EnemySpawnStaticData.AddWave(builder, 1);
+        Offset<TcpSchema.StaticVec3> enemyPosition =
+            TcpSchema.StaticVec3.CreateStaticVec3(
+                builder, 800.0f, 250.0f, 0.0f);
+        TcpSchema.EnemySpawnStaticData.AddPosition(builder, enemyPosition);
+        Offset<TcpSchema.EnemySpawnStaticData> spawn =
+            TcpSchema.EnemySpawnStaticData.EndEnemySpawnStaticData(builder);
+
+        VectorOffset firstPortals = TcpSchema.RoomStaticData
+            .CreatePortalsVector(builder, new[] { portal });
+        VectorOffset firstObstacles = TcpSchema.RoomStaticData
+            .CreateObstaclesVector(builder, new[] { obstacle });
+        VectorOffset firstSpawns = TcpSchema.RoomStaticData
+            .CreateEnemySpawnsVector(builder, new[] { spawn });
+        TcpSchema.RoomStaticData.StartRoomStaticData(builder);
+        TcpSchema.RoomStaticData.AddRoomId(builder, 1);
+        TcpSchema.RoomStaticData.AddWidth(builder, 1200.0f);
+        TcpSchema.RoomStaticData.AddDepth(builder, 500.0f);
+        TcpSchema.RoomStaticData.AddPortals(builder, firstPortals);
+        TcpSchema.RoomStaticData.AddObstacles(builder, firstObstacles);
+        TcpSchema.RoomStaticData.AddEnemySpawns(builder, firstSpawns);
+        Offset<TcpSchema.StaticVec3> firstPlayerSpawn =
+            TcpSchema.StaticVec3.CreateStaticVec3(
+                builder, 100.0f, 250.0f, 0.0f);
+        TcpSchema.RoomStaticData.AddPlayerSpawn(builder, firstPlayerSpawn);
+        Offset<TcpSchema.RoomStaticData> firstRoom =
+            TcpSchema.RoomStaticData.EndRoomStaticData(builder);
+
+        VectorOffset secondPortals = TcpSchema.RoomStaticData
+            .CreatePortalsVector(
+                builder,
+                Array.Empty<Offset<TcpSchema.PortalStaticData>>());
+        VectorOffset secondObstacles = TcpSchema.RoomStaticData
+            .CreateObstaclesVector(
+                builder,
+                Array.Empty<Offset<TcpSchema.ObstacleStaticData>>());
+        VectorOffset secondSpawns = TcpSchema.RoomStaticData
+            .CreateEnemySpawnsVector(
+                builder,
+                Array.Empty<Offset<TcpSchema.EnemySpawnStaticData>>());
+        TcpSchema.RoomStaticData.StartRoomStaticData(builder);
+        TcpSchema.RoomStaticData.AddRoomId(builder, 2);
+        TcpSchema.RoomStaticData.AddWidth(builder, 1500.0f);
+        TcpSchema.RoomStaticData.AddDepth(builder, 600.0f);
+        TcpSchema.RoomStaticData.AddPortals(builder, secondPortals);
+        TcpSchema.RoomStaticData.AddObstacles(builder, secondObstacles);
+        TcpSchema.RoomStaticData.AddEnemySpawns(builder, secondSpawns);
+        Offset<TcpSchema.StaticVec3> secondPlayerSpawn =
+            TcpSchema.StaticVec3.CreateStaticVec3(
+                builder, 100.0f, 300.0f, 0.0f);
+        TcpSchema.RoomStaticData.AddPlayerSpawn(builder, secondPlayerSpawn);
+        Offset<TcpSchema.RoomStaticData> secondRoom =
+            TcpSchema.RoomStaticData.EndRoomStaticData(builder);
+        roomEntries = new[] { firstRoom, secondRoom };
+
+        StringOffset enemyName = builder.CreateString("Goblin");
+        TcpSchema.EnemyTemplateStaticData
+            .StartEnemyTemplateStaticData(builder);
+        TcpSchema.EnemyTemplateStaticData.AddEnemyTemplateId(builder, 2001);
+        TcpSchema.EnemyTemplateStaticData.AddDisplayName(builder, enemyName);
+        TcpSchema.EnemyTemplateStaticData.AddMaxHp(builder, 100);
+        TcpSchema.EnemyTemplateStaticData.AddMoveSpeed(builder, 120.0f);
+        TcpSchema.EnemyTemplateStaticData.AddAiType(
+            builder,
+            TcpSchema.EnemyAiType.Melee);
+        Offset<TcpSchema.StaticCollisionBox> enemyCollision =
+            TcpSchema.StaticCollisionBox.CreateStaticCollisionBox(
+                builder,
+                -20.0f, -15.0f, 0.0f,
+                20.0f, 15.0f, 80.0f);
+        TcpSchema.EnemyTemplateStaticData.AddCollision(
+            builder,
+            enemyCollision);
+        Offset<TcpSchema.EnemyTemplateStaticData> enemy =
+            TcpSchema.EnemyTemplateStaticData
+                .EndEnemyTemplateStaticData(builder);
+        enemyEntries = new[] { enemy };
+    }
+
+    VectorOffset rooms = TcpSchema.DungeonStaticDataResponse
+        .CreateRoomsVector(builder, roomEntries);
+    VectorOffset enemies = TcpSchema.DungeonStaticDataResponse
+        .CreateEnemyTemplatesVector(builder, enemyEntries);
+    Offset<TcpSchema.DungeonStaticDataResponse> response =
+        TcpSchema.DungeonStaticDataResponse.CreateDungeonStaticDataResponse(
+            builder,
+            result,
+            dungeonId,
+            dungeonTemplateId,
+            rooms,
+            enemies);
+    return TcpFlatBufferCodec.FinishPayload(
+        builder,
+        TcpSchema.TcpPayload.DungeonStaticDataResponse,
         response.Value);
 }
 
@@ -1214,6 +1428,52 @@ static async Task TestTcpConnectionAsync()
         receivedDungeon.UdpPort == 40000 &&
         receivedDungeon.UdpToken == 77,
         "Enter dungeon TCP response payload is incorrect.");
+
+    Task<TcpPacket> staticDataResponseTask = connection.SendRequestAsync(
+        TcpPacketType.DungeonStaticDataRequest,
+        DungeonStaticDataCodec.EncodeRequest(receivedDungeon.DungeonId),
+        timeout.Token);
+
+    await serverStream.ReadExactlyAsync(requestHeaderBytes, timeout.Token);
+    TcpPacketHeader staticDataRequestHeader =
+        TcpPacketCodec.DecodeHeader(requestHeaderBytes);
+    int staticDataRequestPayloadSize =
+        staticDataRequestHeader.PacketSize - TcpPacketCodec.HeaderSize;
+    var staticDataRequestPayload =
+        new byte[staticDataRequestPayloadSize];
+    await serverStream.ReadExactlyAsync(
+        staticDataRequestPayload,
+        timeout.Token);
+    Assert(staticDataRequestHeader.Type ==
+        TcpPacketType.DungeonStaticDataRequest,
+        "Dungeon static data TCP request type is incorrect.");
+    var staticDataRequestBuffer = new ByteBuffer(staticDataRequestPayload);
+    Assert(TcpSchema.TcpMessage.VerifyTcpMessage(staticDataRequestBuffer),
+        "Dungeon static data TCP request FlatBuffer is invalid.");
+    TcpSchema.TcpMessage staticDataRequest =
+        TcpSchema.TcpMessage.GetRootAsTcpMessage(staticDataRequestBuffer);
+    Assert(staticDataRequest.PayloadType ==
+        TcpSchema.TcpPayload.DungeonStaticDataRequest &&
+        staticDataRequest.PayloadAsDungeonStaticDataRequest().DungeonId == 10,
+        "Dungeon static data TCP request payload is incorrect.");
+
+    byte[] staticDataResponseBytes = TcpPacketCodec.EncodePacket(
+        TcpPacketType.DungeonStaticDataResponse,
+        staticDataRequestHeader.RequestId,
+        DungeonStaticDataResponseBytes(
+            TcpSchema.DungeonStaticDataResult.Success,
+            10,
+            1001));
+    await serverStream.WriteAsync(staticDataResponseBytes, timeout.Token);
+
+    TcpPacket staticDataResponse = await staticDataResponseTask;
+    DungeonStaticData receivedStaticData =
+        DungeonStaticDataCodec.DecodeResponse(staticDataResponse.Payload);
+    Assert(staticDataResponse.Header.Type ==
+        TcpPacketType.DungeonStaticDataResponse &&
+        receivedStaticData.Rooms.Count == 2 &&
+        receivedStaticData.EnemyTemplates.Count == 1,
+        "Dungeon static data TCP response is incorrect.");
 
     Task<TcpPacket> connectionInfoResponseTask = connection.SendRequestAsync(
         TcpPacketType.DungeonConnectionInfoRequest,

@@ -252,7 +252,7 @@ table SkillCatalogResponse {
   skills:[SkillCatalogEntry] (required);
 }
 
-// Planned one-time static data sent after dungeon admission.
+// One-time static data sent after dungeon admission.
 
 table DungeonStaticDataRequest {
   dungeon_id:ulong;
@@ -307,7 +307,7 @@ table DungeonStaticDataResponse {
   enemy_templates:[EnemyTemplateStaticData] (required);
 }
 
-// Values 1-10 and 101-110 match the existing PacketType header values.
+// Values 1-11 and 101-111 match the existing PacketType header values.
 // Later values are reserved before their PacketType handlers are added.
 union TcpPayload {
   LoginRequest = 1,
