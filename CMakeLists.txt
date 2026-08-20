@@ -25,9 +25,11 @@ flatbuffers_generate_headers(
 )
 
 add_library(dnf_core
+    src/AuthTicketVerifier.cpp
     src/ChannelManager.cpp
     src/ChannelProtocol.cpp
     src/DatabaseExecutor.cpp
+    src/DevAuthTicketVerifier.cpp
     src/DungeonCombatProcessor.cpp
     src/DungeonAdmissionProtocol.cpp
     src/DungeonCatalog.cpp
@@ -82,6 +84,17 @@ add_executable(dnf_mock_server src/main.cpp)
 target_link_libraries(dnf_mock_server PRIVATE dnf_core)
 
 enable_testing()
+
+add_executable(
+    dev_auth_ticket_verifier_test
+    tests/DevAuthTicketVerifierTest.cpp
+)
+target_link_libraries(dev_auth_ticket_verifier_test PRIVATE dnf_core)
+
+add_test(
+    NAME dev_auth_ticket_verifier_test
+    COMMAND dev_auth_ticket_verifier_test
+)
 
 add_executable(database_executor_test tests/DatabaseExecutorTest.cpp)
 target_link_libraries(database_executor_test PRIVATE dnf_core)

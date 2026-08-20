@@ -1,5 +1,6 @@
 #pragma once
 
+#include "PlayerId.h"
 #include "PlayerSkillBook.h"
 
 #include <cstdint>
@@ -8,8 +9,6 @@
 
 namespace dnf
 {
-using PlayerId = std::uint64_t;
-
 struct PlayerProfile
 {
     PlayerId playerId = 0;
