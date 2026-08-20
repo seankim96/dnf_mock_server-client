@@ -59,6 +59,7 @@ add_library(dnf_core
     src/SessionManager.cpp
     src/SkillCatalog.cpp
     src/SqliteDatabase.cpp
+    src/SqlitePlayerRepository.cpp
     src/TcpFlatBufferCodec.cpp
     src/TcpServer.cpp
     src/TcpSession.cpp
@@ -177,6 +178,17 @@ add_executable(sqlite_database_test tests/SqliteDatabaseTest.cpp)
 target_link_libraries(sqlite_database_test PRIVATE dnf_core)
 
 add_test(NAME sqlite_database_test COMMAND sqlite_database_test)
+
+add_executable(
+    sqlite_player_repository_test
+    tests/SqlitePlayerRepositoryTest.cpp
+)
+target_link_libraries(sqlite_player_repository_test PRIVATE dnf_core)
+
+add_test(
+    NAME sqlite_player_repository_test
+    COMMAND sqlite_player_repository_test
+)
 
 add_executable(room_state_test tests/RoomStateTest.cpp)
 target_link_libraries(room_state_test PRIVATE dnf_core)
