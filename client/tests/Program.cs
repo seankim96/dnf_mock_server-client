@@ -364,6 +364,62 @@ static void TestGamePayloads()
             partySnapshotRequest),
         "Party snapshot request was accepted as a response.");
 
+    byte[] dungeonCatalogRequest =
+        GamePayloadCodec.EncodeDungeonCatalogRequest();
+    var dungeonCatalogRequestBuffer = new ByteBuffer(dungeonCatalogRequest);
+    Assert(TcpSchema.TcpMessage.VerifyTcpMessage(dungeonCatalogRequestBuffer),
+        "Dungeon catalog request FlatBuffer is invalid.");
+    Assert(TcpSchema.TcpMessage.GetRootAsTcpMessage(
+            dungeonCatalogRequestBuffer).PayloadType ==
+        TcpSchema.TcpPayload.DungeonCatalogRequest,
+        "Dungeon catalog request type is incorrect.");
+
+    DungeonCatalogData dungeonCatalog =
+        GamePayloadCodec.DecodeDungeonCatalogResponse(
+            DungeonCatalogResponseBytes(
+                TcpSchema.CatalogResult.Success,
+                new[]
+                {
+                    (1000U, "Training Room", (byte)1, (byte)1, true),
+                    (1001U, "Forest", (byte)2, (byte)4, true)
+                }));
+    Assert(dungeonCatalog.Result == CatalogResult.Success &&
+        dungeonCatalog.Dungeons.Count == 2 &&
+        dungeonCatalog.Dungeons[1].TemplateId == 1001 &&
+        dungeonCatalog.Dungeons[1].DisplayName == "Forest" &&
+        dungeonCatalog.Dungeons[1].RecommendedPartySize == 2 &&
+        dungeonCatalog.Dungeons[1].MaxPartySize == 4 &&
+        dungeonCatalog.Dungeons[1].Available,
+        "Dungeon catalog response is incorrect.");
+
+    DungeonCatalogData unavailableCatalog =
+        GamePayloadCodec.DecodeDungeonCatalogResponse(
+            DungeonCatalogResponseBytes(
+                TcpSchema.CatalogResult.Unavailable,
+                Array.Empty<(uint, string, byte, byte, bool)>()));
+    Assert(unavailableCatalog.Result == CatalogResult.Unavailable &&
+        unavailableCatalog.Dungeons.Count == 0,
+        "Unavailable dungeon catalog response is incorrect.");
+    AssertThrows<InvalidDataException>(
+        () => GamePayloadCodec.DecodeDungeonCatalogResponse(
+            DungeonCatalogResponseBytes(
+                TcpSchema.CatalogResult.Success,
+                new[]
+                {
+                    (0U, "Invalid", (byte)1, (byte)4, true)
+                })),
+        "Dungeon catalog entry with a zero ID was accepted.");
+    AssertThrows<InvalidDataException>(
+        () => GamePayloadCodec.DecodeDungeonCatalogResponse(
+            DungeonCatalogResponseBytes(
+                (TcpSchema.CatalogResult)2,
+                Array.Empty<(uint, string, byte, byte, bool)>())),
+        "Unknown dungeon catalog result was accepted.");
+    AssertThrows<InvalidDataException>(
+        () => GamePayloadCodec.DecodeDungeonCatalogResponse(
+            dungeonCatalogRequest),
+        "Dungeon catalog request was accepted as a response.");
+
     byte[] enterDungeonRequest =
         GamePayloadCodec.EncodeEnterDungeonRequest(1001);
     var enterDungeonRequestBuffer = new ByteBuffer(enterDungeonRequest);
@@ -568,6 +624,39 @@ static byte[] CreatePartySnapshotResponseBytes(
     return TcpFlatBufferCodec.FinishPayload(
         builder,
         TcpSchema.TcpPayload.PartySnapshotResponse,
+        response.Value);
+}
+
+static byte[] DungeonCatalogResponseBytes(
+    TcpSchema.CatalogResult result,
+    (uint Id, string Name, byte Recommended, byte Max, bool Available)[] dungeons)
+{
+    var builder = new FlatBufferBuilder(256);
+    var entries = new Offset<TcpSchema.DungeonCatalogEntry>[dungeons.Length];
+
+    for (int index = 0; index < dungeons.Length; index++)
+    {
+        StringOffset name = builder.CreateString(dungeons[index].Name);
+        entries[index] = TcpSchema.DungeonCatalogEntry
+            .CreateDungeonCatalogEntry(
+                builder,
+                dungeons[index].Id,
+                name,
+                dungeons[index].Recommended,
+                dungeons[index].Max,
+                dungeons[index].Available);
+    }
+
+    VectorOffset dungeonEntries = TcpSchema.DungeonCatalogResponse
+        .CreateDungeonsVector(builder, entries);
+    Offset<TcpSchema.DungeonCatalogResponse> response =
+        TcpSchema.DungeonCatalogResponse.CreateDungeonCatalogResponse(
+            builder,
+            result,
+            dungeonEntries);
+    return TcpFlatBufferCodec.FinishPayload(
+        builder,
+        TcpSchema.TcpPayload.DungeonCatalogResponse,
         response.Value);
 }
 
@@ -890,6 +979,46 @@ static async Task TestTcpConnectionAsync()
     Assert(receivedChannels.Count == 1 &&
         receivedChannels[0].DisplayName == "Channel 1",
         "Channel list TCP response payload is incorrect.");
+
+    Task<TcpPacket> catalogResponseTask = connection.SendRequestAsync(
+        TcpPacketType.DungeonCatalogRequest,
+        GamePayloadCodec.EncodeDungeonCatalogRequest(),
+        timeout.Token);
+
+    await serverStream.ReadExactlyAsync(requestHeaderBytes, timeout.Token);
+    TcpPacketHeader catalogRequestHeader =
+        TcpPacketCodec.DecodeHeader(requestHeaderBytes);
+    int catalogRequestPayloadSize =
+        catalogRequestHeader.PacketSize - TcpPacketCodec.HeaderSize;
+    var catalogRequestPayload = new byte[catalogRequestPayloadSize];
+    await serverStream.ReadExactlyAsync(catalogRequestPayload, timeout.Token);
+    Assert(catalogRequestHeader.Type == TcpPacketType.DungeonCatalogRequest,
+        "Dungeon catalog TCP request type is incorrect.");
+    var catalogRequestBuffer = new ByteBuffer(catalogRequestPayload);
+    Assert(TcpSchema.TcpMessage.VerifyTcpMessage(catalogRequestBuffer),
+        "Dungeon catalog TCP request FlatBuffer is invalid.");
+    Assert(TcpSchema.TcpMessage.GetRootAsTcpMessage(catalogRequestBuffer)
+        .PayloadType == TcpSchema.TcpPayload.DungeonCatalogRequest,
+        "Dungeon catalog TCP request FlatBuffer type is incorrect.");
+
+    byte[] catalogResponseBytes = TcpPacketCodec.EncodePacket(
+        TcpPacketType.DungeonCatalogResponse,
+        catalogRequestHeader.RequestId,
+        DungeonCatalogResponseBytes(
+            TcpSchema.CatalogResult.Success,
+            new[]
+            {
+                (1001U, "Forest", (byte)1, (byte)4, true)
+            }));
+    await serverStream.WriteAsync(catalogResponseBytes, timeout.Token);
+
+    TcpPacket catalogResponse = await catalogResponseTask;
+    DungeonCatalogData receivedCatalog =
+        GamePayloadCodec.DecodeDungeonCatalogResponse(catalogResponse.Payload);
+    Assert(catalogResponse.Header.Type == TcpPacketType.DungeonCatalogResponse &&
+        receivedCatalog.Dungeons.Count == 1 &&
+        receivedCatalog.Dungeons[0].TemplateId == 1001,
+        "Dungeon catalog TCP response is incorrect.");
 
     Task<TcpPacket> joinChannelResponseTask = connection.SendRequestAsync(
         TcpPacketType.JoinChannelRequest,

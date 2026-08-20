@@ -77,6 +77,11 @@ std::shared_ptr<DungeonInstance> DungeonManager::FindDungeonByParty(
     return dungeons_.at(partyIt->second);
 }
 
+std::vector<DungeonTemplate> DungeonManager::GetDungeonTemplates() const
+{
+    return dungeonCatalog_.GetDungeonList();
+}
+
 bool DungeonManager::StartDungeon(DungeonId dungeonId)
 {
     std::lock_guard lock(mutex_);

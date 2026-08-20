@@ -2,6 +2,7 @@
 
 #include "ChannelProtocol.h"
 #include "DungeonAdmissionProtocol.h"
+#include "DungeonCatalogProtocol.h"
 #include "DungeonConnectionProtocol.h"
 #include "DungeonLifecycleService.h"
 #include "DungeonManager.h"
@@ -60,6 +61,9 @@ std::vector<std::uint8_t> PacketDispatcher::Dispatch(
 
     case PartySnapshotRequest:
         return HandlePartySnapshotRequest(request);
+
+    case DungeonCatalogRequest:
+        return HandleDungeonCatalogRequest(request);
 
     default:
         throw std::runtime_error("No handler for packet type");
@@ -395,5 +399,21 @@ std::vector<std::uint8_t> PacketDispatcher::HandlePartySnapshotRequest(
             partyId,
             leaderSessionId,
             members));
+}
+
+std::vector<std::uint8_t> PacketDispatcher::HandleDungeonCatalogRequest(
+    const Packet& request) const
+{
+    ValidateDungeonCatalogRequestPayload(request.payload);
+
+    const auto dungeons = dungeonManager_.GetDungeonTemplates();
+    const auto responsePayload = EncodeDungeonCatalogResponsePayload(
+        CatalogResult::Success,
+        dungeons);
+
+    return EncodePacket(
+        DungeonCatalogResponse,
+        request.header.requestId,
+        responsePayload);
 }
 } // namespace dnf

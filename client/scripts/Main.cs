@@ -257,6 +257,7 @@ public partial class Main : Control
             AddLog(
                 $"로그인 성공: {_playerNameInput.Text.Trim()}, session={_localSessionId}");
             await LoadChannelsAsync(_operationCancellation.Token);
+            await LoadDungeonCatalogAsync(_operationCancellation.Token);
         }
         catch (Exception exception) when (IsExpectedOperationError(exception))
         {
@@ -579,6 +580,34 @@ public partial class Main : Control
         }
 
         AddLog($"채널 목록 수신: {channels.Count}개");
+    }
+
+    private async Task LoadDungeonCatalogAsync(
+        CancellationToken cancellationToken)
+    {
+        TcpPacket packet = await _connection.SendRequestAsync(
+            TcpPacketType.DungeonCatalogRequest,
+            GamePayloadCodec.EncodeDungeonCatalogRequest(),
+            cancellationToken);
+        DungeonCatalogData catalog =
+            GamePayloadCodec.DecodeDungeonCatalogResponse(packet.Payload);
+
+        if (catalog.Result != CatalogResult.Success)
+        {
+            AddLog($"DungeonCatalogResponse: {catalog.Result}");
+            return;
+        }
+
+        foreach (DungeonCatalogEntry dungeon in catalog.Dungeons)
+        {
+            if (dungeon.Available)
+            {
+                _dungeonTemplateInput.Text = dungeon.TemplateId.ToString();
+                break;
+            }
+        }
+
+        AddLog($"던전 카탈로그 수신: {catalog.Dungeons.Count}개");
     }
 
     private void BeginOperation(TimeSpan timeout)

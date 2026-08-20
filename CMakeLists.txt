@@ -29,6 +29,7 @@ add_library(dnf_core
     src/DungeonCombatProcessor.cpp
     src/DungeonAdmissionProtocol.cpp
     src/DungeonCatalog.cpp
+    src/DungeonCatalogProtocol.cpp
     src/DungeonConnectionProtocol.cpp
     src/DungeonMovementProcessor.cpp
     src/DungeonInstance.cpp
@@ -123,6 +124,17 @@ add_executable(dungeon_catalog_test tests/DungeonCatalogTest.cpp)
 target_link_libraries(dungeon_catalog_test PRIVATE dnf_core)
 
 add_test(NAME dungeon_catalog_test COMMAND dungeon_catalog_test)
+
+add_executable(
+    dungeon_catalog_protocol_test
+    tests/DungeonCatalogProtocolTest.cpp
+)
+target_link_libraries(dungeon_catalog_protocol_test PRIVATE dnf_core)
+
+add_test(
+    NAME dungeon_catalog_protocol_test
+    COMMAND dungeon_catalog_protocol_test
+)
 
 add_executable(dungeon_room_test tests/DungeonRoomTest.cpp)
 target_link_libraries(dungeon_room_test PRIVATE dnf_core)

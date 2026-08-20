@@ -1,5 +1,6 @@
 #include "ChannelProtocol.h"
 #include "DungeonAdmissionProtocol.h"
+#include "DungeonCatalogProtocol.h"
 #include "DungeonConnectionProtocol.h"
 #include "DungeonManager.h"
 #include "DungeonUdpManager.h"
@@ -110,6 +111,41 @@ void TestChannelListRequest()
     assert(channels[1].name == "Channel 2");
     assert(channels[1].currentPlayers == 0);
     assert(channels[1].maxPlayers == 200);
+}
+
+void TestDungeonCatalogRequest()
+{
+    TestContext context;
+
+    dnf::Packet request;
+    request.header.type = dnf::DungeonCatalogRequest;
+    request.header.requestId = 47;
+    request.payload = dnf::EncodeDungeonCatalogRequestPayload();
+
+    dnf::PacketDispatcher dispatcher(
+        context.channelManager,
+        context.partyManager,
+        context.dungeonManager,
+        context.dungeonUdpManager,
+        100);
+
+    dnf::ReceiveBuffer buffer;
+    buffer.Append(dispatcher.Dispatch(request));
+
+    dnf::Packet response;
+    assert(buffer.TryPop(response));
+    assert(response.header.type == dnf::DungeonCatalogResponse);
+    assert(response.header.requestId == 47);
+
+    const auto catalog =
+        dnf::DecodeDungeonCatalogResponsePayload(response.payload);
+    assert(catalog.result == dnf::CatalogResult::Success);
+    assert(catalog.dungeons.size() == 1);
+    assert(catalog.dungeons[0].templateId == 1001);
+    assert(catalog.dungeons[0].displayName == "Forest");
+    assert(catalog.dungeons[0].recommendedPartySize == 1);
+    assert(catalog.dungeons[0].maxPartySize == 4);
+    assert(catalog.dungeons[0].available);
 }
 
 void TestMissingHandler()
@@ -648,6 +684,7 @@ int main()
     TestLoginRequest();
     TestInvalidLoginRequest();
     TestChannelListRequest();
+    TestDungeonCatalogRequest();
     TestJoinChannelRequest();
     TestCreatePartyRequest();
     TestDuplicateCreatePartyRequest();

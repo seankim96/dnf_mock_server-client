@@ -64,6 +64,21 @@ void TestCreationFailure()
     assert(duplicate.dungeon == nullptr);
 }
 
+void TestDungeonTemplateList()
+{
+    dnf::PartyManager partyManager;
+    dnf::EnemyCatalog enemyCatalog;
+    dnf::DungeonCatalog dungeonCatalog(enemyCatalog);
+    AddTestDungeon(dungeonCatalog);
+    dnf::DungeonManager dungeonManager(
+        partyManager, dungeonCatalog, enemyCatalog);
+
+    const auto templates = dungeonManager.GetDungeonTemplates();
+    assert(templates.size() == 1);
+    assert(templates[0].id == 1001);
+    assert(templates[0].name == "Forest");
+}
+
 void TestDungeonLifecycle()
 {
     dnf::PartyManager partyManager;
@@ -141,6 +156,7 @@ int main()
 {
     TestCreateDungeonFromParty();
     TestCreationFailure();
+    TestDungeonTemplateList();
     TestDungeonLifecycle();
     TestParticipantSnapshot();
     TestCancelWaitingDungeon();

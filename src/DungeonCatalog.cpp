@@ -1,6 +1,7 @@
 #include "DungeonCatalog.h"
 
 #include "EnemyCatalog.h"
+#include "PartyManager.h"
 
 #include <algorithm>
 #include <unordered_set>
@@ -16,11 +17,16 @@ DungeonCatalog::DungeonCatalog(const EnemyCatalog& enemyCatalog)
 bool DungeonCatalog::AddDungeon(
     DungeonTemplateId templateId,
     std::string name,
-    std::vector<RoomTemplate> rooms)
+    std::vector<RoomTemplate> rooms,
+    std::uint8_t recommendedPartySize,
+    std::uint8_t maxPartySize)
 {
     std::lock_guard lock(mutex_);
 
     if (templateId == 0 || name.empty() || rooms.empty() ||
+        recommendedPartySize == 0 || maxPartySize == 0 ||
+        recommendedPartySize > maxPartySize ||
+        maxPartySize > MAX_PARTY_MEMBERS ||
         dungeons_.contains(templateId))
     {
         return false;
@@ -111,6 +117,8 @@ bool DungeonCatalog::AddDungeon(
     dungeon.id = templateId;
     dungeon.name = std::move(name);
     dungeon.rooms = std::move(rooms);
+    dungeon.recommendedPartySize = recommendedPartySize;
+    dungeon.maxPartySize = maxPartySize;
 
     dungeons_.emplace(templateId, std::move(dungeon));
     return true;
@@ -128,5 +136,28 @@ std::optional<DungeonTemplate> DungeonCatalog::GetDungeon(
     }
 
     return dungeonIt->second;
+}
+
+std::vector<DungeonTemplate> DungeonCatalog::GetDungeonList() const
+{
+    std::lock_guard lock(mutex_);
+
+    std::vector<DungeonTemplate> dungeonList;
+    dungeonList.reserve(dungeons_.size());
+
+    for (const auto& dungeonEntry : dungeons_)
+    {
+        dungeonList.push_back(dungeonEntry.second);
+    }
+
+    std::sort(
+        dungeonList.begin(),
+        dungeonList.end(),
+        [](const DungeonTemplate& left, const DungeonTemplate& right)
+        {
+            return left.id < right.id;
+        });
+
+    return dungeonList;
 }
 } // namespace dnf

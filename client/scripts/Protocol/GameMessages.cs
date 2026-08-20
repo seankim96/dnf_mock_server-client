@@ -142,6 +142,49 @@ public sealed class PartySnapshotData
     public IReadOnlyList<ulong> Members { get; }
 }
 
+public enum CatalogResult : byte
+{
+    Success = 0,
+    Unavailable = 1
+}
+
+public sealed class DungeonCatalogEntry
+{
+    public DungeonCatalogEntry(
+        uint templateId,
+        string displayName,
+        byte recommendedPartySize,
+        byte maxPartySize,
+        bool available)
+    {
+        TemplateId = templateId;
+        DisplayName = displayName;
+        RecommendedPartySize = recommendedPartySize;
+        MaxPartySize = maxPartySize;
+        Available = available;
+    }
+
+    public uint TemplateId { get; }
+    public string DisplayName { get; }
+    public byte RecommendedPartySize { get; }
+    public byte MaxPartySize { get; }
+    public bool Available { get; }
+}
+
+public sealed class DungeonCatalogData
+{
+    public DungeonCatalogData(
+        CatalogResult result,
+        IReadOnlyList<DungeonCatalogEntry> dungeons)
+    {
+        Result = result;
+        Dungeons = dungeons;
+    }
+
+    public CatalogResult Result { get; }
+    public IReadOnlyList<DungeonCatalogEntry> Dungeons { get; }
+}
+
 public enum EnterDungeonResult : byte
 {
     Success = 0,

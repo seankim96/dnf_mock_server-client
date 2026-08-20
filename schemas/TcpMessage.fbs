@@ -199,7 +199,7 @@ table PartySnapshotResponse {
   member_session_ids:[ulong] (required);
 }
 
-// Planned TCP catalog payloads.
+// TCP catalog payloads.
 
 table DungeonCatalogRequest {
 }
@@ -307,8 +307,8 @@ table DungeonStaticDataResponse {
   enemy_templates:[EnemyTemplateStaticData] (required);
 }
 
-// Values 1-9 and 101-109 match the existing PacketType header values.
-// Future values are reserved here before their PacketType handlers are added.
+// Values 1-10 and 101-110 match the existing PacketType header values.
+// Later values are reserved before their PacketType handlers are added.
 union TcpPayload {
   LoginRequest = 1,
   ChannelListRequest = 2,

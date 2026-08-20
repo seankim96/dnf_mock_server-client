@@ -45,6 +45,8 @@ private:
         const Packet& request) const;
     std::vector<std::uint8_t> HandlePartySnapshotRequest(
         const Packet& request) const;
+    std::vector<std::uint8_t> HandleDungeonCatalogRequest(
+        const Packet& request) const;
 
     ChannelManager& channelManager_;
     PartyManager& partyManager_;

@@ -323,6 +323,64 @@ public static class GamePayloadCodec
             members);
     }
 
+    public static byte[] EncodeDungeonCatalogRequest()
+    {
+        var builder = new FlatBufferBuilder(64);
+        TcpSchema.DungeonCatalogRequest.StartDungeonCatalogRequest(builder);
+        Offset<TcpSchema.DungeonCatalogRequest> request =
+            TcpSchema.DungeonCatalogRequest.EndDungeonCatalogRequest(builder);
+        return TcpFlatBufferCodec.FinishPayload(
+            builder,
+            TcpSchema.TcpPayload.DungeonCatalogRequest,
+            request.Value);
+    }
+
+    public static DungeonCatalogData DecodeDungeonCatalogResponse(
+        byte[] payload)
+    {
+        TcpSchema.DungeonCatalogResponse response =
+            TcpFlatBufferCodec.DecodePayload<TcpSchema.DungeonCatalogResponse>(
+                payload,
+                TcpSchema.TcpPayload.DungeonCatalogResponse);
+        if (!Enum.IsDefined(typeof(TcpSchema.CatalogResult), response.Result))
+        {
+            throw new InvalidDataException("Invalid dungeon catalog result.");
+        }
+
+        var result = (CatalogResult)(byte)response.Result;
+        if (result == CatalogResult.Unavailable && response.DungeonsLength != 0)
+        {
+            throw new InvalidDataException("Unavailable catalog must be empty.");
+        }
+
+        var dungeons = new List<DungeonCatalogEntry>(response.DungeonsLength);
+        var templateIds = new HashSet<uint>();
+
+        for (int index = 0; index < response.DungeonsLength; index++)
+        {
+            TcpSchema.DungeonCatalogEntry? source = response.Dungeons(index);
+            if (!source.HasValue || source.Value.DungeonTemplateId == 0 ||
+                string.IsNullOrEmpty(source.Value.DisplayName) ||
+                source.Value.RecommendedPartySize == 0 ||
+                source.Value.MaxPartySize == 0 ||
+                source.Value.RecommendedPartySize > source.Value.MaxPartySize ||
+                source.Value.MaxPartySize > 4 ||
+                !templateIds.Add(source.Value.DungeonTemplateId))
+            {
+                throw new InvalidDataException("Invalid dungeon catalog entry.");
+            }
+
+            dungeons.Add(new DungeonCatalogEntry(
+                source.Value.DungeonTemplateId,
+                source.Value.DisplayName,
+                source.Value.RecommendedPartySize,
+                source.Value.MaxPartySize,
+                source.Value.Available));
+        }
+
+        return new DungeonCatalogData(result, dungeons);
+    }
+
     public static byte[] EncodeEnterDungeonRequest(uint dungeonTemplateId)
     {
         if (dungeonTemplateId == 0)

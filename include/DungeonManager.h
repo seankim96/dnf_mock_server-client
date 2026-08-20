@@ -39,6 +39,7 @@ public:
         DungeonTemplateId templateId);
     std::shared_ptr<DungeonInstance> FindDungeon(DungeonId dungeonId) const;
     std::shared_ptr<DungeonInstance> FindDungeonByParty(PartyId partyId) const;
+    std::vector<DungeonTemplate> GetDungeonTemplates() const;
 
     bool StartDungeon(DungeonId dungeonId);
     bool CancelDungeon(DungeonId dungeonId);

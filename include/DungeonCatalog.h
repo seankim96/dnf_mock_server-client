@@ -20,6 +20,8 @@ struct DungeonTemplate
     DungeonTemplateId id = 0;
     std::string name;
     std::vector<RoomTemplate> rooms;
+    std::uint8_t recommendedPartySize = 1;
+    std::uint8_t maxPartySize = 4;
 };
 
 class DungeonCatalog
@@ -30,10 +32,14 @@ public:
     bool AddDungeon(
         DungeonTemplateId templateId,
         std::string name,
-        std::vector<RoomTemplate> rooms);
+        std::vector<RoomTemplate> rooms,
+        std::uint8_t recommendedPartySize = 1,
+        std::uint8_t maxPartySize = 4);
 
     std::optional<DungeonTemplate> GetDungeon(
         DungeonTemplateId templateId) const;
+
+    std::vector<DungeonTemplate> GetDungeonList() const;
 
 private:
     const EnemyCatalog& enemyCatalog_;

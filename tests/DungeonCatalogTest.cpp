@@ -63,13 +63,21 @@ void TestAddAndGetDungeon()
     enemySpawn.wave = 1;
     firstRoom.enemySpawns.push_back(enemySpawn);
 
-    assert(catalog.AddDungeon(1001, "Forest", {firstRoom, secondRoom}));
+    assert(catalog.AddDungeon(
+        1001,
+        "Forest",
+        {firstRoom, secondRoom},
+        2,
+        4));
+    assert(catalog.AddDungeon(1000, "Training Room", {secondRoom}));
     assert(!catalog.AddDungeon(1001, "Duplicate", {firstRoom}));
 
     const auto dungeon = catalog.GetDungeon(1001);
     assert(dungeon.has_value());
     assert(dungeon->id == 1001);
     assert(dungeon->name == "Forest");
+    assert(dungeon->recommendedPartySize == 2);
+    assert(dungeon->maxPartySize == 4);
     assert(dungeon->rooms.size() == 2);
     assert(dungeon->rooms[0].id == 1);
     assert(dungeon->rooms[0].portals[0].targetRoomId == 2);
@@ -77,6 +85,12 @@ void TestAddAndGetDungeon()
     assert(dungeon->rooms[0].obstacles[1].maxHp == 100);
     assert(dungeon->rooms[0].enemySpawns[0].enemyTemplateId == 2001);
     assert(dungeon->rooms[1].playerSpawn.y == 300.0f);
+
+    const auto dungeonList = catalog.GetDungeonList();
+    assert(dungeonList.size() == 2);
+    assert(dungeonList[0].id == 1000);
+    assert(dungeonList[1].id == 1001);
+    assert(dungeonList[1].recommendedPartySize == 2);
 }
 
 void TestInvalidDungeon()
@@ -126,6 +140,9 @@ void TestInvalidDungeon()
     assert(!catalog.AddDungeon(1001, "Forest", {invalidPortalRoom}));
     assert(!catalog.AddDungeon(1001, "Forest", {invalidObstacleRoom}));
     assert(!catalog.AddDungeon(1001, "Forest", {invalidEnemyRoom}));
+    assert(!catalog.AddDungeon(1001, "Forest", {validRoom}, 0, 4));
+    assert(!catalog.AddDungeon(1001, "Forest", {validRoom}, 3, 2));
+    assert(!catalog.AddDungeon(1001, "Forest", {validRoom}, 1, 5));
     assert(!catalog.GetDungeon(9999).has_value());
 }
 } // namespace
