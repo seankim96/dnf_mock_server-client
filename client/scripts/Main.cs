@@ -59,6 +59,7 @@ public partial class Main : Control
     private double _movementSendTime;
     private Vector2 _lastDirection = Vector2.Right;
     private ulong _localSessionId;
+    private ulong _partyLeaderSessionId;
     private DungeonSnapshotData? _pendingSnapshot;
     private string? _pendingUdpError;
 
@@ -330,8 +331,16 @@ public partial class Main : Control
 
     private async void OnEnterDungeonButtonPressed()
     {
-        if (!uint.TryParse(_dungeonTemplateInput.Text, out uint templateId) ||
-            templateId == 0)
+        if (_partyLeaderSessionId == 0)
+        {
+            SetStatus("파티 정보를 먼저 새로고침해 주세요.", Colors.Orange);
+            return;
+        }
+
+        uint templateId = 0;
+        if (IsLocalPartyLeader &&
+            (!uint.TryParse(_dungeonTemplateInput.Text, out templateId) ||
+             templateId == 0))
         {
             SetStatus("던전 템플릿 ID를 확인해 주세요.", Colors.Orange);
             return;
@@ -341,39 +350,16 @@ public partial class Main : Control
 
         try
         {
-            TcpPacket packet = await _connection.SendRequestAsync(
-                TcpPacketType.EnterDungeonRequest,
-                GamePayloadCodec.EncodeEnterDungeonRequest(templateId),
-                _operationCancellation!.Token);
-            EnterDungeonResponse response =
-                GamePayloadCodec.DecodeEnterDungeonResponse(packet.Payload);
-
-            if (response.Result != EnterDungeonResult.Success)
+            if (IsLocalPartyLeader)
             {
-                SetStatus($"던전 입장 실패: {response.Result}", Colors.Orange);
-                AddLog($"EnterDungeonResponse: {response.Result}");
-                return;
+                await CreateDungeonAndConnectAsync(
+                    templateId,
+                    _operationCancellation!.Token);
             }
-
-            SetStatus($"던전 {response.DungeonId} 생성 성공", Colors.LightGreen);
-            AddLog($"던전 생성: id={response.DungeonId}, UDP={response.UdpPort}");
-
-            DungeonStaticData staticData =
-                await LoadDungeonStaticDataAsync(
-                    response.DungeonId,
-                    _operationCancellation.Token);
-            if (staticData.Result != DungeonStaticDataResult.Success)
+            else
             {
-                SetStatus(
-                    $"던전 정적 데이터 조회 실패: {staticData.Result}",
-                    Colors.Orange);
-                return;
+                await JoinCreatedDungeonAsync(_operationCancellation!.Token);
             }
-
-            _dungeonWorldView.SetStaticData(staticData);
-
-            await StartDungeonUdpAsync(response, _localSessionId,
-                _operationCancellation.Token);
         }
         catch (Exception exception) when (IsExpectedOperationError(exception))
         {
@@ -479,6 +465,7 @@ public partial class Main : Control
 
     private void ShowPartyInfo(PartySnapshotData snapshot)
     {
+        _partyLeaderSessionId = snapshot.LeaderSessionId;
         _partyInfoLabel.Text =
             $"Party {snapshot.PartyId} / Leader {snapshot.LeaderSessionId}\n" +
             $"Members: {string.Join(", ", snapshot.Members)}";
@@ -547,6 +534,7 @@ public partial class Main : Control
     private void ClearPartyInfo()
     {
         _inParty = false;
+        _partyLeaderSessionId = 0;
         _partyIdInput.Clear();
         _partyInfoLabel.Text = "파티 없음";
     }
@@ -701,8 +689,14 @@ public partial class Main : Control
         _refreshPartyButton.Disabled = !_inParty || _busy;
         _partyPanel.Modulate = _joinedChannel ? Colors.White : Colors.DimGray;
 
-        _dungeonTemplateInput.Editable = _inParty && !_busy;
-        _enterDungeonButton.Disabled = !_inParty || _busy;
+        _dungeonTemplateInput.Editable = IsLocalPartyLeader && !_busy;
+        _enterDungeonButton.Disabled = !_inParty ||
+            _partyLeaderSessionId == 0 || _busy;
+        _enterDungeonButton.Text = !_inParty
+            ? "던전 입장"
+            : IsLocalPartyLeader
+                ? "던전 생성 및 입장"
+                : "생성된 던전 참가";
         _dungeonPanel.Modulate = _inParty ? Colors.White : Colors.DimGray;
     }
 
@@ -748,15 +742,103 @@ public partial class Main : Control
         _eventLog.AppendText($"\n[color=#aeb9cc]{DateTime.Now:HH:mm:ss}[/color] {message}");
     }
 
-    private async Task StartDungeonUdpAsync(
-        EnterDungeonResponse response,
-        ulong sessionId,
+    private bool IsLocalPartyLeader =>
+        _inParty && _partyLeaderSessionId == _localSessionId;
+
+    private async Task CreateDungeonAndConnectAsync(
+        uint templateId,
         CancellationToken cancellationToken)
     {
-        _localSessionId = sessionId;
+        TcpPacket packet = await _connection.SendRequestAsync(
+            TcpPacketType.EnterDungeonRequest,
+            GamePayloadCodec.EncodeEnterDungeonRequest(templateId),
+            cancellationToken);
+        EnterDungeonResponse response =
+            GamePayloadCodec.DecodeEnterDungeonResponse(packet.Payload);
+
+        if (response.Result != EnterDungeonResult.Success)
+        {
+            SetStatus($"던전 생성 실패: {response.Result}", Colors.Orange);
+            AddLog($"EnterDungeonResponse: {response.Result}");
+            return;
+        }
+
+        SetStatus($"던전 {response.DungeonId} 생성 성공", Colors.LightGreen);
+        AddLog($"던전 생성: id={response.DungeonId}, UDP={response.UdpPort}");
+
+        await ConnectToDungeonAsync(
+            response.DungeonId,
+            response.UdpPort,
+            response.UdpToken,
+            cancellationToken);
+    }
+
+    private async Task JoinCreatedDungeonAsync(
+        CancellationToken cancellationToken)
+    {
+        TcpPacket packet = await _connection.SendRequestAsync(
+            TcpPacketType.DungeonConnectionInfoRequest,
+            GamePayloadCodec.EncodeDungeonConnectionInfoRequest(),
+            cancellationToken);
+        DungeonConnectionInfo response =
+            GamePayloadCodec.DecodeDungeonConnectionInfoResponse(packet.Payload);
+
+        if (response.Result != DungeonConnectionInfoResult.Success)
+        {
+            string message = response.Result ==
+                DungeonConnectionInfoResult.DungeonNotFound
+                ? "파티장이 아직 던전을 생성하지 않았습니다."
+                : $"던전 참가 실패: {response.Result}";
+            SetStatus(message, Colors.Orange);
+            AddLog($"DungeonConnectionInfoResponse: {response.Result}");
+            return;
+        }
+
+        SetStatus($"던전 {response.DungeonId} 접속 정보 수신", Colors.LightGreen);
+        AddLog(
+            $"던전 참가 정보: id={response.DungeonId}, UDP={response.UdpPort}");
+
+        await ConnectToDungeonAsync(
+            response.DungeonId,
+            response.UdpPort,
+            response.UdpToken,
+            cancellationToken);
+    }
+
+    private async Task ConnectToDungeonAsync(
+        ulong dungeonId,
+        ushort udpPort,
+        ulong udpToken,
+        CancellationToken cancellationToken)
+    {
+        DungeonStaticData staticData = await LoadDungeonStaticDataAsync(
+            dungeonId,
+            cancellationToken);
+        if (staticData.Result != DungeonStaticDataResult.Success)
+        {
+            SetStatus(
+                $"던전 정적 데이터 조회 실패: {staticData.Result}",
+                Colors.Orange);
+            return;
+        }
+
+        _dungeonWorldView.SetStaticData(staticData);
+        await StartDungeonUdpAsync(
+            dungeonId,
+            udpPort,
+            udpToken,
+            cancellationToken);
+    }
+
+    private async Task StartDungeonUdpAsync(
+        ulong dungeonId,
+        ushort udpPort,
+        ulong udpToken,
+        CancellationToken cancellationToken)
+    {
         _receivedFirstSnapshot = false;
-        _dungeonWorldView.SetLocalSessionId(sessionId);
-        _dungeonTitleLabel.Text = $"Dungeon {response.DungeonId}";
+        _dungeonWorldView.SetLocalSessionId(_localSessionId);
+        _dungeonTitleLabel.Text = $"Dungeon {dungeonId}";
         _tickLabel.Text = "Tick: -";
         _roomLabel.Text = "Room: -";
         _positionLabel.Text = "Position: -";
@@ -764,15 +846,15 @@ public partial class Main : Control
 
         await _udpService.ConnectAsync(
             _addressInput.Text.Trim(),
-            response.UdpPort,
-            response.DungeonId,
-            sessionId,
-            response.UdpToken,
+            udpPort,
+            dungeonId,
+            _localSessionId,
+            udpToken,
             cancellationToken);
 
         _lobbyScreen.Visible = false;
         _dungeonScreen.Visible = true;
-        AddLog($"UDP Hello 전송: session={sessionId}");
+        AddLog($"UDP Hello 전송: session={_localSessionId}");
     }
 
     private void OnLeaveDungeonButtonPressed()
