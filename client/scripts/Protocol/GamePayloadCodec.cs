@@ -108,20 +108,32 @@ public static class GamePayloadCodec
 
     public static byte[] EncodeCreatePartyRequest()
     {
-        return Array.Empty<byte>();
+        var builder = new FlatBufferBuilder(64);
+        TcpSchema.CreatePartyRequest.StartCreatePartyRequest(builder);
+        Offset<TcpSchema.CreatePartyRequest> request =
+            TcpSchema.CreatePartyRequest.EndCreatePartyRequest(builder);
+        return TcpFlatBufferCodec.FinishPayload(
+            builder,
+            TcpSchema.TcpPayload.CreatePartyRequest,
+            request.Value);
     }
 
     public static CreatePartyResponse DecodeCreatePartyResponse(byte[] payload)
     {
-        if (payload.Length != 17 ||
-            !Enum.IsDefined(typeof(CreatePartyResult), payload[0]))
+        TcpSchema.CreatePartyResponse response =
+            TcpFlatBufferCodec.DecodePayload<TcpSchema.CreatePartyResponse>(
+                payload,
+                TcpSchema.TcpPayload.CreatePartyResponse);
+        if (!Enum.IsDefined(
+                typeof(TcpSchema.CreatePartyResult),
+                response.Result))
         {
             throw new InvalidDataException("Invalid create party response payload.");
         }
 
-        var result = (CreatePartyResult)payload[0];
-        ulong partyId = ReadUInt64(payload, 1);
-        ulong leaderSessionId = ReadUInt64(payload, 9);
+        var result = (CreatePartyResult)(byte)response.Result;
+        ulong partyId = response.PartyId;
+        ulong leaderSessionId = response.LeaderSessionId;
         bool succeeded = result == CreatePartyResult.Success;
         bool hasPartyData = partyId != 0 && leaderSessionId != 0;
         bool hasNoPartyData = partyId == 0 && leaderSessionId == 0;

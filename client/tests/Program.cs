@@ -159,27 +159,40 @@ static void TestGamePayloads()
     Assert(joinResponse.Result == JoinChannelResult.Success &&
         joinResponse.ChannelId == 3, "Join channel response is incorrect.");
 
-    Assert(GamePayloadCodec.EncodeCreatePartyRequest().Length == 0,
-        "Create party request payload must be empty.");
+    byte[] createPartyRequest = GamePayloadCodec.EncodeCreatePartyRequest();
+    var createPartyRequestBuffer = new ByteBuffer(createPartyRequest);
+    Assert(TcpSchema.TcpMessage.VerifyTcpMessage(createPartyRequestBuffer),
+        "Create party request FlatBuffer is invalid.");
+    Assert(TcpSchema.TcpMessage.GetRootAsTcpMessage(createPartyRequestBuffer)
+        .PayloadType == TcpSchema.TcpPayload.CreatePartyRequest,
+        "Create party request type is incorrect.");
+
     CreatePartyResponse createParty = GamePayloadCodec.DecodeCreatePartyResponse(
-        new byte[]
-        {
-            0,
-            0, 0, 0, 0, 0, 0, 0, 9,
-            0, 0, 0, 0, 0, 0, 0, 42
-        });
+        CreatePartyResponseBytes(
+            TcpSchema.CreatePartyResult.Success,
+            9,
+            42));
     Assert(createParty.Result == CreatePartyResult.Success &&
         createParty.PartyId == 9 && createParty.LeaderSessionId == 42,
         "Create party response is incorrect.");
     CreatePartyResponse failedParty = GamePayloadCodec.DecodeCreatePartyResponse(
-        new byte[17] { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
+        CreatePartyResponseBytes(
+            TcpSchema.CreatePartyResult.AlreadyInParty,
+            0,
+            0));
     Assert(failedParty.Result == CreatePartyResult.AlreadyInParty &&
         failedParty.PartyId == 0 && failedParty.LeaderSessionId == 0,
         "Failed create party response is incorrect.");
     AssertThrows<InvalidDataException>(
         () => GamePayloadCodec.DecodeCreatePartyResponse(
-            new byte[17] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }),
+            CreatePartyResponseBytes(
+                TcpSchema.CreatePartyResult.Success,
+                0,
+                0)),
         "Successful create party response with zero IDs was accepted.");
+    AssertThrows<InvalidDataException>(
+        () => GamePayloadCodec.DecodeCreatePartyResponse(createPartyRequest),
+        "Create party request was accepted as a response.");
 
     byte[] joinPartyPayload = GamePayloadCodec.EncodeJoinPartyRequest(9);
     Assert(joinPartyPayload.SequenceEqual(
@@ -359,6 +372,24 @@ static byte[] CreatePartySnapshotResponseBytes(
         response.Value);
 }
 
+static byte[] CreatePartyResponseBytes(
+    TcpSchema.CreatePartyResult result,
+    ulong partyId,
+    ulong leaderSessionId)
+{
+    var builder = new FlatBufferBuilder(128);
+    Offset<TcpSchema.CreatePartyResponse> response =
+        TcpSchema.CreatePartyResponse.CreateCreatePartyResponse(
+            builder,
+            result,
+            partyId,
+            leaderSessionId);
+    return TcpFlatBufferCodec.FinishPayload(
+        builder,
+        TcpSchema.TcpPayload.CreatePartyResponse,
+        response.Value);
+}
+
 static byte[] CreateTestSnapshotBytes()
 {
     var builder = new FlatBufferBuilder(256);
@@ -491,18 +522,24 @@ static async Task TestTcpConnectionAsync()
         TcpPacketCodec.DecodeHeader(requestHeaderBytes);
     Assert(partyRequestHeader.Type == TcpPacketType.CreatePartyRequest,
         "Create party TCP request type is incorrect.");
-    Assert(partyRequestHeader.PacketSize == TcpPacketCodec.HeaderSize,
-        "Create party TCP request payload must be empty.");
+    int partyRequestPayloadSize =
+        partyRequestHeader.PacketSize - TcpPacketCodec.HeaderSize;
+    var partyRequestPayload = new byte[partyRequestPayloadSize];
+    await serverStream.ReadExactlyAsync(partyRequestPayload, timeout.Token);
+    var partyRequestBuffer = new ByteBuffer(partyRequestPayload);
+    Assert(TcpSchema.TcpMessage.VerifyTcpMessage(partyRequestBuffer),
+        "Create party TCP request FlatBuffer is invalid.");
+    Assert(TcpSchema.TcpMessage.GetRootAsTcpMessage(partyRequestBuffer)
+        .PayloadType == TcpSchema.TcpPayload.CreatePartyRequest,
+        "Create party TCP request FlatBuffer type is incorrect.");
 
     byte[] partyResponseBytes = TcpPacketCodec.EncodePacket(
         TcpPacketType.CreatePartyResponse,
         partyRequestHeader.RequestId,
-        new byte[]
-        {
-            0,
-            0, 0, 0, 0, 0, 0, 0, 9,
-            0, 0, 0, 0, 0, 0, 0, 42
-        });
+        CreatePartyResponseBytes(
+            TcpSchema.CreatePartyResult.Success,
+            9,
+            42));
     await serverStream.WriteAsync(partyResponseBytes, timeout.Token);
 
     TcpPacket partyResponse = await partyResponseTask;

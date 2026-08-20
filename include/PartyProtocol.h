@@ -50,6 +50,8 @@ struct PartySnapshotData
 void ValidateCreatePartyRequestPayload(
     const std::vector<std::uint8_t>& payload);
 
+std::vector<std::uint8_t> EncodeCreatePartyRequestPayload();
+
 std::vector<std::uint8_t> EncodeCreatePartyResponsePayload(
     CreatePartyResult result,
     PartyId partyId,

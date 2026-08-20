@@ -10,10 +10,13 @@ namespace
 {
 void TestCreatePartyRequest()
 {
+    const auto payload = dnf::EncodeCreatePartyRequestPayload();
+    assert(!payload.empty());
+
     const auto packetBytes = dnf::EncodePacket(
         dnf::CreatePartyRequest,
         70,
-        {});
+        payload);
 
     dnf::ReceiveBuffer buffer;
     buffer.Append(packetBytes);
@@ -42,12 +45,7 @@ void TestSuccessfulCreatePartyResponse()
         0x0102030405060708,
         0x1112131415161718);
 
-    assert(payload.size() == 17);
-    assert(payload[0] == 0);
-    assert(payload[1] == 0x01);
-    assert(payload[8] == 0x08);
-    assert(payload[9] == 0x11);
-    assert(payload[16] == 0x18);
+    assert(!payload.empty());
 
     const auto response =
         dnf::DecodeCreatePartyResponsePayload(payload);
@@ -89,7 +87,8 @@ void TestInvalidCreatePartyResponse()
     threw = false;
     try
     {
-        dnf::DecodeCreatePartyResponsePayload({0});
+        dnf::DecodeCreatePartyResponsePayload(
+            dnf::EncodeCreatePartyRequestPayload());
     }
     catch (const std::runtime_error&)
     {

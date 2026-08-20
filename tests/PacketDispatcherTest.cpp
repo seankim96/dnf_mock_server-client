@@ -202,6 +202,7 @@ dnf::CreatePartyResponseData SendCreatePartyRequest(
     dnf::Packet request;
     request.header.type = dnf::CreatePartyRequest;
     request.header.requestId = requestId;
+    request.payload = dnf::EncodeCreatePartyRequestPayload();
 
     dnf::PacketDispatcher dispatcher(
         context.channelManager,

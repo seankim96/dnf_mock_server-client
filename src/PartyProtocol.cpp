@@ -119,11 +119,23 @@ bool IsValidPartySnapshot(
 void ValidateCreatePartyRequestPayload(
     const std::vector<std::uint8_t>& payload)
 {
-    if (!payload.empty())
+    const auto* message = DecodeTcpPayload(
+        payload,
+        tcp::TcpPayload_CreatePartyRequest);
+    if (message->payload_as_CreatePartyRequest() == nullptr)
     {
-        throw std::runtime_error(
-            "Create party request payload must be empty");
+        throw std::runtime_error("Invalid create party request payload");
     }
+}
+
+std::vector<std::uint8_t> EncodeCreatePartyRequestPayload()
+{
+    flatbuffers::FlatBufferBuilder builder;
+    const auto request = tcp::CreateCreatePartyRequest(builder);
+    return FinishTcpPayload(
+        builder,
+        tcp::TcpPayload_CreatePartyRequest,
+        request.Union());
 }
 
 std::vector<std::uint8_t> EncodeCreatePartyResponsePayload(
@@ -136,26 +148,33 @@ std::vector<std::uint8_t> EncodeCreatePartyResponsePayload(
         throw std::invalid_argument("Invalid create party response");
     }
 
-    std::vector<std::uint8_t> payload;
-    payload.reserve(PARTY_RESPONSE_SIZE);
-    payload.push_back(static_cast<std::uint8_t>(result));
-    AppendUint64(payload, partyId);
-    AppendUint64(payload, leaderSessionId);
-    return payload;
+    flatbuffers::FlatBufferBuilder builder;
+    const auto response = tcp::CreateCreatePartyResponse(
+        builder,
+        static_cast<tcp::CreatePartyResult>(result),
+        partyId,
+        leaderSessionId);
+    return FinishTcpPayload(
+        builder,
+        tcp::TcpPayload_CreatePartyResponse,
+        response.Union());
 }
 
 CreatePartyResponseData DecodeCreatePartyResponsePayload(
     const std::vector<std::uint8_t>& payload)
 {
-    if (payload.size() != PARTY_RESPONSE_SIZE)
+    const auto* message = DecodeTcpPayload(
+        payload,
+        tcp::TcpPayload_CreatePartyResponse);
+    const auto* response = message->payload_as_CreatePartyResponse();
+    if (response == nullptr)
     {
-        throw std::runtime_error(
-            "Invalid create party response payload size");
+        throw std::runtime_error("Invalid create party response payload");
     }
 
-    const auto result = static_cast<CreatePartyResult>(payload[0]);
-    const PartyId partyId = ReadUint64(payload, 1);
-    const SessionId leaderSessionId = ReadUint64(payload, 9);
+    const auto result = static_cast<CreatePartyResult>(response->result());
+    const PartyId partyId = response->party_id();
+    const SessionId leaderSessionId = response->leader_session_id();
 
     if (!IsValidCreatePartyResponse(result, partyId, leaderSessionId))
     {
