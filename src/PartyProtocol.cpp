@@ -9,31 +9,7 @@ namespace dnf
 {
 namespace
 {
-constexpr std::size_t PARTY_ID_SIZE = 8;
-constexpr std::size_t PARTY_RESPONSE_SIZE = 17;
 namespace tcp = Dnf::Protocol::Tcp;
-
-void AppendUint64(std::vector<std::uint8_t>& bytes, std::uint64_t value)
-{
-    for (int shift = 56; shift >= 0; shift -= 8)
-    {
-        bytes.push_back(static_cast<std::uint8_t>(value >> shift));
-    }
-}
-
-std::uint64_t ReadUint64(
-    const std::vector<std::uint8_t>& bytes,
-    std::size_t offset)
-{
-    std::uint64_t value = 0;
-
-    for (std::size_t index = 0; index < 8; ++index)
-    {
-        value = (value << 8) | bytes[offset + index];
-    }
-
-    return value;
-}
 
 bool IsValidCreatePartyResponse(
     CreatePartyResult result,
@@ -191,21 +167,27 @@ std::vector<std::uint8_t> EncodeJoinPartyRequestPayload(PartyId partyId)
         throw std::invalid_argument("Party ID must not be zero");
     }
 
-    std::vector<std::uint8_t> payload;
-    payload.reserve(PARTY_ID_SIZE);
-    AppendUint64(payload, partyId);
-    return payload;
+    flatbuffers::FlatBufferBuilder builder;
+    const auto request = tcp::CreateJoinPartyRequest(builder, partyId);
+    return FinishTcpPayload(
+        builder,
+        tcp::TcpPayload_JoinPartyRequest,
+        request.Union());
 }
 
 PartyId DecodeJoinPartyRequestPayload(
     const std::vector<std::uint8_t>& payload)
 {
-    if (payload.size() != PARTY_ID_SIZE)
+    const auto* message = DecodeTcpPayload(
+        payload,
+        tcp::TcpPayload_JoinPartyRequest);
+    const auto* request = message->payload_as_JoinPartyRequest();
+    if (request == nullptr)
     {
-        throw std::runtime_error("Invalid join party request payload size");
+        throw std::runtime_error("Invalid join party request payload");
     }
 
-    const PartyId partyId = ReadUint64(payload, 0);
+    const PartyId partyId = request->party_id();
     if (partyId == 0)
     {
         throw std::runtime_error("Invalid join party request data");
@@ -224,26 +206,33 @@ std::vector<std::uint8_t> EncodeJoinPartyResponsePayload(
         throw std::invalid_argument("Invalid join party response");
     }
 
-    std::vector<std::uint8_t> payload;
-    payload.reserve(PARTY_RESPONSE_SIZE);
-    payload.push_back(static_cast<std::uint8_t>(result));
-    AppendUint64(payload, partyId);
-    AppendUint64(payload, leaderSessionId);
-    return payload;
+    flatbuffers::FlatBufferBuilder builder;
+    const auto response = tcp::CreateJoinPartyResponse(
+        builder,
+        static_cast<tcp::JoinPartyResult>(result),
+        partyId,
+        leaderSessionId);
+    return FinishTcpPayload(
+        builder,
+        tcp::TcpPayload_JoinPartyResponse,
+        response.Union());
 }
 
 JoinPartyResponseData DecodeJoinPartyResponsePayload(
     const std::vector<std::uint8_t>& payload)
 {
-    if (payload.size() != PARTY_RESPONSE_SIZE)
+    const auto* message = DecodeTcpPayload(
+        payload,
+        tcp::TcpPayload_JoinPartyResponse);
+    const auto* response = message->payload_as_JoinPartyResponse();
+    if (response == nullptr)
     {
-        throw std::runtime_error(
-            "Invalid join party response payload size");
+        throw std::runtime_error("Invalid join party response payload");
     }
 
-    const auto result = static_cast<JoinPartyResult>(payload[0]);
-    const PartyId partyId = ReadUint64(payload, 1);
-    const SessionId leaderSessionId = ReadUint64(payload, 9);
+    const auto result = static_cast<JoinPartyResult>(response->result());
+    const PartyId partyId = response->party_id();
+    const SessionId leaderSessionId = response->leader_session_id();
 
     if (!IsValidJoinPartyResponse(result, partyId, leaderSessionId))
     {

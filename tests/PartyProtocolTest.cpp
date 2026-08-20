@@ -101,9 +101,7 @@ void TestJoinPartyRequest()
 {
     const auto payload =
         dnf::EncodeJoinPartyRequestPayload(0x0102030405060708);
-    assert(payload.size() == 8);
-    assert(payload[0] == 0x01);
-    assert(payload[7] == 0x08);
+    assert(!payload.empty());
     assert(dnf::DecodeJoinPartyRequestPayload(payload) ==
            0x0102030405060708);
 
@@ -160,7 +158,8 @@ void TestInvalidJoinPartyPayload()
     threw = false;
     try
     {
-        dnf::DecodeJoinPartyRequestPayload({0, 0, 0, 0, 0, 0, 0, 0});
+        dnf::DecodeJoinPartyRequestPayload(
+            dnf::EncodeCreatePartyRequestPayload());
     }
     catch (const std::runtime_error&)
     {
@@ -177,6 +176,18 @@ void TestInvalidJoinPartyPayload()
             0);
     }
     catch (const std::invalid_argument&)
+    {
+        threw = true;
+    }
+    assert(threw);
+
+    threw = false;
+    try
+    {
+        dnf::DecodeJoinPartyResponsePayload(
+            dnf::EncodeJoinPartyRequestPayload(10));
+    }
+    catch (const std::runtime_error&)
     {
         threw = true;
     }

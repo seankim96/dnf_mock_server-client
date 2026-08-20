@@ -153,22 +153,33 @@ public static class GamePayloadCodec
             throw new ArgumentOutOfRangeException(nameof(partyId));
         }
 
-        var payload = new byte[8];
-        BinaryPrimitives.WriteUInt64BigEndian(payload, partyId);
-        return payload;
+        var builder = new FlatBufferBuilder(64);
+        Offset<TcpSchema.JoinPartyRequest> request =
+            TcpSchema.JoinPartyRequest.CreateJoinPartyRequest(
+                builder,
+                partyId);
+        return TcpFlatBufferCodec.FinishPayload(
+            builder,
+            TcpSchema.TcpPayload.JoinPartyRequest,
+            request.Value);
     }
 
     public static JoinPartyResponse DecodeJoinPartyResponse(byte[] payload)
     {
-        if (payload.Length != 17 ||
-            !Enum.IsDefined(typeof(JoinPartyResult), payload[0]))
+        TcpSchema.JoinPartyResponse response =
+            TcpFlatBufferCodec.DecodePayload<TcpSchema.JoinPartyResponse>(
+                payload,
+                TcpSchema.TcpPayload.JoinPartyResponse);
+        if (!Enum.IsDefined(
+                typeof(TcpSchema.JoinPartyResult),
+                response.Result))
         {
             throw new InvalidDataException("Invalid join party response payload.");
         }
 
-        var result = (JoinPartyResult)payload[0];
-        ulong partyId = ReadUInt64(payload, 1);
-        ulong leaderSessionId = ReadUInt64(payload, 9);
+        var result = (JoinPartyResult)(byte)response.Result;
+        ulong partyId = response.PartyId;
+        ulong leaderSessionId = response.LeaderSessionId;
         bool succeeded = result == JoinPartyResult.Success;
         bool hasPartyData = partyId != 0 && leaderSessionId != 0;
         bool hasNoPartyData = partyId == 0 && leaderSessionId == 0;

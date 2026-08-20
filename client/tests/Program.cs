@@ -195,24 +195,35 @@ static void TestGamePayloads()
         "Create party request was accepted as a response.");
 
     byte[] joinPartyPayload = GamePayloadCodec.EncodeJoinPartyRequest(9);
-    Assert(joinPartyPayload.SequenceEqual(
-        new byte[] { 0, 0, 0, 0, 0, 0, 0, 9 }),
+    var joinPartyRequestBuffer = new ByteBuffer(joinPartyPayload);
+    Assert(TcpSchema.TcpMessage.VerifyTcpMessage(joinPartyRequestBuffer),
+        "Join party request FlatBuffer is invalid.");
+    TcpSchema.TcpMessage joinPartyRequestMessage =
+        TcpSchema.TcpMessage.GetRootAsTcpMessage(joinPartyRequestBuffer);
+    Assert(joinPartyRequestMessage.PayloadType ==
+        TcpSchema.TcpPayload.JoinPartyRequest &&
+        joinPartyRequestMessage.PayloadAsJoinPartyRequest().PartyId == 9,
         "Join party request payload is incorrect.");
+
     JoinPartyResponse joinParty = GamePayloadCodec.DecodeJoinPartyResponse(
-        new byte[]
-        {
-            0,
-            0, 0, 0, 0, 0, 0, 0, 9,
-            0, 0, 0, 0, 0, 0, 0, 42
-        });
+        JoinPartyResponseBytes(
+            TcpSchema.JoinPartyResult.Success,
+            9,
+            42));
     Assert(joinParty.Result == JoinPartyResult.Success &&
         joinParty.PartyId == 9 && joinParty.LeaderSessionId == 42,
         "Join party response is incorrect.");
     JoinPartyResponse missingParty = GamePayloadCodec.DecodeJoinPartyResponse(
-        new byte[17] { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
+        JoinPartyResponseBytes(
+            TcpSchema.JoinPartyResult.PartyNotFound,
+            0,
+            0));
     Assert(missingParty.Result == JoinPartyResult.PartyNotFound &&
         missingParty.PartyId == 0 && missingParty.LeaderSessionId == 0,
         "Failed join party response is incorrect.");
+    AssertThrows<InvalidDataException>(
+        () => GamePayloadCodec.DecodeJoinPartyResponse(joinPartyPayload),
+        "Join party request was accepted as a response.");
 
     Assert(GamePayloadCodec.EncodeLeavePartyRequest().Length == 0,
         "Leave party request payload must be empty.");
@@ -390,6 +401,24 @@ static byte[] CreatePartyResponseBytes(
         response.Value);
 }
 
+static byte[] JoinPartyResponseBytes(
+    TcpSchema.JoinPartyResult result,
+    ulong partyId,
+    ulong leaderSessionId)
+{
+    var builder = new FlatBufferBuilder(128);
+    Offset<TcpSchema.JoinPartyResponse> response =
+        TcpSchema.JoinPartyResponse.CreateJoinPartyResponse(
+            builder,
+            result,
+            partyId,
+            leaderSessionId);
+    return TcpFlatBufferCodec.FinishPayload(
+        builder,
+        TcpSchema.TcpPayload.JoinPartyResponse,
+        response.Value);
+}
+
 static byte[] CreateTestSnapshotBytes()
 {
     var builder = new FlatBufferBuilder(256);
@@ -554,23 +583,28 @@ static async Task TestTcpConnectionAsync()
     await serverStream.ReadExactlyAsync(requestHeaderBytes, timeout.Token);
     TcpPacketHeader joinPartyRequestHeader =
         TcpPacketCodec.DecodeHeader(requestHeaderBytes);
-    var joinPartyRequestPayload = new byte[8];
+    int joinPartyRequestPayloadSize =
+        joinPartyRequestHeader.PacketSize - TcpPacketCodec.HeaderSize;
+    var joinPartyRequestPayload = new byte[joinPartyRequestPayloadSize];
     await serverStream.ReadExactlyAsync(joinPartyRequestPayload, timeout.Token);
     Assert(joinPartyRequestHeader.Type == TcpPacketType.JoinPartyRequest,
         "Join party TCP request type is incorrect.");
-    Assert(joinPartyRequestPayload.SequenceEqual(
-        new byte[] { 0, 0, 0, 0, 0, 0, 0, 9 }),
-        "Join party TCP request payload is incorrect.");
+    var joinPartyRequestBuffer = new ByteBuffer(joinPartyRequestPayload);
+    Assert(TcpSchema.TcpMessage.VerifyTcpMessage(joinPartyRequestBuffer),
+        "Join party TCP request FlatBuffer is invalid.");
+    TcpSchema.TcpMessage joinPartyRequest =
+        TcpSchema.TcpMessage.GetRootAsTcpMessage(joinPartyRequestBuffer);
+    Assert(joinPartyRequest.PayloadType == TcpSchema.TcpPayload.JoinPartyRequest &&
+        joinPartyRequest.PayloadAsJoinPartyRequest().PartyId == 9,
+        "Join party TCP request FlatBuffer data is incorrect.");
 
     byte[] joinPartyResponseBytes = TcpPacketCodec.EncodePacket(
         TcpPacketType.JoinPartyResponse,
         joinPartyRequestHeader.RequestId,
-        new byte[]
-        {
-            0,
-            0, 0, 0, 0, 0, 0, 0, 9,
-            0, 0, 0, 0, 0, 0, 0, 42
-        });
+        JoinPartyResponseBytes(
+            TcpSchema.JoinPartyResult.Success,
+            9,
+            42));
     await serverStream.WriteAsync(joinPartyResponseBytes, timeout.Token);
 
     TcpPacket joinPartyResponse = await joinPartyResponseTask;
