@@ -29,6 +29,8 @@ struct DungeonConnectionInfoData
 void ValidateDungeonConnectionInfoRequestPayload(
     const std::vector<std::uint8_t>& payload);
 
+std::vector<std::uint8_t> EncodeDungeonConnectionInfoRequestPayload();
+
 std::vector<std::uint8_t> EncodeDungeonConnectionInfoResponsePayload(
     DungeonConnectionInfoResult result,
     DungeonId dungeonId,

@@ -10,10 +10,14 @@ namespace
 {
 void TestConnectionInfoPacket()
 {
+    const auto requestPayload =
+        dnf::EncodeDungeonConnectionInfoRequestPayload();
+    assert(!requestPayload.empty());
+
     const auto packetBytes = dnf::EncodePacket(
         dnf::DungeonConnectionInfoRequest,
         60,
-        {});
+        requestPayload);
 
     dnf::ReceiveBuffer buffer;
     buffer.Append(packetBytes);
@@ -70,6 +74,33 @@ void TestInvalidConnectionInfo()
             5001,
             0,
             90001);
+    }
+    catch (const std::invalid_argument&)
+    {
+        invalidResponse = true;
+    }
+    assert(invalidResponse);
+
+    invalidResponse = false;
+    try
+    {
+        dnf::DecodeDungeonConnectionInfoResponsePayload(
+            dnf::EncodeDungeonConnectionInfoRequestPayload());
+    }
+    catch (const std::runtime_error&)
+    {
+        invalidResponse = true;
+    }
+    assert(invalidResponse);
+
+    invalidResponse = false;
+    try
+    {
+        dnf::EncodeDungeonConnectionInfoResponsePayload(
+            static_cast<dnf::DungeonConnectionInfoResult>(5),
+            0,
+            0,
+            0);
     }
     catch (const std::invalid_argument&)
     {

@@ -1,4 +1,7 @@
 #include "DungeonConnectionProtocol.h"
+#include "TcpFlatBufferCodec.h"
+
+#include <flatbuffers/flatbuffer_builder.h>
 
 #include <stdexcept>
 
@@ -6,42 +9,7 @@ namespace dnf
 {
 namespace
 {
-void AppendUint16(std::vector<std::uint8_t>& bytes, std::uint16_t value)
-{
-    bytes.push_back(static_cast<std::uint8_t>(value >> 8));
-    bytes.push_back(static_cast<std::uint8_t>(value));
-}
-
-void AppendUint64(std::vector<std::uint8_t>& bytes, std::uint64_t value)
-{
-    for (int shift = 56; shift >= 0; shift -= 8)
-    {
-        bytes.push_back(static_cast<std::uint8_t>(value >> shift));
-    }
-}
-
-std::uint16_t ReadUint16(
-    const std::vector<std::uint8_t>& bytes,
-    std::size_t offset)
-{
-    return static_cast<std::uint16_t>(
-        (static_cast<std::uint16_t>(bytes[offset]) << 8) |
-        bytes[offset + 1]);
-}
-
-std::uint64_t ReadUint64(
-    const std::vector<std::uint8_t>& bytes,
-    std::size_t offset)
-{
-    std::uint64_t value = 0;
-
-    for (std::size_t index = 0; index < 8; ++index)
-    {
-        value = (value << 8) | bytes[offset + index];
-    }
-
-    return value;
-}
+namespace tcp = Dnf::Protocol::Tcp;
 
 bool IsValidResponse(
     DungeonConnectionInfoResult result,
@@ -66,11 +34,25 @@ bool IsValidResponse(
 void ValidateDungeonConnectionInfoRequestPayload(
     const std::vector<std::uint8_t>& payload)
 {
-    if (!payload.empty())
+    const auto* message = DecodeTcpPayload(
+        payload,
+        tcp::TcpPayload_DungeonConnectionInfoRequest);
+    if (message->payload_as_DungeonConnectionInfoRequest() == nullptr)
     {
         throw std::runtime_error(
-            "Dungeon connection info request payload must be empty");
+            "Invalid dungeon connection info request payload");
     }
+}
+
+std::vector<std::uint8_t> EncodeDungeonConnectionInfoRequestPayload()
+{
+    flatbuffers::FlatBufferBuilder builder;
+    const auto request =
+        tcp::CreateDungeonConnectionInfoRequest(builder);
+    return FinishTcpPayload(
+        builder,
+        tcp::TcpPayload_DungeonConnectionInfoRequest,
+        request.Union());
 }
 
 std::vector<std::uint8_t> EncodeDungeonConnectionInfoResponsePayload(
@@ -85,29 +67,38 @@ std::vector<std::uint8_t> EncodeDungeonConnectionInfoResponsePayload(
             "Invalid dungeon connection info response");
     }
 
-    std::vector<std::uint8_t> payload;
-    payload.reserve(19);
-    payload.push_back(static_cast<std::uint8_t>(result));
-    AppendUint64(payload, dungeonId);
-    AppendUint16(payload, udpPort);
-    AppendUint64(payload, udpToken);
-    return payload;
+    flatbuffers::FlatBufferBuilder builder;
+    const auto response = tcp::CreateDungeonConnectionInfoResponse(
+        builder,
+        static_cast<tcp::DungeonConnectionInfoResult>(result),
+        dungeonId,
+        udpPort,
+        udpToken);
+    return FinishTcpPayload(
+        builder,
+        tcp::TcpPayload_DungeonConnectionInfoResponse,
+        response.Union());
 }
 
 DungeonConnectionInfoData DecodeDungeonConnectionInfoResponsePayload(
     const std::vector<std::uint8_t>& payload)
 {
-    if (payload.size() != 19)
+    const auto* message = DecodeTcpPayload(
+        payload,
+        tcp::TcpPayload_DungeonConnectionInfoResponse);
+    const auto* response =
+        message->payload_as_DungeonConnectionInfoResponse();
+    if (response == nullptr)
     {
         throw std::runtime_error(
             "Invalid dungeon connection info response payload");
     }
 
     const auto result =
-        static_cast<DungeonConnectionInfoResult>(payload[0]);
-    const DungeonId dungeonId = ReadUint64(payload, 1);
-    const std::uint16_t udpPort = ReadUint16(payload, 9);
-    const DungeonUdpToken udpToken = ReadUint64(payload, 11);
+        static_cast<DungeonConnectionInfoResult>(response->result());
+    const DungeonId dungeonId = response->dungeon_id();
+    const std::uint16_t udpPort = response->udp_port();
+    const DungeonUdpToken udpToken = response->udp_token();
 
     if (!IsValidResponse(result, dungeonId, udpPort, udpToken))
     {

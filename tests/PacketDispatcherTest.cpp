@@ -489,6 +489,8 @@ dnf::DungeonConnectionInfoData SendConnectionInfoRequest(
     dnf::Packet request;
     request.header.type = dnf::DungeonConnectionInfoRequest;
     request.header.requestId = 61;
+    request.payload =
+        dnf::EncodeDungeonConnectionInfoRequestPayload();
 
     dnf::PacketDispatcher dispatcher(
         context.channelManager,

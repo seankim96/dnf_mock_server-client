@@ -1,5 +1,4 @@
 using System;
-using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.IO;
 using Google.FlatBuffers;
@@ -365,37 +364,43 @@ public static class GamePayloadCodec
         return new EnterDungeonResponse(result, dungeonId, udpPort, udpToken);
     }
 
+    public static byte[] EncodeDungeonConnectionInfoRequest()
+    {
+        var builder = new FlatBufferBuilder(64);
+        TcpSchema.DungeonConnectionInfoRequest
+            .StartDungeonConnectionInfoRequest(builder);
+        Offset<TcpSchema.DungeonConnectionInfoRequest> request =
+            TcpSchema.DungeonConnectionInfoRequest
+                .EndDungeonConnectionInfoRequest(builder);
+        return TcpFlatBufferCodec.FinishPayload(
+            builder,
+            TcpSchema.TcpPayload.DungeonConnectionInfoRequest,
+            request.Value);
+    }
+
     public static DungeonConnectionInfo DecodeDungeonConnectionInfoResponse(
         byte[] payload)
     {
-        ValidateDungeonPayload(payload);
-
-        var result = (DungeonConnectionInfoResult)payload[0];
-        if (!Enum.IsDefined(typeof(DungeonConnectionInfoResult), result))
+        TcpSchema.DungeonConnectionInfoResponse response =
+            TcpFlatBufferCodec.DecodePayload<
+                TcpSchema.DungeonConnectionInfoResponse>(
+                payload,
+                TcpSchema.TcpPayload.DungeonConnectionInfoResponse);
+        if (!Enum.IsDefined(
+                typeof(TcpSchema.DungeonConnectionInfoResult),
+                response.Result))
         {
             throw new InvalidDataException("Invalid dungeon connection result.");
         }
 
-        ulong dungeonId = ReadUInt64(payload, 1);
-        ushort udpPort = BinaryPrimitives.ReadUInt16BigEndian(payload.AsSpan(9, 2));
-        ulong udpToken = ReadUInt64(payload, 11);
+        var result = (DungeonConnectionInfoResult)(byte)response.Result;
+        ulong dungeonId = response.DungeonId;
+        ushort udpPort = response.UdpPort;
+        ulong udpToken = response.UdpToken;
         ValidateDungeonResult(result == DungeonConnectionInfoResult.Success,
             dungeonId, udpPort, udpToken);
 
         return new DungeonConnectionInfo(result, dungeonId, udpPort, udpToken);
-    }
-
-    private static ulong ReadUInt64(byte[] bytes, int offset)
-    {
-        return BinaryPrimitives.ReadUInt64BigEndian(bytes.AsSpan(offset, 8));
-    }
-
-    private static void ValidateDungeonPayload(byte[] payload)
-    {
-        if (payload.Length != 19)
-        {
-            throw new InvalidDataException("Invalid dungeon response payload.");
-        }
     }
 
     private static void ValidateDungeonResult(

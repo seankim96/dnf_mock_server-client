@@ -428,6 +428,58 @@ static void TestGamePayloads()
     AssertThrows<InvalidDataException>(
         () => GamePayloadCodec.DecodeEnterDungeonResponse(enterDungeonRequest),
         "Enter dungeon request was accepted as a response.");
+
+    byte[] connectionInfoRequest =
+        GamePayloadCodec.EncodeDungeonConnectionInfoRequest();
+    var connectionInfoRequestBuffer = new ByteBuffer(connectionInfoRequest);
+    Assert(TcpSchema.TcpMessage.VerifyTcpMessage(connectionInfoRequestBuffer),
+        "Dungeon connection info request FlatBuffer is invalid.");
+    Assert(TcpSchema.TcpMessage.GetRootAsTcpMessage(connectionInfoRequestBuffer)
+        .PayloadType == TcpSchema.TcpPayload.DungeonConnectionInfoRequest,
+        "Dungeon connection info request type is incorrect.");
+
+    DungeonConnectionInfo connectionInfo =
+        GamePayloadCodec.DecodeDungeonConnectionInfoResponse(
+            DungeonConnectionInfoResponseBytes(
+                TcpSchema.DungeonConnectionInfoResult.Success,
+                9,
+                0x2345,
+                8));
+    Assert(connectionInfo.Result == DungeonConnectionInfoResult.Success &&
+        connectionInfo.DungeonId == 9 && connectionInfo.UdpPort == 0x2345 &&
+        connectionInfo.UdpToken == 8,
+        "Dungeon connection info response is incorrect.");
+    DungeonConnectionInfo missingDungeon =
+        GamePayloadCodec.DecodeDungeonConnectionInfoResponse(
+            DungeonConnectionInfoResponseBytes(
+                TcpSchema.DungeonConnectionInfoResult.DungeonNotFound,
+                0,
+                0,
+                0));
+    Assert(missingDungeon.Result == DungeonConnectionInfoResult.DungeonNotFound &&
+        missingDungeon.DungeonId == 0 && missingDungeon.UdpPort == 0 &&
+        missingDungeon.UdpToken == 0,
+        "Failed dungeon connection info response is incorrect.");
+    AssertThrows<InvalidDataException>(
+        () => GamePayloadCodec.DecodeDungeonConnectionInfoResponse(
+            DungeonConnectionInfoResponseBytes(
+                TcpSchema.DungeonConnectionInfoResult.Success,
+                0,
+                0x2345,
+                8)),
+        "Successful connection info response with a zero ID was accepted.");
+    AssertThrows<InvalidDataException>(
+        () => GamePayloadCodec.DecodeDungeonConnectionInfoResponse(
+            DungeonConnectionInfoResponseBytes(
+                (TcpSchema.DungeonConnectionInfoResult)5,
+                0,
+                0,
+                0)),
+        "Unknown dungeon connection info result was accepted.");
+    AssertThrows<InvalidDataException>(
+        () => GamePayloadCodec.DecodeDungeonConnectionInfoResponse(
+            connectionInfoRequest),
+        "Dungeon connection info request was accepted as a response.");
 }
 
 static void TestDungeonProtocol()
@@ -646,6 +698,27 @@ static byte[] EnterDungeonResponseBytes(
     return TcpFlatBufferCodec.FinishPayload(
         builder,
         TcpSchema.TcpPayload.EnterDungeonResponse,
+        response.Value);
+}
+
+static byte[] DungeonConnectionInfoResponseBytes(
+    TcpSchema.DungeonConnectionInfoResult result,
+    ulong dungeonId,
+    ushort udpPort,
+    ulong udpToken)
+{
+    var builder = new FlatBufferBuilder(96);
+    Offset<TcpSchema.DungeonConnectionInfoResponse> response =
+        TcpSchema.DungeonConnectionInfoResponse
+            .CreateDungeonConnectionInfoResponse(
+                builder,
+                result,
+                dungeonId,
+                udpPort,
+                udpToken);
+    return TcpFlatBufferCodec.FinishPayload(
+        builder,
+        TcpSchema.TcpPayload.DungeonConnectionInfoResponse,
         response.Value);
 }
 
@@ -1012,6 +1085,53 @@ static async Task TestTcpConnectionAsync()
         receivedDungeon.UdpPort == 40000 &&
         receivedDungeon.UdpToken == 77,
         "Enter dungeon TCP response payload is incorrect.");
+
+    Task<TcpPacket> connectionInfoResponseTask = connection.SendRequestAsync(
+        TcpPacketType.DungeonConnectionInfoRequest,
+        GamePayloadCodec.EncodeDungeonConnectionInfoRequest(),
+        timeout.Token);
+
+    await serverStream.ReadExactlyAsync(requestHeaderBytes, timeout.Token);
+    TcpPacketHeader connectionInfoRequestHeader =
+        TcpPacketCodec.DecodeHeader(requestHeaderBytes);
+    int connectionInfoRequestPayloadSize =
+        connectionInfoRequestHeader.PacketSize - TcpPacketCodec.HeaderSize;
+    var connectionInfoRequestPayload =
+        new byte[connectionInfoRequestPayloadSize];
+    await serverStream.ReadExactlyAsync(
+        connectionInfoRequestPayload,
+        timeout.Token);
+    Assert(connectionInfoRequestHeader.Type ==
+        TcpPacketType.DungeonConnectionInfoRequest,
+        "Dungeon connection info TCP request type is incorrect.");
+    var connectionInfoRequestBuffer =
+        new ByteBuffer(connectionInfoRequestPayload);
+    Assert(TcpSchema.TcpMessage.VerifyTcpMessage(connectionInfoRequestBuffer),
+        "Dungeon connection info TCP request FlatBuffer is invalid.");
+    Assert(TcpSchema.TcpMessage.GetRootAsTcpMessage(connectionInfoRequestBuffer)
+        .PayloadType == TcpSchema.TcpPayload.DungeonConnectionInfoRequest,
+        "Dungeon connection info TCP request FlatBuffer type is incorrect.");
+
+    byte[] connectionInfoResponseBytes = TcpPacketCodec.EncodePacket(
+        TcpPacketType.DungeonConnectionInfoResponse,
+        connectionInfoRequestHeader.RequestId,
+        DungeonConnectionInfoResponseBytes(
+            TcpSchema.DungeonConnectionInfoResult.Success,
+            10,
+            40000,
+            88));
+    await serverStream.WriteAsync(connectionInfoResponseBytes, timeout.Token);
+
+    TcpPacket connectionInfoResponse = await connectionInfoResponseTask;
+    DungeonConnectionInfo receivedConnectionInfo =
+        GamePayloadCodec.DecodeDungeonConnectionInfoResponse(
+            connectionInfoResponse.Payload);
+    Assert(receivedConnectionInfo.Result ==
+        DungeonConnectionInfoResult.Success &&
+        receivedConnectionInfo.DungeonId == 10 &&
+        receivedConnectionInfo.UdpPort == 40000 &&
+        receivedConnectionInfo.UdpToken == 88,
+        "Dungeon connection info TCP response payload is incorrect.");
 
     Task<TcpPacket> leavePartyResponseTask = connection.SendRequestAsync(
         TcpPacketType.LeavePartyRequest,
