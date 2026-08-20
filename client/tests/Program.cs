@@ -151,18 +151,37 @@ static void TestGamePayloads()
         () => GamePayloadCodec.DecodeLoginResponse(loginPayload),
         "Login request was accepted as a response.");
 
-    byte[] channelListPayload =
-    {
-        0, 1,
-        0, 0, 0, 2,
-        0, 0, 0, 5,
-        0, 0, 0, 100
-    };
+    byte[] channelListRequest =
+        GamePayloadCodec.EncodeChannelListRequest();
+    var channelListRequestBuffer = new ByteBuffer(channelListRequest);
+    Assert(TcpSchema.TcpMessage.VerifyTcpMessage(channelListRequestBuffer),
+        "Channel list request FlatBuffer is invalid.");
+    Assert(TcpSchema.TcpMessage.GetRootAsTcpMessage(channelListRequestBuffer)
+        .PayloadType == TcpSchema.TcpPayload.ChannelListRequest,
+        "Channel list request type is incorrect.");
+
     IReadOnlyList<ChannelInfo> channels =
-        GamePayloadCodec.DecodeChannelListResponse(channelListPayload);
-    Assert(channels.Count == 1, "Channel count is incorrect.");
-    Assert(channels[0].Id == 2 && channels[0].CurrentPlayers == 5 &&
-        channels[0].MaxPlayers == 100, "Channel entry is incorrect.");
+        GamePayloadCodec.DecodeChannelListResponse(
+            ChannelListResponseBytes(new[]
+            {
+                (2U, "Channel 2", 5U, 100U),
+                (3U, "Channel 3", 0U, 200U)
+            }));
+    Assert(channels.Count == 2, "Channel count is incorrect.");
+    Assert(channels[0].Id == 2 &&
+        channels[0].DisplayName == "Channel 2" &&
+        channels[0].CurrentPlayers == 5 && channels[0].MaxPlayers == 100,
+        "Channel entry is incorrect.");
+    AssertThrows<InvalidDataException>(
+        () => GamePayloadCodec.DecodeChannelListResponse(channelListRequest),
+        "Channel list request was accepted as a response.");
+    AssertThrows<InvalidDataException>(
+        () => GamePayloadCodec.DecodeChannelListResponse(
+            ChannelListResponseBytes(new[]
+            {
+                (0U, "Invalid", 0U, 100U)
+            })),
+        "Channel list entry with a zero ID was accepted.");
 
     byte[] joinPayload = GamePayloadCodec.EncodeJoinChannelRequest(3);
     Assert(joinPayload.SequenceEqual(new byte[] { 0, 0, 0, 3 }),
@@ -423,6 +442,35 @@ static byte[] LoginResponseBytes(
         response.Value);
 }
 
+static byte[] ChannelListResponseBytes(
+    (uint Id, string Name, uint CurrentPlayers, uint MaxPlayers)[] channels)
+{
+    var builder = new FlatBufferBuilder(256);
+    var entries = new Offset<TcpSchema.ChannelInfo>[channels.Length];
+
+    for (int index = 0; index < channels.Length; index++)
+    {
+        StringOffset name = builder.CreateString(channels[index].Name);
+        entries[index] = TcpSchema.ChannelInfo.CreateChannelInfo(
+            builder,
+            channels[index].Id,
+            name,
+            channels[index].CurrentPlayers,
+            channels[index].MaxPlayers);
+    }
+
+    VectorOffset channelEntries =
+        TcpSchema.ChannelListResponse.CreateChannelsVector(builder, entries);
+    Offset<TcpSchema.ChannelListResponse> response =
+        TcpSchema.ChannelListResponse.CreateChannelListResponse(
+            builder,
+            channelEntries);
+    return TcpFlatBufferCodec.FinishPayload(
+        builder,
+        TcpSchema.TcpPayload.ChannelListResponse,
+        response.Value);
+}
+
 static byte[] CreatePartyResponseBytes(
     TcpSchema.CreatePartyResult result,
     ulong partyId,
@@ -601,6 +649,45 @@ static async Task TestTcpConnectionAsync()
     Assert(loginResponse.Result == LoginResult.Success &&
         loginResponse.SessionId == 42,
         "TCP login response payload is incorrect.");
+
+    Task<TcpPacket> channelListResponseTask = connection.SendRequestAsync(
+        TcpPacketType.ChannelListRequest,
+        GamePayloadCodec.EncodeChannelListRequest(),
+        timeout.Token);
+
+    await serverStream.ReadExactlyAsync(requestHeaderBytes, timeout.Token);
+    TcpPacketHeader channelListRequestHeader =
+        TcpPacketCodec.DecodeHeader(requestHeaderBytes);
+    int channelListRequestPayloadSize =
+        channelListRequestHeader.PacketSize - TcpPacketCodec.HeaderSize;
+    var channelListRequestPayload = new byte[channelListRequestPayloadSize];
+    await serverStream.ReadExactlyAsync(
+        channelListRequestPayload,
+        timeout.Token);
+    Assert(channelListRequestHeader.Type == TcpPacketType.ChannelListRequest,
+        "Channel list TCP request type is incorrect.");
+    var channelListRequestBuffer = new ByteBuffer(channelListRequestPayload);
+    Assert(TcpSchema.TcpMessage.VerifyTcpMessage(channelListRequestBuffer),
+        "Channel list TCP request FlatBuffer is invalid.");
+    Assert(TcpSchema.TcpMessage.GetRootAsTcpMessage(channelListRequestBuffer)
+        .PayloadType == TcpSchema.TcpPayload.ChannelListRequest,
+        "Channel list TCP request FlatBuffer type is incorrect.");
+
+    byte[] channelListResponseBytes = TcpPacketCodec.EncodePacket(
+        TcpPacketType.ChannelListResponse,
+        channelListRequestHeader.RequestId,
+        ChannelListResponseBytes(new[]
+        {
+            (1U, "Channel 1", 2U, 100U)
+        }));
+    await serverStream.WriteAsync(channelListResponseBytes, timeout.Token);
+
+    TcpPacket channelListResponse = await channelListResponseTask;
+    IReadOnlyList<ChannelInfo> receivedChannels =
+        GamePayloadCodec.DecodeChannelListResponse(channelListResponse.Payload);
+    Assert(receivedChannels.Count == 1 &&
+        receivedChannels[0].DisplayName == "Channel 1",
+        "Channel list TCP response payload is incorrect.");
 
     Task<TcpPacket> partyResponseTask = connection.SendRequestAsync(
         TcpPacketType.CreatePartyRequest,

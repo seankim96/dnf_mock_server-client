@@ -81,6 +81,7 @@ void TestChannelListRequest()
     dnf::Packet request;
     request.header.type = dnf::ChannelListRequest;
     request.header.requestId = 44;
+    request.payload = dnf::EncodeChannelListRequestPayload();
 
     dnf::PacketDispatcher dispatcher(
         context.channelManager,
@@ -98,12 +99,15 @@ void TestChannelListRequest()
     assert(response.header.type == dnf::ChannelListResponse);
     assert(response.header.requestId == 44);
 
-    const auto channels = dnf::DecodeChannelListPayload(response.payload);
+    const auto channels =
+        dnf::DecodeChannelListResponsePayload(response.payload);
     assert(channels.size() == 2);
     assert(channels[0].id == 1);
+    assert(channels[0].name == "Channel 1");
     assert(channels[0].currentPlayers == 1);
     assert(channels[0].maxPlayers == 100);
     assert(channels[1].id == 2);
+    assert(channels[1].name == "Channel 2");
     assert(channels[1].currentPlayers == 0);
     assert(channels[1].maxPlayers == 200);
 }

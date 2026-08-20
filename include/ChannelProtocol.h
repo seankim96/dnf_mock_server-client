@@ -10,6 +10,7 @@ namespace dnf
 struct ChannelListEntry
 {
     ChannelId id = 0;
+    std::string name;
     std::uint32_t currentPlayers = 0;
     std::uint32_t maxPlayers = 0;
 };
@@ -20,10 +21,15 @@ struct JoinChannelResponseData
     ChannelId channelId = 0;
 };
 
-std::vector<std::uint8_t> EncodeChannelListPayload(
+void ValidateChannelListRequestPayload(
+    const std::vector<std::uint8_t>& payload);
+
+std::vector<std::uint8_t> EncodeChannelListRequestPayload();
+
+std::vector<std::uint8_t> EncodeChannelListResponsePayload(
     const std::vector<ChannelInfo>& channels);
 
-std::vector<ChannelListEntry> DecodeChannelListPayload(
+std::vector<ChannelListEntry> DecodeChannelListResponsePayload(
     const std::vector<std::uint8_t>& payload);
 
 std::vector<std::uint8_t> EncodeJoinChannelRequestPayload(

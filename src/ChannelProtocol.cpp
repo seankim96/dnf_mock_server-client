@@ -1,4 +1,7 @@
 #include "ChannelProtocol.h"
+#include "TcpFlatBufferCodec.h"
+
+#include <flatbuffers/flatbuffer_builder.h>
 
 #include <limits>
 #include <stdexcept>
@@ -7,13 +10,7 @@ namespace dnf
 {
 namespace
 {
-constexpr std::size_t CHANNEL_ENTRY_SIZE = 12;
-
-void AppendUint16(std::vector<std::uint8_t>& bytes, std::uint16_t value)
-{
-    bytes.push_back(static_cast<std::uint8_t>(value >> 8));
-    bytes.push_back(static_cast<std::uint8_t>(value));
-}
+namespace tcp = Dnf::Protocol::Tcp;
 
 void AppendUint32(std::vector<std::uint8_t>& bytes, std::uint32_t value)
 {
@@ -21,15 +18,6 @@ void AppendUint32(std::vector<std::uint8_t>& bytes, std::uint32_t value)
     bytes.push_back(static_cast<std::uint8_t>(value >> 16));
     bytes.push_back(static_cast<std::uint8_t>(value >> 8));
     bytes.push_back(static_cast<std::uint8_t>(value));
-}
-
-std::uint16_t ReadUint16(
-    const std::vector<std::uint8_t>& bytes,
-    std::size_t offset)
-{
-    return static_cast<std::uint16_t>(
-        (static_cast<std::uint16_t>(bytes[offset]) << 8) |
-        bytes[offset + 1]);
 }
 
 std::uint32_t ReadUint32(
@@ -43,68 +31,95 @@ std::uint32_t ReadUint32(
 }
 } // namespace
 
-std::vector<std::uint8_t> EncodeChannelListPayload(
+void ValidateChannelListRequestPayload(
+    const std::vector<std::uint8_t>& payload)
+{
+    const auto* message = DecodeTcpPayload(
+        payload,
+        tcp::TcpPayload_ChannelListRequest);
+    if (message->payload_as_ChannelListRequest() == nullptr)
+    {
+        throw std::runtime_error("Invalid channel list request payload");
+    }
+}
+
+std::vector<std::uint8_t> EncodeChannelListRequestPayload()
+{
+    flatbuffers::FlatBufferBuilder builder;
+    const auto request = tcp::CreateChannelListRequest(builder);
+    return FinishTcpPayload(
+        builder,
+        tcp::TcpPayload_ChannelListRequest,
+        request.Union());
+}
+
+std::vector<std::uint8_t> EncodeChannelListResponsePayload(
     const std::vector<ChannelInfo>& channels)
 {
-    if (channels.size() > std::numeric_limits<std::uint16_t>::max())
-    {
-        throw std::runtime_error("Too many channels");
-    }
-
-    std::vector<std::uint8_t> payload;
-    payload.reserve(2 + channels.size() * CHANNEL_ENTRY_SIZE);
-    AppendUint16(payload, static_cast<std::uint16_t>(channels.size()));
+    flatbuffers::FlatBufferBuilder builder;
+    std::vector<flatbuffers::Offset<tcp::ChannelInfo>> entries;
+    entries.reserve(channels.size());
 
     for (const ChannelInfo& channel : channels)
     {
-        if (channel.currentPlayers > std::numeric_limits<std::uint32_t>::max() ||
+        if (channel.id == 0 || channel.name.empty() ||
+            channel.maxPlayers == 0 ||
+            channel.currentPlayers > channel.maxPlayers ||
+            channel.currentPlayers > std::numeric_limits<std::uint32_t>::max() ||
             channel.maxPlayers > std::numeric_limits<std::uint32_t>::max())
         {
-            throw std::runtime_error("Channel player count is too large");
+            throw std::invalid_argument("Invalid channel list entry");
         }
 
-        AppendUint32(payload, channel.id);
-        AppendUint32(
-            payload,
-            static_cast<std::uint32_t>(channel.currentPlayers));
-        AppendUint32(
-            payload,
-            static_cast<std::uint32_t>(channel.maxPlayers));
+        const auto name = builder.CreateString(channel.name);
+        entries.push_back(tcp::CreateChannelInfo(
+            builder,
+            channel.id,
+            name,
+            static_cast<std::uint32_t>(channel.currentPlayers),
+            static_cast<std::uint32_t>(channel.maxPlayers)));
     }
 
-    return payload;
+    const auto channelEntries = builder.CreateVector(entries);
+    const auto response = tcp::CreateChannelListResponse(
+        builder,
+        channelEntries);
+    return FinishTcpPayload(
+        builder,
+        tcp::TcpPayload_ChannelListResponse,
+        response.Union());
 }
 
-std::vector<ChannelListEntry> DecodeChannelListPayload(
+std::vector<ChannelListEntry> DecodeChannelListResponsePayload(
     const std::vector<std::uint8_t>& payload)
 {
-    if (payload.size() < 2)
+    const auto* message = DecodeTcpPayload(
+        payload,
+        tcp::TcpPayload_ChannelListResponse);
+    const auto* response = message->payload_as_ChannelListResponse();
+    if (response == nullptr || response->channels() == nullptr)
     {
-        throw std::runtime_error("Invalid channel list payload");
-    }
-
-    const std::uint16_t channelCount = ReadUint16(payload, 0);
-    const std::size_t expectedSize =
-        2 + static_cast<std::size_t>(channelCount) * CHANNEL_ENTRY_SIZE;
-
-    if (payload.size() != expectedSize)
-    {
-        throw std::runtime_error("Invalid channel list payload size");
+        throw std::runtime_error("Invalid channel list response payload");
     }
 
     std::vector<ChannelListEntry> channels;
-    channels.reserve(channelCount);
+    channels.reserve(response->channels()->size());
 
-    std::size_t offset = 2;
-    for (std::uint16_t index = 0; index < channelCount; ++index)
+    for (const auto* source : *response->channels())
     {
-        ChannelListEntry channel;
-        channel.id = ReadUint32(payload, offset);
-        channel.currentPlayers = ReadUint32(payload, offset + 4);
-        channel.maxPlayers = ReadUint32(payload, offset + 8);
-        channels.push_back(channel);
+        if (source == nullptr || source->display_name() == nullptr ||
+            source->channel_id() == 0 || source->display_name()->empty() ||
+            source->max_players() == 0 ||
+            source->current_players() > source->max_players())
+        {
+            throw std::runtime_error("Invalid channel list response data");
+        }
 
-        offset += CHANNEL_ENTRY_SIZE;
+        channels.push_back({
+            source->channel_id(),
+            source->display_name()->str(),
+            source->current_players(),
+            source->max_players()});
     }
 
     return channels;

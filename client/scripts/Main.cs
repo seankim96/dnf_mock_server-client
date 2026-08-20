@@ -565,7 +565,7 @@ public partial class Main : Control
     {
         TcpPacket packet = await _connection.SendRequestAsync(
             TcpPacketType.ChannelListRequest,
-            Array.Empty<byte>(),
+            GamePayloadCodec.EncodeChannelListRequest(),
             cancellationToken);
         IReadOnlyList<ChannelInfo> channels =
             GamePayloadCodec.DecodeChannelListResponse(packet.Payload);
@@ -574,7 +574,7 @@ public partial class Main : Control
         foreach (ChannelInfo channel in channels)
         {
             _channelSelect.AddItem(
-                $"채널 {channel.Id}  ({channel.CurrentPlayers}/{channel.MaxPlayers})",
+                $"{channel.DisplayName}  ({channel.CurrentPlayers}/{channel.MaxPlayers})",
                 checked((int)channel.Id));
         }
 

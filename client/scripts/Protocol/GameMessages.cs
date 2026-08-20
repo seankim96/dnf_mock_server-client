@@ -24,14 +24,20 @@ public sealed class LoginResponseData
 
 public sealed class ChannelInfo
 {
-    public ChannelInfo(uint id, uint currentPlayers, uint maxPlayers)
+    public ChannelInfo(
+        uint id,
+        string displayName,
+        uint currentPlayers,
+        uint maxPlayers)
     {
         Id = id;
+        DisplayName = displayName;
         CurrentPlayers = currentPlayers;
         MaxPlayers = maxPlayers;
     }
 
     public uint Id { get; }
+    public string DisplayName { get; }
     public uint CurrentPlayers { get; }
     public uint MaxPlayers { get; }
 }

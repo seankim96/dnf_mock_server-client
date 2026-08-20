@@ -11,6 +11,7 @@ void TestChannelList()
 
     assert(manager.AddChannel(2, "Channel 2", 20));
     assert(manager.AddChannel(1, "Channel 1", 10));
+    assert(!manager.AddChannel(0, "Invalid", 10));
     assert(!manager.AddChannel(1, "Duplicate", 10));
 
     const auto channels = manager.GetChannelList();

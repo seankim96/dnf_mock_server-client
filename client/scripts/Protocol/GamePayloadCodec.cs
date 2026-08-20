@@ -59,33 +59,44 @@ public static class GamePayloadCodec
         return new LoginResponseData(result, sessionId);
     }
 
+    public static byte[] EncodeChannelListRequest()
+    {
+        var builder = new FlatBufferBuilder(64);
+        TcpSchema.ChannelListRequest.StartChannelListRequest(builder);
+        Offset<TcpSchema.ChannelListRequest> request =
+            TcpSchema.ChannelListRequest.EndChannelListRequest(builder);
+        return TcpFlatBufferCodec.FinishPayload(
+            builder,
+            TcpSchema.TcpPayload.ChannelListRequest,
+            request.Value);
+    }
+
     public static IReadOnlyList<ChannelInfo> DecodeChannelListResponse(
         byte[] payload)
     {
-        if (payload.Length < 2)
+        TcpSchema.ChannelListResponse response =
+            TcpFlatBufferCodec.DecodePayload<TcpSchema.ChannelListResponse>(
+                payload,
+                TcpSchema.TcpPayload.ChannelListResponse);
+
+        var channels = new List<ChannelInfo>(response.ChannelsLength);
+
+        for (int index = 0; index < response.ChannelsLength; index++)
         {
-            throw new InvalidDataException("Invalid channel list payload.");
-        }
+            TcpSchema.ChannelInfo? source = response.Channels(index);
+            if (!source.HasValue || source.Value.ChannelId == 0 ||
+                string.IsNullOrEmpty(source.Value.DisplayName) ||
+                source.Value.MaxPlayers == 0 ||
+                source.Value.CurrentPlayers > source.Value.MaxPlayers)
+            {
+                throw new InvalidDataException("Invalid channel list response data.");
+            }
 
-        ushort channelCount = BinaryPrimitives.ReadUInt16BigEndian(
-            payload.AsSpan(0, 2));
-        int expectedSize = 2 + channelCount * 12;
-
-        if (payload.Length != expectedSize)
-        {
-            throw new InvalidDataException("Invalid channel list payload size.");
-        }
-
-        var channels = new List<ChannelInfo>(channelCount);
-        int offset = 2;
-
-        for (int index = 0; index < channelCount; index++)
-        {
-            uint id = ReadUInt32(payload, offset);
-            uint currentPlayers = ReadUInt32(payload, offset + 4);
-            uint maxPlayers = ReadUInt32(payload, offset + 8);
-            channels.Add(new ChannelInfo(id, currentPlayers, maxPlayers));
-            offset += 12;
+            channels.Add(new ChannelInfo(
+                source.Value.ChannelId,
+                source.Value.DisplayName,
+                source.Value.CurrentPlayers,
+                source.Value.MaxPlayers));
         }
 
         return channels;

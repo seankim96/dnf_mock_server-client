@@ -89,13 +89,10 @@ std::vector<std::uint8_t> PacketDispatcher::HandleLoginRequest(
 std::vector<std::uint8_t> PacketDispatcher::HandleChannelListRequest(
     const Packet& request) const
 {
-    if (!request.payload.empty())
-    {
-        throw std::runtime_error("ChannelListRequest payload must be empty");
-    }
+    ValidateChannelListRequestPayload(request.payload);
 
     const auto channels = channelManager_.GetChannelList();
-    const auto responsePayload = EncodeChannelListPayload(channels);
+    const auto responsePayload = EncodeChannelListResponsePayload(channels);
 
     return EncodePacket(
         ChannelListResponse,

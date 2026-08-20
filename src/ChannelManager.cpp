@@ -12,7 +12,8 @@ bool ChannelManager::AddChannel(
 {
     std::lock_guard lock(mutex_);
 
-    if (name.empty() || maxPlayers == 0 || channels_.contains(channelId))
+    if (channelId == 0 || name.empty() || maxPlayers == 0 ||
+        channels_.contains(channelId))
     {
         return false;
     }
