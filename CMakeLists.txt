@@ -8,6 +8,7 @@ project(DNFMockServer LANGUAGES CXX)
 
 find_package(Boost 1.82 REQUIRED COMPONENTS system)
 find_package(flatbuffers CONFIG REQUIRED)
+find_package(SQLite3 REQUIRED)
 find_package(Threads REQUIRED)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -57,6 +58,7 @@ add_library(dnf_core
     src/ServerApplication.cpp
     src/SessionManager.cpp
     src/SkillCatalog.cpp
+    src/SqliteDatabase.cpp
     src/TcpFlatBufferCodec.cpp
     src/TcpServer.cpp
     src/TcpSession.cpp
@@ -64,6 +66,7 @@ add_library(dnf_core
 target_include_directories(dnf_core PUBLIC include)
 target_link_libraries(dnf_core PUBLIC
     Boost::system
+    SQLite3::SQLite3
     Threads::Threads
     flatbuffers::flatbuffers
     dnf_protocol_generated
@@ -169,6 +172,11 @@ add_executable(player_profile_test tests/PlayerProfileTest.cpp)
 target_link_libraries(player_profile_test PRIVATE dnf_core)
 
 add_test(NAME player_profile_test COMMAND player_profile_test)
+
+add_executable(sqlite_database_test tests/SqliteDatabaseTest.cpp)
+target_link_libraries(sqlite_database_test PRIVATE dnf_core)
+
+add_test(NAME sqlite_database_test COMMAND sqlite_database_test)
 
 add_executable(room_state_test tests/RoomStateTest.cpp)
 target_link_libraries(room_state_test PRIVATE dnf_core)
