@@ -196,10 +196,13 @@ void TestInvalidJoinPartyPayload()
 
 void TestLeavePartyRequest()
 {
+    const auto payload = dnf::EncodeLeavePartyRequestPayload();
+    assert(!payload.empty());
+
     const auto packetBytes = dnf::EncodePacket(
         dnf::LeavePartyRequest,
         73,
-        {});
+        payload);
 
     dnf::ReceiveBuffer buffer;
     buffer.Append(packetBytes);
@@ -225,7 +228,7 @@ void TestLeavePartyResponse()
 {
     const auto successPayload = dnf::EncodeLeavePartyResponsePayload(
         dnf::LeavePartyResult::Success);
-    assert(successPayload.size() == 1);
+    assert(!successPayload.empty());
     assert(dnf::DecodeLeavePartyResponsePayload(successPayload) ==
            dnf::LeavePartyResult::Success);
 
@@ -237,9 +240,22 @@ void TestLeavePartyResponse()
     bool threw = false;
     try
     {
-        dnf::DecodeLeavePartyResponsePayload({2});
+        dnf::DecodeLeavePartyResponsePayload(
+            dnf::EncodeLeavePartyRequestPayload());
     }
     catch (const std::runtime_error&)
+    {
+        threw = true;
+    }
+    assert(threw);
+
+    threw = false;
+    try
+    {
+        dnf::EncodeLeavePartyResponsePayload(
+            static_cast<dnf::LeavePartyResult>(2));
+    }
+    catch (const std::invalid_argument&)
     {
         threw = true;
     }

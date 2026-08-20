@@ -245,11 +245,23 @@ JoinPartyResponseData DecodeJoinPartyResponsePayload(
 void ValidateLeavePartyRequestPayload(
     const std::vector<std::uint8_t>& payload)
 {
-    if (!payload.empty())
+    const auto* message = DecodeTcpPayload(
+        payload,
+        tcp::TcpPayload_LeavePartyRequest);
+    if (message->payload_as_LeavePartyRequest() == nullptr)
     {
-        throw std::runtime_error(
-            "Leave party request payload must be empty");
+        throw std::runtime_error("Invalid leave party request payload");
     }
+}
+
+std::vector<std::uint8_t> EncodeLeavePartyRequestPayload()
+{
+    flatbuffers::FlatBufferBuilder builder;
+    const auto request = tcp::CreateLeavePartyRequest(builder);
+    return FinishTcpPayload(
+        builder,
+        tcp::TcpPayload_LeavePartyRequest,
+        request.Union());
 }
 
 std::vector<std::uint8_t> EncodeLeavePartyResponsePayload(
@@ -261,19 +273,36 @@ std::vector<std::uint8_t> EncodeLeavePartyResponsePayload(
         throw std::invalid_argument("Invalid leave party result");
     }
 
-    return {static_cast<std::uint8_t>(result)};
+    flatbuffers::FlatBufferBuilder builder;
+    const auto response = tcp::CreateLeavePartyResponse(
+        builder,
+        static_cast<tcp::LeavePartyResult>(result));
+    return FinishTcpPayload(
+        builder,
+        tcp::TcpPayload_LeavePartyResponse,
+        response.Union());
 }
 
 LeavePartyResult DecodeLeavePartyResponsePayload(
     const std::vector<std::uint8_t>& payload)
 {
-    if (payload.size() != 1 ||
-        payload[0] > static_cast<std::uint8_t>(LeavePartyResult::NotInParty))
+    const auto* message = DecodeTcpPayload(
+        payload,
+        tcp::TcpPayload_LeavePartyResponse);
+    const auto* response = message->payload_as_LeavePartyResponse();
+    if (response == nullptr)
     {
         throw std::runtime_error("Invalid leave party response payload");
     }
 
-    return static_cast<LeavePartyResult>(payload[0]);
+    const auto result = static_cast<LeavePartyResult>(response->result());
+    if (result < LeavePartyResult::Success ||
+        result > LeavePartyResult::NotInParty)
+    {
+        throw std::runtime_error("Invalid leave party response data");
+    }
+
+    return result;
 }
 
 void ValidatePartySnapshotRequestPayload(

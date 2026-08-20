@@ -225,15 +225,26 @@ static void TestGamePayloads()
         () => GamePayloadCodec.DecodeJoinPartyResponse(joinPartyPayload),
         "Join party request was accepted as a response.");
 
-    Assert(GamePayloadCodec.EncodeLeavePartyRequest().Length == 0,
-        "Leave party request payload must be empty.");
-    Assert(GamePayloadCodec.DecodeLeavePartyResponse(new byte[] { 0 }) ==
+    byte[] leavePartyRequest = GamePayloadCodec.EncodeLeavePartyRequest();
+    var leavePartyRequestBuffer = new ByteBuffer(leavePartyRequest);
+    Assert(TcpSchema.TcpMessage.VerifyTcpMessage(leavePartyRequestBuffer),
+        "Leave party request FlatBuffer is invalid.");
+    Assert(TcpSchema.TcpMessage.GetRootAsTcpMessage(leavePartyRequestBuffer)
+        .PayloadType == TcpSchema.TcpPayload.LeavePartyRequest,
+        "Leave party request type is incorrect.");
+    Assert(GamePayloadCodec.DecodeLeavePartyResponse(
+            LeavePartyResponseBytes(TcpSchema.LeavePartyResult.Success)) ==
         LeavePartyResult.Success, "Leave party success result is incorrect.");
-    Assert(GamePayloadCodec.DecodeLeavePartyResponse(new byte[] { 1 }) ==
+    Assert(GamePayloadCodec.DecodeLeavePartyResponse(
+            LeavePartyResponseBytes(TcpSchema.LeavePartyResult.NotInParty)) ==
         LeavePartyResult.NotInParty, "Leave party failure result is incorrect.");
     AssertThrows<InvalidDataException>(
-        () => GamePayloadCodec.DecodeLeavePartyResponse(new byte[] { 2 }),
+        () => GamePayloadCodec.DecodeLeavePartyResponse(
+            LeavePartyResponseBytes((TcpSchema.LeavePartyResult)2)),
         "Unknown leave party result was accepted.");
+    AssertThrows<InvalidDataException>(
+        () => GamePayloadCodec.DecodeLeavePartyResponse(leavePartyRequest),
+        "Leave party request was accepted as a response.");
 
     byte[] partySnapshotRequest =
         GamePayloadCodec.EncodePartySnapshotRequest();
@@ -416,6 +427,19 @@ static byte[] JoinPartyResponseBytes(
     return TcpFlatBufferCodec.FinishPayload(
         builder,
         TcpSchema.TcpPayload.JoinPartyResponse,
+        response.Value);
+}
+
+static byte[] LeavePartyResponseBytes(TcpSchema.LeavePartyResult result)
+{
+    var builder = new FlatBufferBuilder(64);
+    Offset<TcpSchema.LeavePartyResponse> response =
+        TcpSchema.LeavePartyResponse.CreateLeavePartyResponse(
+            builder,
+            result);
+    return TcpFlatBufferCodec.FinishPayload(
+        builder,
+        TcpSchema.TcpPayload.LeavePartyResponse,
         response.Value);
 }
 
@@ -656,13 +680,21 @@ static async Task TestTcpConnectionAsync()
         TcpPacketCodec.DecodeHeader(requestHeaderBytes);
     Assert(leavePartyRequestHeader.Type == TcpPacketType.LeavePartyRequest,
         "Leave party TCP request type is incorrect.");
-    Assert(leavePartyRequestHeader.PacketSize == TcpPacketCodec.HeaderSize,
-        "Leave party TCP request payload must be empty.");
+    int leavePartyRequestPayloadSize =
+        leavePartyRequestHeader.PacketSize - TcpPacketCodec.HeaderSize;
+    var leavePartyRequestPayload = new byte[leavePartyRequestPayloadSize];
+    await serverStream.ReadExactlyAsync(leavePartyRequestPayload, timeout.Token);
+    var leavePartyRequestBuffer = new ByteBuffer(leavePartyRequestPayload);
+    Assert(TcpSchema.TcpMessage.VerifyTcpMessage(leavePartyRequestBuffer),
+        "Leave party TCP request FlatBuffer is invalid.");
+    Assert(TcpSchema.TcpMessage.GetRootAsTcpMessage(leavePartyRequestBuffer)
+        .PayloadType == TcpSchema.TcpPayload.LeavePartyRequest,
+        "Leave party TCP request FlatBuffer type is incorrect.");
 
     byte[] leavePartyResponseBytes = TcpPacketCodec.EncodePacket(
         TcpPacketType.LeavePartyResponse,
         leavePartyRequestHeader.RequestId,
-        new byte[] { 0 });
+        LeavePartyResponseBytes(TcpSchema.LeavePartyResult.Success));
     await serverStream.WriteAsync(leavePartyResponseBytes, timeout.Token);
 
     TcpPacket leavePartyResponse = await leavePartyResponseTask;

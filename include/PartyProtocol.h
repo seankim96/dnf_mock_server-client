@@ -76,6 +76,8 @@ JoinPartyResponseData DecodeJoinPartyResponsePayload(
 void ValidateLeavePartyRequestPayload(
     const std::vector<std::uint8_t>& payload);
 
+std::vector<std::uint8_t> EncodeLeavePartyRequestPayload();
+
 std::vector<std::uint8_t> EncodeLeavePartyResponsePayload(
     LeavePartyResult result);
 

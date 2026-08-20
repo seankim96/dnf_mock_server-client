@@ -319,6 +319,7 @@ dnf::LeavePartyResult SendLeavePartyRequest(
     dnf::Packet request;
     request.header.type = dnf::LeavePartyRequest;
     request.header.requestId = 73;
+    request.payload = dnf::EncodeLeavePartyRequestPayload();
 
     dnf::PacketDispatcher dispatcher(
         context.channelManager,

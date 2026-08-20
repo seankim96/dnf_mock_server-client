@@ -194,18 +194,30 @@ public static class GamePayloadCodec
 
     public static byte[] EncodeLeavePartyRequest()
     {
-        return Array.Empty<byte>();
+        var builder = new FlatBufferBuilder(64);
+        TcpSchema.LeavePartyRequest.StartLeavePartyRequest(builder);
+        Offset<TcpSchema.LeavePartyRequest> request =
+            TcpSchema.LeavePartyRequest.EndLeavePartyRequest(builder);
+        return TcpFlatBufferCodec.FinishPayload(
+            builder,
+            TcpSchema.TcpPayload.LeavePartyRequest,
+            request.Value);
     }
 
     public static LeavePartyResult DecodeLeavePartyResponse(byte[] payload)
     {
-        if (payload.Length != 1 ||
-            !Enum.IsDefined(typeof(LeavePartyResult), payload[0]))
+        TcpSchema.LeavePartyResponse response =
+            TcpFlatBufferCodec.DecodePayload<TcpSchema.LeavePartyResponse>(
+                payload,
+                TcpSchema.TcpPayload.LeavePartyResponse);
+        if (!Enum.IsDefined(
+                typeof(TcpSchema.LeavePartyResult),
+                response.Result))
         {
             throw new InvalidDataException("Invalid leave party response payload.");
         }
 
-        return (LeavePartyResult)payload[0];
+        return (LeavePartyResult)(byte)response.Result;
     }
 
     public static byte[] EncodePartySnapshotRequest()
