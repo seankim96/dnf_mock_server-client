@@ -61,7 +61,18 @@ void TestInvalidPayloads()
     bool invalidRequest = false;
     try
     {
-        dnf::DecodeEnterDungeonRequestPayload({0, 0, 0, 0});
+        dnf::EncodeEnterDungeonRequestPayload(0);
+    }
+    catch (const std::invalid_argument&)
+    {
+        invalidRequest = true;
+    }
+    assert(invalidRequest);
+
+    invalidRequest = false;
+    try
+    {
+        dnf::DecodeEnterDungeonRequestPayload({0});
     }
     catch (const std::runtime_error&)
     {
@@ -77,6 +88,33 @@ void TestInvalidPayloads()
             0,
             40000,
             90001);
+    }
+    catch (const std::invalid_argument&)
+    {
+        invalidResponse = true;
+    }
+    assert(invalidResponse);
+
+    invalidResponse = false;
+    try
+    {
+        dnf::DecodeEnterDungeonResponsePayload(
+            dnf::EncodeEnterDungeonRequestPayload(1001));
+    }
+    catch (const std::runtime_error&)
+    {
+        invalidResponse = true;
+    }
+    assert(invalidResponse);
+
+    invalidResponse = false;
+    try
+    {
+        dnf::EncodeEnterDungeonResponsePayload(
+            static_cast<dnf::EnterDungeonResult>(6),
+            0,
+            0,
+            0);
     }
     catch (const std::invalid_argument&)
     {

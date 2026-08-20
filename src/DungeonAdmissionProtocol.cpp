@@ -1,4 +1,7 @@
 #include "DungeonAdmissionProtocol.h"
+#include "TcpFlatBufferCodec.h"
+
+#include <flatbuffers/flatbuffer_builder.h>
 
 #include <stdexcept>
 
@@ -6,58 +9,7 @@ namespace dnf
 {
 namespace
 {
-void AppendUint32(std::vector<std::uint8_t>& bytes, std::uint32_t value)
-{
-    bytes.push_back(static_cast<std::uint8_t>(value >> 24));
-    bytes.push_back(static_cast<std::uint8_t>(value >> 16));
-    bytes.push_back(static_cast<std::uint8_t>(value >> 8));
-    bytes.push_back(static_cast<std::uint8_t>(value));
-}
-
-void AppendUint16(std::vector<std::uint8_t>& bytes, std::uint16_t value)
-{
-    bytes.push_back(static_cast<std::uint8_t>(value >> 8));
-    bytes.push_back(static_cast<std::uint8_t>(value));
-}
-
-void AppendUint64(std::vector<std::uint8_t>& bytes, std::uint64_t value)
-{
-    for (int shift = 56; shift >= 0; shift -= 8)
-    {
-        bytes.push_back(static_cast<std::uint8_t>(value >> shift));
-    }
-}
-
-std::uint32_t ReadUint32(const std::vector<std::uint8_t>& bytes)
-{
-    return (static_cast<std::uint32_t>(bytes[0]) << 24) |
-           (static_cast<std::uint32_t>(bytes[1]) << 16) |
-           (static_cast<std::uint32_t>(bytes[2]) << 8) |
-           static_cast<std::uint32_t>(bytes[3]);
-}
-
-std::uint64_t ReadUint64(
-    const std::vector<std::uint8_t>& bytes,
-    std::size_t offset)
-{
-    std::uint64_t value = 0;
-
-    for (std::size_t index = 0; index < 8; ++index)
-    {
-        value = (value << 8) | bytes[offset + index];
-    }
-
-    return value;
-}
-
-std::uint16_t ReadUint16(
-    const std::vector<std::uint8_t>& bytes,
-    std::size_t offset)
-{
-    return static_cast<std::uint16_t>(
-        (static_cast<std::uint16_t>(bytes[offset]) << 8) |
-        bytes[offset + 1]);
-}
+namespace tcp = Dnf::Protocol::Tcp;
 
 bool IsValidResult(EnterDungeonResult result)
 {
@@ -91,27 +43,29 @@ std::vector<std::uint8_t> EncodeEnterDungeonRequestPayload(
         throw std::invalid_argument("Dungeon template ID must not be zero");
     }
 
-    std::vector<std::uint8_t> payload;
-    payload.reserve(4);
-    AppendUint32(payload, templateId);
-    return payload;
+    flatbuffers::FlatBufferBuilder builder;
+    const auto request = tcp::CreateEnterDungeonRequest(
+        builder,
+        templateId);
+    return FinishTcpPayload(
+        builder,
+        tcp::TcpPayload_EnterDungeonRequest,
+        request.Union());
 }
 
 DungeonTemplateId DecodeEnterDungeonRequestPayload(
     const std::vector<std::uint8_t>& payload)
 {
-    if (payload.size() != 4)
+    const auto* message = DecodeTcpPayload(
+        payload,
+        tcp::TcpPayload_EnterDungeonRequest);
+    const auto* request = message->payload_as_EnterDungeonRequest();
+    if (request == nullptr || request->dungeon_template_id() == 0)
     {
-        throw std::runtime_error("Invalid enter dungeon request payload");
+        throw std::runtime_error("Invalid enter dungeon request data");
     }
 
-    const DungeonTemplateId templateId = ReadUint32(payload);
-    if (templateId == 0)
-    {
-        throw std::runtime_error("Invalid dungeon template ID");
-    }
-
-    return templateId;
+    return request->dungeon_template_id();
 }
 
 std::vector<std::uint8_t> EncodeEnterDungeonResponsePayload(
@@ -125,27 +79,36 @@ std::vector<std::uint8_t> EncodeEnterDungeonResponsePayload(
         throw std::invalid_argument("Invalid enter dungeon response");
     }
 
-    std::vector<std::uint8_t> payload;
-    payload.reserve(19);
-    payload.push_back(static_cast<std::uint8_t>(result));
-    AppendUint64(payload, dungeonId);
-    AppendUint16(payload, udpPort);
-    AppendUint64(payload, udpToken);
-    return payload;
+    flatbuffers::FlatBufferBuilder builder;
+    const auto response = tcp::CreateEnterDungeonResponse(
+        builder,
+        static_cast<tcp::EnterDungeonResult>(result),
+        dungeonId,
+        udpPort,
+        udpToken);
+    return FinishTcpPayload(
+        builder,
+        tcp::TcpPayload_EnterDungeonResponse,
+        response.Union());
 }
 
 EnterDungeonResponseData DecodeEnterDungeonResponsePayload(
     const std::vector<std::uint8_t>& payload)
 {
-    if (payload.size() != 19)
+    const auto* message = DecodeTcpPayload(
+        payload,
+        tcp::TcpPayload_EnterDungeonResponse);
+    const auto* response = message->payload_as_EnterDungeonResponse();
+    if (response == nullptr)
     {
         throw std::runtime_error("Invalid enter dungeon response payload");
     }
 
-    const auto result = static_cast<EnterDungeonResult>(payload[0]);
-    const DungeonId dungeonId = ReadUint64(payload, 1);
-    const std::uint16_t udpPort = ReadUint16(payload, 9);
-    const DungeonUdpToken udpToken = ReadUint64(payload, 11);
+    const auto result =
+        static_cast<EnterDungeonResult>(response->result());
+    const DungeonId dungeonId = response->dungeon_id();
+    const std::uint16_t udpPort = response->udp_port();
+    const DungeonUdpToken udpToken = response->udp_token();
 
     if (!IsValidResponse(result, dungeonId, udpPort, udpToken))
     {

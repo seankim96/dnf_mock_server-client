@@ -331,24 +331,34 @@ public static class GamePayloadCodec
             throw new ArgumentOutOfRangeException(nameof(dungeonTemplateId));
         }
 
-        var payload = new byte[4];
-        BinaryPrimitives.WriteUInt32BigEndian(payload, dungeonTemplateId);
-        return payload;
+        var builder = new FlatBufferBuilder(64);
+        Offset<TcpSchema.EnterDungeonRequest> request =
+            TcpSchema.EnterDungeonRequest.CreateEnterDungeonRequest(
+                builder,
+                dungeonTemplateId);
+        return TcpFlatBufferCodec.FinishPayload(
+            builder,
+            TcpSchema.TcpPayload.EnterDungeonRequest,
+            request.Value);
     }
 
     public static EnterDungeonResponse DecodeEnterDungeonResponse(byte[] payload)
     {
-        ValidateDungeonPayload(payload);
-
-        var result = (EnterDungeonResult)payload[0];
-        if (!Enum.IsDefined(typeof(EnterDungeonResult), result))
+        TcpSchema.EnterDungeonResponse response =
+            TcpFlatBufferCodec.DecodePayload<TcpSchema.EnterDungeonResponse>(
+                payload,
+                TcpSchema.TcpPayload.EnterDungeonResponse);
+        if (!Enum.IsDefined(
+                typeof(TcpSchema.EnterDungeonResult),
+                response.Result))
         {
             throw new InvalidDataException("Invalid enter dungeon result.");
         }
 
-        ulong dungeonId = ReadUInt64(payload, 1);
-        ushort udpPort = BinaryPrimitives.ReadUInt16BigEndian(payload.AsSpan(9, 2));
-        ulong udpToken = ReadUInt64(payload, 11);
+        var result = (EnterDungeonResult)(byte)response.Result;
+        ulong dungeonId = response.DungeonId;
+        ushort udpPort = response.UdpPort;
+        ulong udpToken = response.UdpToken;
         ValidateDungeonResult(result == EnterDungeonResult.Success,
             dungeonId, udpPort, udpToken);
 
@@ -373,11 +383,6 @@ public static class GamePayloadCodec
             dungeonId, udpPort, udpToken);
 
         return new DungeonConnectionInfo(result, dungeonId, udpPort, udpToken);
-    }
-
-    private static uint ReadUInt32(byte[] bytes, int offset)
-    {
-        return BinaryPrimitives.ReadUInt32BigEndian(bytes.AsSpan(offset, 4));
     }
 
     private static ulong ReadUInt64(byte[] bytes, int offset)
