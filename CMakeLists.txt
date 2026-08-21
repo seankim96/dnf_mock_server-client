@@ -457,6 +457,10 @@ add_test(
     NAME auth_server_application_test
     COMMAND auth_server_application_test
 )
+set_tests_properties(
+    auth_server_application_test
+    PROPERTIES TIMEOUT 10
+)
 
 add_executable(dungeon_protocol_test tests/DungeonProtocolTest.cpp)
 target_link_libraries(dungeon_protocol_test PRIVATE dnf_core)

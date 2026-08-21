@@ -1,5 +1,10 @@
 #include "AuthServerApplication.h"
 
+#include <boost/asio/error.hpp>
+#include <boost/asio/post.hpp>
+#include <boost/system/error_code.hpp>
+
+#include <csignal>
 #include <exception>
 #include <iostream>
 #include <thread>
@@ -20,7 +25,8 @@ AuthServerApplication::AuthServerApplication(
     const std::string& certificateChainPath,
     const std::string& privateKeyPath,
     GameServerAddress gameServerAddress)
-    : database_(databasePath),
+    : shutdownSignals_(ioContext_, SIGINT, SIGTERM),
+      database_(databasePath),
       accountRepository_(database_),
       playerRepository_(database_),
       accountPlayerRepository_(database_),
@@ -57,12 +63,40 @@ AuthServerApplication::AuthServerApplication(
 void AuthServerApplication::Start()
 {
     tlsServer_.Start();
+    WaitForShutdownSignal();
 
     std::cout << "Authentication server started"
               << " port=" << tlsServer_.Port()
               << " ioThreads=" << AUTH_IO_THREAD_COUNT
               << " databaseThreads=" << AUTH_DATABASE_THREAD_COUNT
               << '\n';
+}
+
+void AuthServerApplication::WaitForShutdownSignal()
+{
+    shutdownSignals_.async_wait(
+        [this](
+            const boost::system::error_code& error,
+            int signalNumber)
+        {
+            if (error == boost::asio::error::operation_aborted)
+            {
+                return;
+            }
+
+            if (error)
+            {
+                std::cerr << "Shutdown signal error: "
+                          << error.message() << '\n';
+            }
+            else
+            {
+                std::cout << "Authentication server stopping"
+                          << " signal=" << signalNumber << '\n';
+            }
+
+            StopOnIoContext();
+        });
 }
 
 void AuthServerApplication::Run()
@@ -98,6 +132,18 @@ void AuthServerApplication::Run()
 
 void AuthServerApplication::Stop()
 {
+    boost::asio::post(
+        ioContext_,
+        [this]
+        {
+            StopOnIoContext();
+        });
+}
+
+void AuthServerApplication::StopOnIoContext()
+{
+    boost::system::error_code ignoredError;
+    shutdownSignals_.cancel(ignoredError);
     tlsServer_.Stop();
     ioContext_.stop();
 }

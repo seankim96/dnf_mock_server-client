@@ -14,6 +14,7 @@
 #include "SqlitePlayerRepository.h"
 
 #include <boost/asio/io_context.hpp>
+#include <boost/asio/signal_set.hpp>
 
 #include <cstdint>
 #include <string>
@@ -37,7 +38,11 @@ public:
     std::uint16_t Port() const;
 
 private:
+    void WaitForShutdownSignal();
+    void StopOnIoContext();
+
     boost::asio::io_context ioContext_;
+    boost::asio::signal_set shutdownSignals_;
     SqliteDatabase database_;
     SqliteAccountRepository accountRepository_;
     SqlitePlayerRepository playerRepository_;

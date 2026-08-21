@@ -10,6 +10,7 @@
 #include <boost/system/error_code.hpp>
 
 #include <cassert>
+#include <csignal>
 #include <exception>
 #include <iostream>
 #include <thread>
@@ -89,11 +90,47 @@ void TestApplicationRunsTlsListener()
         std::rethrow_exception(serverException);
     }
 }
+
+void TestApplicationStopsOnSignal()
+{
+    dnf::test::TestTlsCertificateFiles certificateFiles;
+    dnf::AuthServerApplication application(
+        0,
+        ":memory:",
+        certificateFiles.CertificatePath(),
+        certificateFiles.PrivateKeyPath(),
+        {"127.0.0.1", 7777});
+
+    application.Start();
+
+    std::exception_ptr serverException;
+    std::thread serverThread(
+        [&]
+        {
+            try
+            {
+                application.Run();
+            }
+            catch (...)
+            {
+                serverException = std::current_exception();
+            }
+        });
+
+    assert(std::raise(SIGINT) == 0);
+    serverThread.join();
+
+    if (serverException)
+    {
+        std::rethrow_exception(serverException);
+    }
+}
 } // namespace
 
 int main()
 {
     TestApplicationRunsTlsListener();
+    TestApplicationStopsOnSignal();
 
     std::cout << "All auth server application tests passed.\n";
     return 0;
