@@ -19,5 +19,6 @@ ROOT_DIR=$(dirname -- "$CLIENT_DIR")
     --csharp \
     --gen-onefile \
     -o "$CLIENT_DIR/scripts/Generated" \
+    "$ROOT_DIR/schemas/AuthMessage.fbs" \
     "$ROOT_DIR/schemas/DungeonMessage.fbs" \
     "$ROOT_DIR/schemas/TcpMessage.fbs"

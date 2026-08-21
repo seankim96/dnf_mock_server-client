@@ -1,0 +1,78 @@
+namespace Dnf.Protocol.Auth;
+
+// FlatBuffers only serializes these values. LoginRequest must be sent over TLS.
+
+enum LoginResult : ubyte {
+  Success = 0,
+  InvalidCredentials = 1,
+  ServiceError = 2
+}
+
+enum CharacterListResult : ubyte {
+  Success = 0,
+  NotAuthenticated = 1,
+  AccountNotFound = 2,
+  ServiceError = 3
+}
+
+enum CharacterSelectionResult : ubyte {
+  Success = 0,
+  NotAuthenticated = 1,
+  InvalidSelection = 2,
+  ServiceError = 3
+}
+
+table LoginRequest {
+  login_id:string (required);
+  password:string (required);
+}
+
+table LoginResponse {
+  result:LoginResult = Success;
+}
+
+// account_id is read from the authenticated TCP session.
+table CharacterListRequest {
+}
+
+table CharacterSummary {
+  player_id:ulong;
+  display_name:string (required);
+  level:uint = 1;
+}
+
+table CharacterListResponse {
+  result:CharacterListResult = Success;
+  characters:[CharacterSummary] (required);
+}
+
+// The client only chooses a character. It cannot choose an account_id.
+table CharacterSelectionRequest {
+  player_id:ulong;
+}
+
+table CharacterSelectionResponse {
+  result:CharacterSelectionResult = Success;
+  game_server_host:string;
+  game_server_port:ushort;
+  auth_ticket:string;
+  expires_at_unix:long;
+}
+
+union AuthPayload {
+  LoginRequest = 1,
+  CharacterListRequest = 2,
+  CharacterSelectionRequest = 3,
+
+  LoginResponse = 101,
+  CharacterListResponse = 102,
+  CharacterSelectionResponse = 103
+}
+
+table AuthMessage {
+  protocol_version:ushort = 1;
+  payload:AuthPayload;
+}
+
+root_type AuthMessage;
+file_identifier "DNFA";

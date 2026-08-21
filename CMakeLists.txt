@@ -16,6 +16,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(DNF_FLATBUFFER_SCHEMAS
+    ${CMAKE_CURRENT_SOURCE_DIR}/schemas/AuthMessage.fbs
     ${CMAKE_CURRENT_SOURCE_DIR}/schemas/DungeonMessage.fbs
     ${CMAKE_CURRENT_SOURCE_DIR}/schemas/TcpMessage.fbs
 )
@@ -351,6 +352,17 @@ add_executable(tcp_flatbuffer_schema_test tests/TcpFlatBufferSchemaTest.cpp)
 target_link_libraries(tcp_flatbuffer_schema_test PRIVATE dnf_core)
 
 add_test(NAME tcp_flatbuffer_schema_test COMMAND tcp_flatbuffer_schema_test)
+
+add_executable(
+    auth_flatbuffer_schema_test
+    tests/AuthFlatBufferSchemaTest.cpp
+)
+target_link_libraries(auth_flatbuffer_schema_test PRIVATE dnf_core)
+
+add_test(
+    NAME auth_flatbuffer_schema_test
+    COMMAND auth_flatbuffer_schema_test
+)
 
 add_executable(dungeon_protocol_test tests/DungeonProtocolTest.cpp)
 target_link_libraries(dungeon_protocol_test PRIVATE dnf_core)
