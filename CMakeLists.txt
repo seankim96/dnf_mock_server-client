@@ -30,6 +30,7 @@ add_library(dnf_core
     src/Account.cpp
     src/AccountAuthenticationService.cpp
     src/AuthFlatBufferCodec.cpp
+    src/AuthServerSessionState.cpp
     src/AuthTicketIssuer.cpp
     src/AuthTicketVerifier.cpp
     src/ChannelManager.cpp
@@ -184,6 +185,17 @@ add_executable(session_auth_state_test tests/SessionAuthStateTest.cpp)
 target_link_libraries(session_auth_state_test PRIVATE dnf_core)
 
 add_test(NAME session_auth_state_test COMMAND session_auth_state_test)
+
+add_executable(
+    auth_server_session_state_test
+    tests/AuthServerSessionStateTest.cpp
+)
+target_link_libraries(auth_server_session_state_test PRIVATE dnf_core)
+
+add_test(
+    NAME auth_server_session_state_test
+    COMMAND auth_server_session_state_test
+)
 
 add_executable(
     packet_dispatcher_test
