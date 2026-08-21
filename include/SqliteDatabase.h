@@ -8,7 +8,7 @@ struct sqlite3;
 
 namespace dnf
 {
-constexpr int SQLITE_DATABASE_SCHEMA_VERSION = 3;
+constexpr int SQLITE_DATABASE_SCHEMA_VERSION = 4;
 
 class DatabaseError : public std::runtime_error
 {

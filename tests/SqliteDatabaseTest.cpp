@@ -45,7 +45,7 @@ void TestSchemaIsCreated()
                "SELECT COUNT(*) FROM sqlite_master "
                "WHERE type = 'table' AND name IN "
                "('players', 'player_skills', 'auth_tickets', "
-               "'accounts');") == 4);
+               "'accounts', 'account_players');") == 5);
 }
 
 void TestVersionOneDatabaseIsMigrated()
@@ -102,6 +102,9 @@ void TestVersionOneDatabaseIsMigrated()
                "SELECT COUNT(*) FROM accounts;") == 0);
     assert(QueryInt(
                database.Handle(),
+               "SELECT COUNT(*) FROM account_players;") == 0);
+    assert(QueryInt(
+               database.Handle(),
                "SELECT COUNT(*) FROM players "
                "WHERE name = 'ExistingPlayer';") == 1);
 }
@@ -123,6 +126,10 @@ void TestSchemaConstraints()
                handle,
                "INSERT INTO accounts(login_id, password_hash) "
                "VALUES('account_1', 'encoded-test-hash');") == SQLITE_OK);
+    assert(Execute(
+               handle,
+               "INSERT INTO account_players(account_id, player_id) "
+               "VALUES(1, 1);") == SQLITE_OK);
 
     assert(Execute(
                handle,
@@ -137,10 +144,19 @@ void TestSchemaConstraints()
                "INSERT INTO accounts(login_id, password_hash) "
                "VALUES('ACCOUNT_1', 'another-hash');") ==
            SQLITE_CONSTRAINT);
+    assert(Execute(
+               handle,
+               "INSERT INTO account_players(account_id, player_id) "
+               "VALUES(999, 1);") == SQLITE_CONSTRAINT);
+    assert(Execute(
+               handle,
+               "INSERT INTO account_players(account_id, player_id) "
+               "VALUES(1, 999);") == SQLITE_CONSTRAINT);
 
     assert(Execute(handle, "DELETE FROM players WHERE player_id = 1;") ==
            SQLITE_OK);
     assert(QueryInt(handle, "SELECT COUNT(*) FROM player_skills;") == 0);
+    assert(QueryInt(handle, "SELECT COUNT(*) FROM account_players;") == 0);
 }
 
 void TestEmptyPathIsRejected()

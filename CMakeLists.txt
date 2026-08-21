@@ -64,6 +64,7 @@ add_library(dnf_core
     src/SessionAuthState.cpp
     src/SessionManager.cpp
     src/SkillCatalog.cpp
+    src/SqliteAccountPlayerRepository.cpp
     src/SqliteAccountRepository.cpp
     src/SqliteAuthTicketStore.cpp
     src/SqliteAuthTicketVerifier.cpp
@@ -236,6 +237,20 @@ target_link_libraries(sqlite_account_repository_test PRIVATE dnf_core)
 add_test(
     NAME sqlite_account_repository_test
     COMMAND sqlite_account_repository_test
+)
+
+add_executable(
+    sqlite_account_player_repository_test
+    tests/SqliteAccountPlayerRepositoryTest.cpp
+)
+target_link_libraries(
+    sqlite_account_player_repository_test
+    PRIVATE dnf_core
+)
+
+add_test(
+    NAME sqlite_account_player_repository_test
+    COMMAND sqlite_account_player_repository_test
 )
 
 add_executable(

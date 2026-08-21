@@ -24,9 +24,11 @@ std::int64_t CurrentUnixTime()
 } // namespace
 
 AuthTicketIssuer::AuthTicketIssuer(
+    AccountPlayerRepository& accountPlayerRepository,
     SqliteAuthTicketStore& ticketStore,
     std::chrono::seconds ticketLifetime)
-    : ticketStore_(ticketStore),
+    : accountPlayerRepository_(accountPlayerRepository),
+      ticketStore_(ticketStore),
       ticketLifetime_(ticketLifetime)
 {
     if (ticketLifetime_.count() <= 0)
@@ -39,7 +41,10 @@ AuthTicketIssuer::AuthTicketIssuer(
 std::optional<IssuedAuthTicket> AuthTicketIssuer::Issue(
     const AuthContext& context)
 {
-    if (!IsValidAuthContext(context))
+    if (!IsValidAuthContext(context) ||
+        !accountPlayerRepository_.OwnsPlayer(
+            context.accountId,
+            context.playerId))
     {
         return std::nullopt;
     }

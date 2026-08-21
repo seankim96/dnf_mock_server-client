@@ -1,5 +1,6 @@
 #pragma once
 
+#include "AccountPlayerRepository.h"
 #include "AuthTicketVerifier.h"
 #include "SqliteAuthTicketStore.h"
 
@@ -22,6 +23,7 @@ class AuthTicketIssuer
 {
 public:
     explicit AuthTicketIssuer(
+        AccountPlayerRepository& accountPlayerRepository,
         SqliteAuthTicketStore& ticketStore,
         std::chrono::seconds ticketLifetime =
             DEFAULT_AUTH_TICKET_LIFETIME);
@@ -32,6 +34,7 @@ public:
 private:
     std::string GenerateTicket() const;
 
+    AccountPlayerRepository& accountPlayerRepository_;
     SqliteAuthTicketStore& ticketStore_;
     std::chrono::seconds ticketLifetime_;
 };

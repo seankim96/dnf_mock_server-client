@@ -200,6 +200,23 @@ void SqliteDatabase::InitializeSchema()
                 "CHECK(length(password_hash) BETWEEN 1 AND 256)"
             ");"
             "PRAGMA user_version = 3;");
+        schemaVersion = 3;
+    }
+
+    if (schemaVersion < 4)
+    {
+        RunMigration(
+            database_,
+            "CREATE TABLE account_players ("
+            "account_id INTEGER NOT NULL,"
+            "player_id INTEGER NOT NULL UNIQUE,"
+            "PRIMARY KEY(account_id, player_id),"
+            "FOREIGN KEY(account_id) REFERENCES accounts(account_id) "
+                "ON DELETE CASCADE,"
+            "FOREIGN KEY(player_id) REFERENCES players(player_id) "
+                "ON DELETE CASCADE"
+            ");"
+            "PRAGMA user_version = 4;");
     }
 }
 } // namespace dnf
