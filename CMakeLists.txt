@@ -104,7 +104,25 @@ endif()
 add_executable(dnf_mock_server src/main.cpp)
 target_link_libraries(dnf_mock_server PRIVATE dnf_core)
 
+add_executable(dnf_auth_server src/auth_main.cpp)
+target_link_libraries(dnf_auth_server PRIVATE dnf_core)
+
 enable_testing()
+
+add_test(NAME auth_server_help_test COMMAND dnf_auth_server --help)
+set_tests_properties(
+    auth_server_help_test
+    PROPERTIES PASS_REGULAR_EXPRESSION "Usage:"
+)
+
+add_test(
+    NAME auth_server_invalid_port_test
+    COMMAND dnf_auth_server invalid unused.db cert.pem key.pem localhost 7777
+)
+set_tests_properties(
+    auth_server_invalid_port_test
+    PROPERTIES WILL_FAIL TRUE
+)
 
 add_executable(
     dev_auth_ticket_verifier_test
