@@ -18,6 +18,7 @@
 #include <cstdint>
 #include <iostream>
 #include <stdexcept>
+#include <utility>
 #include <vector>
 
 namespace
@@ -97,6 +98,72 @@ void TestLoginRequest()
         dnf::DecodeLoginResponsePayload(response.payload);
     assert(loginResponse.result == dnf::LoginSuccess);
     assert(loginResponse.sessionId == 100);
+}
+
+void TestAsyncDispatch()
+{
+    TestContext context;
+    dnf::Packet request;
+    request.header.type = dnf::LoginRequest;
+    request.header.requestId = 43;
+    request.payload = dnf::EncodeLoginRequestPayload("AsyncMock");
+
+    dnf::PacketDispatcher dispatcher(
+        context.channelManager,
+        context.partyManager,
+        context.dungeonManager,
+        context.dungeonUdpManager,
+        101);
+
+    bool responseReceived = false;
+    dispatcher.DispatchAsync(
+        std::move(request),
+        [&responseReceived](std::vector<std::uint8_t> responseBytes)
+        {
+            dnf::ReceiveBuffer buffer;
+            buffer.Append(responseBytes);
+
+            dnf::Packet response;
+            assert(buffer.TryPop(response));
+            assert(response.header.type == dnf::LoginResponse);
+            assert(response.header.requestId == 43);
+
+            const auto loginResponse =
+                dnf::DecodeLoginResponsePayload(response.payload);
+            assert(loginResponse.result == dnf::LoginSuccess);
+            assert(loginResponse.sessionId == 101);
+            responseReceived = true;
+        });
+
+    assert(responseReceived);
+}
+
+void TestAsyncDispatchRequiresResponseHandler()
+{
+    TestContext context;
+    dnf::Packet request;
+    request.header.type = dnf::LoginRequest;
+    request.payload = dnf::EncodeLoginRequestPayload("Mock");
+
+    dnf::PacketDispatcher dispatcher(
+        context.channelManager,
+        context.partyManager,
+        context.dungeonManager,
+        context.dungeonUdpManager,
+        100);
+
+    bool errorOccurred = false;
+
+    try
+    {
+        dispatcher.DispatchAsync(std::move(request), {});
+    }
+    catch (const std::invalid_argument&)
+    {
+        errorOccurred = true;
+    }
+
+    assert(errorOccurred);
 }
 
 void TestChannelListRequest()
@@ -774,6 +841,8 @@ void TestConnectionInfoFailures()
 int main()
 {
     TestLoginRequest();
+    TestAsyncDispatch();
+    TestAsyncDispatchRequiresResponseHandler();
     TestInvalidLoginRequest();
     TestChannelListRequest();
     TestDungeonCatalogRequest();

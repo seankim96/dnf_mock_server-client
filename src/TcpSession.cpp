@@ -107,7 +107,28 @@ void TcpSession::HandleRead(std::size_t receivedSize)
                       << " requestId=" << packet.header.requestId
                       << '\n';
 
-            QueueWrite(dispatcher_.Dispatch(packet));
+            const auto weakSelf = weak_from_this();
+
+            dispatcher_.DispatchAsync(
+                std::move(packet),
+                [weakSelf](std::vector<std::uint8_t> response) mutable
+                {
+                    const auto self = weakSelf.lock();
+                    if (!self)
+                    {
+                        return;
+                    }
+
+                    boost::asio::dispatch(
+                        self->strand_,
+                        [self, response = std::move(response)]() mutable
+                        {
+                            if (!self->closed_)
+                            {
+                                self->QueueWrite(std::move(response));
+                            }
+                        });
+                });
         }
     }
     catch (const std::exception& exception)

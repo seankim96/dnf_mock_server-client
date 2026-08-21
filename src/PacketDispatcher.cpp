@@ -76,6 +76,18 @@ std::vector<std::uint8_t> PacketDispatcher::Dispatch(
     }
 }
 
+void PacketDispatcher::DispatchAsync(
+    Packet request,
+    ResponseHandler responseHandler) const
+{
+    if (!responseHandler)
+    {
+        throw std::invalid_argument("Response handler is required");
+    }
+
+    responseHandler(Dispatch(request));
+}
+
 std::vector<std::uint8_t> PacketDispatcher::HandleLoginRequest(
     const Packet& request) const
 {
