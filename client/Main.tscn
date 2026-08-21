@@ -135,8 +135,7 @@ text = "2. 로그인"
 [node name="AuthTicketInput" type="LineEdit" parent="Margin/RootVBox/Content/LeftScroll/Steps/LoginPanel/Margin/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "dev-ticket-1"
-placeholder_text = "개발용 인증 티켓"
+placeholder_text = "인증 서버에서 발급받은 티켓"
 
 [node name="LoginButton" type="Button" parent="Margin/RootVBox/Content/LeftScroll/Steps/LoginPanel/Margin/VBox"]
 unique_name_in_owner = true

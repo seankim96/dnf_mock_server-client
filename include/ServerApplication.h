@@ -40,7 +40,6 @@ public:
 
 private:
     void LoadGameData();
-    void LoadDevelopmentAccounts();
 
     boost::asio::io_context ioContext_;
     SqliteDatabase database_;
