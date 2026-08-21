@@ -13,6 +13,7 @@
 #include "SqliteAuthTicketStore.h"
 #include "SqliteDatabase.h"
 #include "SqlitePlayerRepository.h"
+#include "TestTlsCertificate.h"
 
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/executor_work_guard.hpp>
@@ -28,17 +29,11 @@
 
 #include <flatbuffers/flatbuffer_builder.h>
 
-#include <openssl/evp.h>
-#include <openssl/rsa.h>
-#include <openssl/ssl.h>
-#include <openssl/x509.h>
-
 #include <array>
 #include <cassert>
 #include <cstdint>
 #include <exception>
 #include <iostream>
-#include <memory>
 #include <optional>
 #include <string>
 #include <thread>
@@ -66,80 +61,6 @@ public:
         return encodedPasswordHash == "test-hash:" + password;
     }
 };
-
-void ConfigureTestServerCertificate(
-    boost::asio::ssl::context& tlsContext)
-{
-    using KeyContextPointer = std::unique_ptr<
-        EVP_PKEY_CTX,
-        decltype(&EVP_PKEY_CTX_free)>;
-    using KeyPointer = std::unique_ptr<
-        EVP_PKEY,
-        decltype(&EVP_PKEY_free)>;
-    using CertificatePointer = std::unique_ptr<
-        X509,
-        decltype(&X509_free)>;
-
-    KeyContextPointer keyContext(
-        EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, nullptr),
-        EVP_PKEY_CTX_free);
-    if (!keyContext ||
-        EVP_PKEY_keygen_init(keyContext.get()) <= 0 ||
-        EVP_PKEY_CTX_set_rsa_keygen_bits(
-            keyContext.get(), 2048) <= 0)
-    {
-        throw std::runtime_error("Failed to prepare test TLS key");
-    }
-
-    EVP_PKEY* generatedKey = nullptr;
-    if (EVP_PKEY_keygen(keyContext.get(), &generatedKey) <= 0)
-    {
-        throw std::runtime_error("Failed to generate test TLS key");
-    }
-    KeyPointer key(generatedKey, EVP_PKEY_free);
-
-    CertificatePointer certificate(X509_new(), X509_free);
-    if (!certificate ||
-        X509_set_version(certificate.get(), 2) != 1 ||
-        ASN1_INTEGER_set(
-            X509_get_serialNumber(certificate.get()), 1) != 1 ||
-        X509_gmtime_adj(
-            X509_get_notBefore(certificate.get()), 0) == nullptr ||
-        X509_gmtime_adj(
-            X509_get_notAfter(certificate.get()), 3600) == nullptr ||
-        X509_set_pubkey(certificate.get(), key.get()) != 1)
-    {
-        throw std::runtime_error(
-            "Failed to prepare test TLS certificate");
-    }
-
-    X509_NAME* subject = X509_get_subject_name(certificate.get());
-    const unsigned char commonName[] = "localhost";
-    if (subject == nullptr ||
-        X509_NAME_add_entry_by_txt(
-            subject,
-            "CN",
-            MBSTRING_ASC,
-            commonName,
-            -1,
-            -1,
-            0) != 1 ||
-        X509_set_issuer_name(certificate.get(), subject) != 1 ||
-        X509_sign(certificate.get(), key.get(), EVP_sha256()) <= 0)
-    {
-        throw std::runtime_error("Failed to sign test TLS certificate");
-    }
-
-    SSL_CTX* nativeContext = tlsContext.native_handle();
-    if (SSL_CTX_use_certificate(
-            nativeContext, certificate.get()) != 1 ||
-        SSL_CTX_use_PrivateKey(nativeContext, key.get()) != 1 ||
-        SSL_CTX_check_private_key(nativeContext) != 1)
-    {
-        throw std::runtime_error(
-            "Failed to install test TLS certificate");
-    }
-}
 
 std::vector<std::uint8_t> MakeLoginPacket()
 {
@@ -230,7 +151,7 @@ void TestPipelinedRequestsAreHandledSequentially()
 
     boost::asio::ssl::context serverTlsContext(
         boost::asio::ssl::context::tls_server);
-    ConfigureTestServerCertificate(serverTlsContext);
+    dnf::test::ConfigureTestTlsContext(serverTlsContext);
 
     tcp::acceptor acceptor(
         serverIoContext,

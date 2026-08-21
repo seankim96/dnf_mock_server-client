@@ -34,6 +34,7 @@ add_library(dnf_core
     src/AuthServerSessionState.cpp
     src/AuthTicketIssuer.cpp
     src/AuthTicketVerifier.cpp
+    src/AuthTlsServer.cpp
     src/AuthTlsSession.cpp
     src/ChannelManager.cpp
     src/ChannelProtocol.cpp
@@ -405,12 +406,25 @@ add_test(
 add_executable(
     auth_tls_session_test
     tests/AuthTlsSessionTest.cpp
+    tests/TestTlsCertificate.cpp
 )
 target_link_libraries(auth_tls_session_test PRIVATE dnf_core)
 
 add_test(
     NAME auth_tls_session_test
     COMMAND auth_tls_session_test
+)
+
+add_executable(
+    auth_tls_server_test
+    tests/AuthTlsServerTest.cpp
+    tests/TestTlsCertificate.cpp
+)
+target_link_libraries(auth_tls_server_test PRIVATE dnf_core)
+
+add_test(
+    NAME auth_tls_server_test
+    COMMAND auth_tls_server_test
 )
 
 add_executable(dungeon_protocol_test tests/DungeonProtocolTest.cpp)
