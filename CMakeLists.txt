@@ -27,6 +27,7 @@ flatbuffers_generate_headers(
 
 add_library(dnf_core
     src/Account.cpp
+    src/AccountAuthenticationService.cpp
     src/AuthTicketIssuer.cpp
     src/AuthTicketVerifier.cpp
     src/ChannelManager.cpp
@@ -111,6 +112,20 @@ add_executable(auth_ticket_issuer_test tests/AuthTicketIssuerTest.cpp)
 target_link_libraries(auth_ticket_issuer_test PRIVATE dnf_core)
 
 add_test(NAME auth_ticket_issuer_test COMMAND auth_ticket_issuer_test)
+
+add_executable(
+    account_authentication_service_test
+    tests/AccountAuthenticationServiceTest.cpp
+)
+target_link_libraries(
+    account_authentication_service_test
+    PRIVATE dnf_core
+)
+
+add_test(
+    NAME account_authentication_service_test
+    COMMAND account_authentication_service_test
+)
 
 add_executable(
     scrypt_password_hasher_test
