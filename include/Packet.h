@@ -24,6 +24,10 @@ enum PacketType : std::uint16_t
     DungeonCatalogRequest = 10,
     DungeonStaticDataRequest = 11,
 
+    AuthLoginRequest = 201,
+    AuthCharacterListRequest = 202,
+    AuthCharacterSelectionRequest = 203,
+
     LoginResponse = 101,
     ChannelListResponse = 102,
     JoinChannelResponse = 103,
@@ -34,7 +38,11 @@ enum PacketType : std::uint16_t
     LeavePartyResponse = 108,
     PartySnapshotResponse = 109,
     DungeonCatalogResponse = 110,
-    DungeonStaticDataResponse = 111
+    DungeonStaticDataResponse = 111,
+
+    AuthLoginResponse = 301,
+    AuthCharacterListResponse = 302,
+    AuthCharacterSelectionResponse = 303
 };
 
 // 모든 TCP 패킷 앞에 붙는 공통 정보다.

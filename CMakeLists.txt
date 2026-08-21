@@ -29,6 +29,7 @@ flatbuffers_generate_headers(
 add_library(dnf_core
     src/Account.cpp
     src/AccountAuthenticationService.cpp
+    src/AuthFlatBufferCodec.cpp
     src/AuthTicketIssuer.cpp
     src/AuthTicketVerifier.cpp
     src/ChannelManager.cpp
@@ -362,6 +363,17 @@ target_link_libraries(auth_flatbuffer_schema_test PRIVATE dnf_core)
 add_test(
     NAME auth_flatbuffer_schema_test
     COMMAND auth_flatbuffer_schema_test
+)
+
+add_executable(
+    auth_flatbuffer_codec_test
+    tests/AuthFlatBufferCodecTest.cpp
+)
+target_link_libraries(auth_flatbuffer_codec_test PRIVATE dnf_core)
+
+add_test(
+    NAME auth_flatbuffer_codec_test
+    COMMAND auth_flatbuffer_codec_test
 )
 
 add_executable(dungeon_protocol_test tests/DungeonProtocolTest.cpp)
