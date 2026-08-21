@@ -8,6 +8,7 @@ project(DNFMockServer LANGUAGES CXX)
 
 find_package(Boost 1.82 REQUIRED COMPONENTS system)
 find_package(flatbuffers CONFIG REQUIRED)
+find_package(OpenSSL REQUIRED)
 find_package(SQLite3 REQUIRED)
 find_package(Threads REQUIRED)
 
@@ -25,6 +26,7 @@ flatbuffers_generate_headers(
 )
 
 add_library(dnf_core
+    src/AuthTicketIssuer.cpp
     src/AuthTicketVerifier.cpp
     src/ChannelManager.cpp
     src/ChannelProtocol.cpp
@@ -72,6 +74,7 @@ add_library(dnf_core
 target_include_directories(dnf_core PUBLIC include)
 target_link_libraries(dnf_core PUBLIC
     Boost::system
+    OpenSSL::Crypto
     SQLite3::SQLite3
     Threads::Threads
     flatbuffers::flatbuffers
@@ -99,6 +102,11 @@ add_test(
     NAME dev_auth_ticket_verifier_test
     COMMAND dev_auth_ticket_verifier_test
 )
+
+add_executable(auth_ticket_issuer_test tests/AuthTicketIssuerTest.cpp)
+target_link_libraries(auth_ticket_issuer_test PRIVATE dnf_core)
+
+add_test(NAME auth_ticket_issuer_test COMMAND auth_ticket_issuer_test)
 
 add_executable(database_executor_test tests/DatabaseExecutorTest.cpp)
 target_link_libraries(database_executor_test PRIVATE dnf_core)
