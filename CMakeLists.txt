@@ -30,6 +30,7 @@ add_library(dnf_core
     src/Account.cpp
     src/AccountAuthenticationService.cpp
     src/AuthFlatBufferCodec.cpp
+    src/AuthPacketDispatcher.cpp
     src/AuthServerSessionState.cpp
     src/AuthTicketIssuer.cpp
     src/AuthTicketVerifier.cpp
@@ -386,6 +387,17 @@ target_link_libraries(auth_flatbuffer_codec_test PRIVATE dnf_core)
 add_test(
     NAME auth_flatbuffer_codec_test
     COMMAND auth_flatbuffer_codec_test
+)
+
+add_executable(
+    auth_packet_dispatcher_test
+    tests/AuthPacketDispatcherTest.cpp
+)
+target_link_libraries(auth_packet_dispatcher_test PRIVATE dnf_core)
+
+add_test(
+    NAME auth_packet_dispatcher_test
+    COMMAND auth_packet_dispatcher_test
 )
 
 add_executable(dungeon_protocol_test tests/DungeonProtocolTest.cpp)
