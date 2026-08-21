@@ -32,6 +32,7 @@ add_library(dnf_core
     src/AuthTicketVerifier.cpp
     src/ChannelManager.cpp
     src/ChannelProtocol.cpp
+    src/CharacterSelectionService.cpp
     src/DatabaseExecutor.cpp
     src/DungeonCombatProcessor.cpp
     src/DungeonAdmissionProtocol.cpp
@@ -125,6 +126,20 @@ target_link_libraries(
 add_test(
     NAME account_authentication_service_test
     COMMAND account_authentication_service_test
+)
+
+add_executable(
+    character_selection_service_test
+    tests/CharacterSelectionServiceTest.cpp
+)
+target_link_libraries(
+    character_selection_service_test
+    PRIVATE dnf_core
+)
+
+add_test(
+    NAME character_selection_service_test
+    COMMAND character_selection_service_test
 )
 
 add_executable(
