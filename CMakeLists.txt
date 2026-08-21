@@ -60,6 +60,7 @@ add_library(dnf_core
     src/PlayerSkillBook.cpp
     src/ReceiveBuffer.cpp
     src/RoomState.cpp
+    src/ScryptPasswordHasher.cpp
     src/ServerApplication.cpp
     src/SessionAuthState.cpp
     src/SessionManager.cpp
@@ -110,6 +111,17 @@ add_executable(auth_ticket_issuer_test tests/AuthTicketIssuerTest.cpp)
 target_link_libraries(auth_ticket_issuer_test PRIVATE dnf_core)
 
 add_test(NAME auth_ticket_issuer_test COMMAND auth_ticket_issuer_test)
+
+add_executable(
+    scrypt_password_hasher_test
+    tests/ScryptPasswordHasherTest.cpp
+)
+target_link_libraries(scrypt_password_hasher_test PRIVATE dnf_core)
+
+add_test(
+    NAME scrypt_password_hasher_test
+    COMMAND scrypt_password_hasher_test
+)
 
 add_executable(database_executor_test tests/DatabaseExecutorTest.cpp)
 target_link_libraries(database_executor_test PRIVATE dnf_core)
