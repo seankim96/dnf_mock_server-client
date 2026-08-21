@@ -80,6 +80,7 @@ add_library(dnf_core
     src/SqliteAccountRepository.cpp
     src/SqliteAuthTicketStore.cpp
     src/SqliteAuthTicketVerifier.cpp
+    src/SqliteCharacterProvisioner.cpp
     src/SqliteDatabase.cpp
     src/SqlitePlayerRepository.cpp
     src/TcpFlatBufferCodec.cpp
@@ -177,6 +178,20 @@ target_link_libraries(
 add_test(
     NAME account_provisioning_service_test
     COMMAND account_provisioning_service_test
+)
+
+add_executable(
+    sqlite_character_provisioner_test
+    tests/SqliteCharacterProvisionerTest.cpp
+)
+target_link_libraries(
+    sqlite_character_provisioner_test
+    PRIVATE dnf_core
+)
+
+add_test(
+    NAME sqlite_character_provisioner_test
+    COMMAND sqlite_character_provisioner_test
 )
 
 add_executable(
