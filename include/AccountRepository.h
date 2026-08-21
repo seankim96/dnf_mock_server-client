@@ -7,7 +7,8 @@
 
 namespace dnf
 {
-// 이 인터페이스의 함수는 DatabaseExecutor 작업 스레드에서 호출한다.
+// 서버의 비동기 경로에서는 DatabaseExecutor 작업 스레드에서 호출한다.
+// 단일 작업 관리 도구에서는 같은 인터페이스를 동기 호출할 수 있다.
 class AccountRepository
 {
 public:

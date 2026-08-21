@@ -29,6 +29,7 @@ flatbuffers_generate_headers(
 add_library(dnf_core
     src/Account.cpp
     src/AccountAuthenticationService.cpp
+    src/AccountProvisioningService.cpp
     src/AuthFlatBufferCodec.cpp
     src/AuthPacketDispatcher.cpp
     src/AuthServerApplication.cpp
@@ -107,7 +108,16 @@ target_link_libraries(dnf_mock_server PRIVATE dnf_core)
 add_executable(dnf_auth_server src/auth_main.cpp)
 target_link_libraries(dnf_auth_server PRIVATE dnf_core)
 
+add_executable(dnf_admin src/admin_main.cpp)
+target_link_libraries(dnf_admin PRIVATE dnf_core)
+
 enable_testing()
+
+add_test(NAME admin_help_test COMMAND dnf_admin --help)
+set_tests_properties(
+    admin_help_test
+    PROPERTIES PASS_REGULAR_EXPRESSION "create-account"
+)
 
 add_test(NAME auth_server_help_test COMMAND dnf_auth_server --help)
 set_tests_properties(
@@ -153,6 +163,20 @@ target_link_libraries(
 add_test(
     NAME account_authentication_service_test
     COMMAND account_authentication_service_test
+)
+
+add_executable(
+    account_provisioning_service_test
+    tests/AccountProvisioningServiceTest.cpp
+)
+target_link_libraries(
+    account_provisioning_service_test
+    PRIVATE dnf_core
+)
+
+add_test(
+    NAME account_provisioning_service_test
+    COMMAND account_provisioning_service_test
 )
 
 add_executable(
