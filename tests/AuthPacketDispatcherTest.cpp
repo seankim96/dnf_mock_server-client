@@ -1,12 +1,16 @@
 #include "AccountAuthenticationService.h"
 #include "AuthFlatBufferCodec.h"
 #include "AuthPacketDispatcher.h"
+#include "AuthTicketIssuer.h"
 #include "CharacterListService.h"
+#include "CharacterSelectionService.h"
 #include "DatabaseExecutor.h"
 #include "PasswordHasher.h"
 #include "ReceiveBuffer.h"
 #include "SqliteAccountPlayerRepository.h"
 #include "SqliteAccountRepository.h"
+#include "SqliteAuthTicketStore.h"
+#include "SqliteAuthTicketVerifier.h"
 #include "SqliteDatabase.h"
 #include "SqlitePlayerRepository.h"
 
@@ -16,6 +20,7 @@
 #include <flatbuffers/flatbuffer_builder.h>
 
 #include <cassert>
+#include <cstdint>
 #include <iostream>
 #include <optional>
 #include <stdexcept>
@@ -51,6 +56,9 @@ struct TestContext
           accountRepository(database),
           playerRepository(database),
           accountPlayerRepository(database),
+          ticketStore(database),
+          ticketVerifier(ticketStore),
+          ticketIssuer(accountPlayerRepository, ticketStore),
           databaseExecutor(1),
           authenticationService(
               ioContext,
@@ -63,7 +71,15 @@ struct TestContext
               accountRepository,
               accountPlayerRepository,
               playerRepository),
-          dispatcher(authenticationService, characterListService)
+          characterSelectionService(
+              ioContext,
+              databaseExecutor,
+              ticketIssuer),
+          dispatcher(
+              authenticationService,
+              characterListService,
+              characterSelectionService,
+              {"127.0.0.1", 7777})
     {
     }
 
@@ -81,10 +97,14 @@ struct TestContext
     dnf::SqliteAccountRepository accountRepository;
     dnf::SqlitePlayerRepository playerRepository;
     dnf::SqliteAccountPlayerRepository accountPlayerRepository;
+    dnf::SqliteAuthTicketStore ticketStore;
+    dnf::SqliteAuthTicketVerifier ticketVerifier;
+    dnf::AuthTicketIssuer ticketIssuer;
     TestPasswordHasher passwordHasher;
     dnf::DatabaseExecutor databaseExecutor;
     dnf::AccountAuthenticationService authenticationService;
     dnf::CharacterListService characterListService;
+    dnf::CharacterSelectionService characterSelectionService;
     dnf::AuthPacketDispatcher dispatcher;
 };
 
@@ -247,6 +267,87 @@ CharacterListResponseData WaitForCharacterList(
     return DecodeCharacterListResponse(responseBytes.value());
 }
 
+dnf::Packet MakeCharacterSelectionRequest(
+    std::uint32_t requestId,
+    std::uint64_t playerId)
+{
+    flatbuffers::FlatBufferBuilder builder;
+    const auto request = protocol::CreateCharacterSelectionRequest(
+        builder,
+        playerId);
+
+    dnf::Packet packet;
+    packet.header.type = dnf::AuthCharacterSelectionRequest;
+    packet.header.requestId = requestId;
+    packet.payload = dnf::FinishAuthPayload(
+        builder,
+        protocol::AuthPayload_CharacterSelectionRequest,
+        request.Union());
+    packet.header.packetSize = static_cast<std::uint16_t>(
+        dnf::PACKET_HEADER_SIZE + packet.payload.size());
+    return packet;
+}
+
+struct CharacterSelectionResponseData
+{
+    std::uint32_t requestId = 0;
+    protocol::CharacterSelectionResult result =
+        protocol::CharacterSelectionResult_ServiceError;
+    std::string gameServerHost;
+    std::uint16_t gameServerPort = 0;
+    std::string authTicket;
+    std::int64_t expiresAtUnix = 0;
+};
+
+CharacterSelectionResponseData DecodeCharacterSelectionResponse(
+    const std::vector<std::uint8_t>& responseBytes)
+{
+    dnf::ReceiveBuffer receiveBuffer;
+    receiveBuffer.Append(responseBytes);
+
+    dnf::Packet response;
+    assert(receiveBuffer.TryPop(response));
+    assert(response.header.type ==
+           dnf::AuthCharacterSelectionResponse);
+
+    const auto* message = dnf::DecodeAuthPayload(
+        response.payload,
+        protocol::AuthPayload_CharacterSelectionResponse);
+    const auto* selectionResponse =
+        message->payload_as_CharacterSelectionResponse();
+    assert(selectionResponse != nullptr);
+
+    return {
+        response.header.requestId,
+        selectionResponse->result(),
+        selectionResponse->game_server_host()->str(),
+        selectionResponse->game_server_port(),
+        selectionResponse->auth_ticket()->str(),
+        selectionResponse->expires_at_unix()};
+}
+
+CharacterSelectionResponseData WaitForCharacterSelection(
+    dnf::AuthPacketDispatcher& dispatcher,
+    boost::asio::io_context& ioContext,
+    dnf::Packet request)
+{
+    auto workGuard = boost::asio::make_work_guard(ioContext);
+    std::optional<std::vector<std::uint8_t>> responseBytes;
+
+    dispatcher.DispatchAsync(
+        std::move(request),
+        [&](std::vector<std::uint8_t> response)
+        {
+            responseBytes = std::move(response);
+            workGuard.reset();
+        });
+
+    ioContext.run();
+    ioContext.restart();
+    assert(responseBytes.has_value());
+    return DecodeCharacterSelectionResponse(responseBytes.value());
+}
+
 void TestSuccessfulLoginStoresAccount()
 {
     TestContext context;
@@ -373,6 +474,80 @@ void TestCharacterListReturnsOwnedCharacters()
     assert(response.characters[0].name == "Player_1");
     assert(response.characters[0].level == 25);
 }
+
+void TestCharacterSelectionRequiresAuthentication()
+{
+    TestContext context;
+
+    const CharacterSelectionResponseData response =
+        WaitForCharacterSelection(
+            context.dispatcher,
+            context.ioContext,
+            MakeCharacterSelectionRequest(100, 1));
+
+    assert(response.requestId == 100);
+    assert(response.result ==
+           protocol::CharacterSelectionResult_NotAuthenticated);
+    assert(response.gameServerHost.empty());
+    assert(response.gameServerPort == 0);
+    assert(response.authTicket.empty());
+    assert(response.expiresAtUnix == 0);
+}
+
+void TestOwnedCharacterSelectionReturnsGameTicket()
+{
+    TestContext context;
+    const dnf::Account account = context.CreateAccount(
+        "account_1", "correct-password");
+    const dnf::PlayerProfile ownedPlayer =
+        context.playerRepository.CreatePlayer("Player_1").value();
+    const dnf::PlayerProfile unownedPlayer =
+        context.playerRepository.CreatePlayer("Player_2").value();
+    assert(context.accountPlayerRepository.LinkPlayer(
+        account.accountId,
+        ownedPlayer.playerId));
+
+    const LoginResponseData login = WaitForLogin(
+        context.dispatcher,
+        context.ioContext,
+        MakeLoginRequest(1, "account_1", "correct-password"));
+    assert(login.result == protocol::LoginResult_Success);
+
+    const CharacterSelectionResponseData success =
+        WaitForCharacterSelection(
+            context.dispatcher,
+            context.ioContext,
+            MakeCharacterSelectionRequest(101, ownedPlayer.playerId));
+
+    assert(success.requestId == 101);
+    assert(success.result ==
+           protocol::CharacterSelectionResult_Success);
+    assert(success.gameServerHost == "127.0.0.1");
+    assert(success.gameServerPort == 7777);
+    assert(!success.authTicket.empty());
+    assert(success.expiresAtUnix > 0);
+
+    const std::optional<dnf::AuthContext> verified =
+        context.ticketVerifier.Verify(success.authTicket);
+    assert(verified.has_value());
+    assert(verified->accountId == account.accountId);
+    assert(verified->playerId == ownedPlayer.playerId);
+
+    const CharacterSelectionResponseData rejected =
+        WaitForCharacterSelection(
+            context.dispatcher,
+            context.ioContext,
+            MakeCharacterSelectionRequest(
+                102,
+                unownedPlayer.playerId));
+
+    assert(rejected.result ==
+           protocol::CharacterSelectionResult_InvalidSelection);
+    assert(rejected.gameServerHost.empty());
+    assert(rejected.gameServerPort == 0);
+    assert(rejected.authTicket.empty());
+    assert(rejected.expiresAtUnix == 0);
+}
 } // namespace
 
 int main()
@@ -382,6 +557,8 @@ int main()
     TestSecondLoginWhileFirstIsRunningIsRejected();
     TestCharacterListRequiresAuthentication();
     TestCharacterListReturnsOwnedCharacters();
+    TestCharacterSelectionRequiresAuthentication();
+    TestOwnedCharacterSelectionReturnsGameTicket();
 
     std::cout << "All auth packet dispatcher tests passed.\n";
     return 0;

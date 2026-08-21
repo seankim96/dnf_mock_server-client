@@ -3,6 +3,7 @@
 #include "AccountAuthenticationService.h"
 #include "AuthFlatBufferCodec.h"
 #include "CharacterListService.h"
+#include "CharacterSelectionService.h"
 
 #include <flatbuffers/flatbuffer_builder.h>
 
@@ -74,6 +75,24 @@ protocol::CharacterListResult ToProtocolResult(
     throw std::runtime_error("Unknown character list status");
 }
 
+protocol::CharacterSelectionResult ToProtocolResult(
+    CharacterSelectionStatus status)
+{
+    switch (status)
+    {
+    case CharacterSelectionStatus::Success:
+        return protocol::CharacterSelectionResult_Success;
+
+    case CharacterSelectionStatus::InvalidSelection:
+        return protocol::CharacterSelectionResult_InvalidSelection;
+
+    case CharacterSelectionStatus::ServiceError:
+        return protocol::CharacterSelectionResult_ServiceError;
+    }
+
+    throw std::runtime_error("Unknown character selection status");
+}
+
 std::vector<std::uint8_t> EncodeLoginResponse(
     std::uint32_t requestId,
     protocol::LoginResult result)
@@ -124,16 +143,57 @@ std::vector<std::uint8_t> EncodeCharacterListResponse(
         requestId,
         payload);
 }
+
+std::vector<std::uint8_t> EncodeCharacterSelectionResponse(
+    std::uint32_t requestId,
+    protocol::CharacterSelectionResult result,
+    const GameServerAddress& gameServerAddress,
+    const std::optional<IssuedAuthTicket>& authTicket)
+{
+    const bool success =
+        result == protocol::CharacterSelectionResult_Success &&
+        authTicket.has_value();
+
+    flatbuffers::FlatBufferBuilder builder;
+    const auto host = builder.CreateString(
+        success ? gameServerAddress.host : "");
+    const auto ticket = builder.CreateString(
+        success ? authTicket->ticket : "");
+    const auto response = protocol::CreateCharacterSelectionResponse(
+        builder,
+        result,
+        host,
+        success ? gameServerAddress.port : 0,
+        ticket,
+        success ? authTicket->expiresAtUnix : 0);
+    const auto payload = FinishAuthPayload(
+        builder,
+        protocol::AuthPayload_CharacterSelectionResponse,
+        response.Union());
+
+    return EncodePacket(
+        AuthCharacterSelectionResponse,
+        requestId,
+        payload);
+}
 } // namespace
 
 AuthPacketDispatcher::AuthPacketDispatcher(
     AccountAuthenticationService& authenticationService,
-    CharacterListService& characterListService)
+    CharacterListService& characterListService,
+    CharacterSelectionService& characterSelectionService,
+    GameServerAddress gameServerAddress)
     : authenticationService_(authenticationService),
       characterListService_(characterListService),
+      characterSelectionService_(characterSelectionService),
+      gameServerAddress_(std::move(gameServerAddress)),
       sessionState_(std::make_shared<AuthServerSessionState>()),
       loginInProgress_(std::make_shared<std::atomic_bool>(false))
 {
+    if (gameServerAddress_.host.empty() || gameServerAddress_.port == 0)
+    {
+        throw std::invalid_argument("Game server address is invalid");
+    }
 }
 
 void AuthPacketDispatcher::DispatchAsync(
@@ -162,6 +222,14 @@ void AuthPacketDispatcher::DispatchAsync(
     if (request.header.type == AuthCharacterListRequest)
     {
         HandleCharacterListRequestAsync(
+            std::move(request),
+            std::move(responseHandler));
+        return;
+    }
+
+    if (request.header.type == AuthCharacterSelectionRequest)
+    {
+        HandleCharacterSelectionRequestAsync(
             std::move(request),
             std::move(responseHandler));
         return;
@@ -274,6 +342,62 @@ void AuthPacketDispatcher::HandleCharacterListRequestAsync(
                 requestId,
                 responseResult,
                 listResult.characters));
+        });
+}
+
+void AuthPacketDispatcher::HandleCharacterSelectionRequestAsync(
+    Packet request,
+    ResponseHandler responseHandler) const
+{
+    const auto* message = DecodeAuthPayload(
+        request.payload,
+        protocol::AuthPayload_CharacterSelectionRequest);
+    const auto* selectionRequest =
+        message->payload_as_CharacterSelectionRequest();
+
+    const std::uint32_t requestId = request.header.requestId;
+    const PlayerId selectedPlayerId = selectionRequest->player_id();
+    const std::optional<AccountId> accountId =
+        sessionState_->AuthenticatedAccount();
+
+    if (!accountId.has_value())
+    {
+        responseHandler(EncodeCharacterSelectionResponse(
+            requestId,
+            protocol::CharacterSelectionResult_NotAuthenticated,
+            gameServerAddress_,
+            std::nullopt));
+        return;
+    }
+
+    const GameServerAddress gameServerAddress = gameServerAddress_;
+    characterSelectionService_.SelectCharacter(
+        accountId.value(),
+        selectedPlayerId,
+        [requestId,
+         gameServerAddress,
+         responseHandler = std::move(responseHandler)](
+            CharacterSelectionResult selectionResult) mutable
+        {
+            protocol::CharacterSelectionResult responseResult =
+                ToProtocolResult(selectionResult.status);
+
+            if (responseResult ==
+                    protocol::CharacterSelectionResult_Success &&
+                (!selectionResult.authTicket.has_value() ||
+                 selectionResult.authTicket->ticket.empty() ||
+                 selectionResult.authTicket->expiresAtUnix <= 0))
+            {
+                responseResult =
+                    protocol::CharacterSelectionResult_ServiceError;
+                selectionResult.authTicket = std::nullopt;
+            }
+
+            responseHandler(EncodeCharacterSelectionResponse(
+                requestId,
+                responseResult,
+                gameServerAddress,
+                selectionResult.authTicket));
         });
 }
 } // namespace dnf

@@ -9,12 +9,20 @@
 #include <functional>
 #include <memory>
 #include <optional>
+#include <string>
 #include <vector>
 
 namespace dnf
 {
 class AccountAuthenticationService;
 class CharacterListService;
+class CharacterSelectionService;
+
+struct GameServerAddress
+{
+    std::string host;
+    std::uint16_t port = 0;
+};
 
 class AuthPacketDispatcher
 {
@@ -24,7 +32,9 @@ public:
 
     explicit AuthPacketDispatcher(
         AccountAuthenticationService& authenticationService,
-        CharacterListService& characterListService);
+        CharacterListService& characterListService,
+        CharacterSelectionService& characterSelectionService,
+        GameServerAddress gameServerAddress);
 
     void DispatchAsync(
         Packet request,
@@ -39,9 +49,14 @@ private:
     void HandleCharacterListRequestAsync(
         Packet request,
         ResponseHandler responseHandler) const;
+    void HandleCharacterSelectionRequestAsync(
+        Packet request,
+        ResponseHandler responseHandler) const;
 
     AccountAuthenticationService& authenticationService_;
     CharacterListService& characterListService_;
+    CharacterSelectionService& characterSelectionService_;
+    GameServerAddress gameServerAddress_;
     std::shared_ptr<AuthServerSessionState> sessionState_;
     std::shared_ptr<std::atomic_bool> loginInProgress_;
 };
