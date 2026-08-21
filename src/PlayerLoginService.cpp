@@ -46,33 +46,35 @@ void PlayerLoginService::Login(
             "Player login completion handler must not be empty");
     }
 
-    const std::optional<AuthContext> authContext =
-        ticketVerifier_.Verify(ticket);
-    if (!authContext.has_value())
-    {
-        PostCompletion(
-            ioContext_,
-            std::move(completionHandler),
-            {PlayerLoginStatus::InvalidTicket, std::nullopt, std::nullopt});
-        return;
-    }
-
     boost::asio::io_context* ioContext = &ioContext_;
+    AuthTicketVerifier* ticketVerifier = &ticketVerifier_;
     PlayerRepository* playerRepository = &playerRepository_;
 
     databaseExecutor_.Post(
         [ioContext,
+         ticketVerifier,
          playerRepository,
-         authContext = authContext.value(),
+         ticket = std::move(ticket),
          completionHandler = std::move(completionHandler)]() mutable
         {
             PlayerLoginResult result;
-            result.authContext = authContext;
 
             try
             {
+                result.authContext = ticketVerifier->Verify(ticket);
+                if (!result.authContext.has_value())
+                {
+                    result.status = PlayerLoginStatus::InvalidTicket;
+                    PostCompletion(
+                        *ioContext,
+                        std::move(completionHandler),
+                        std::move(result));
+                    return;
+                }
+
                 result.profile =
-                    playerRepository->FindPlayer(authContext.playerId);
+                    playerRepository->FindPlayer(
+                        result.authContext->playerId);
                 result.status = result.profile.has_value()
                     ? PlayerLoginStatus::Success
                     : PlayerLoginStatus::PlayerNotFound;

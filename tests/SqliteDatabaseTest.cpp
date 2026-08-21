@@ -3,6 +3,8 @@
 #include <sqlite3.h>
 
 #include <cassert>
+#include <chrono>
+#include <filesystem>
 #include <iostream>
 #include <stdexcept>
 
@@ -42,7 +44,62 @@ void TestSchemaIsCreated()
                handle,
                "SELECT COUNT(*) FROM sqlite_master "
                "WHERE type = 'table' AND name IN "
-               "('players', 'player_skills');") == 2);
+               "('players', 'player_skills', 'auth_tickets');") == 3);
+}
+
+void TestVersionOneDatabaseIsMigrated()
+{
+    const auto uniqueSuffix =
+        std::chrono::steady_clock::now().time_since_epoch().count();
+    const std::filesystem::path databasePath =
+        std::filesystem::temp_directory_path() /
+        ("dnf_schema_migration_" +
+         std::to_string(uniqueSuffix) +
+         ".db");
+
+    struct TemporaryFile
+    {
+        std::filesystem::path path;
+
+        ~TemporaryFile()
+        {
+            std::error_code error;
+            std::filesystem::remove(path, error);
+        }
+    } temporaryFile{databasePath};
+
+    sqlite3* oldDatabase = nullptr;
+    assert(sqlite3_open(databasePath.string().c_str(), &oldDatabase) ==
+           SQLITE_OK);
+    assert(Execute(
+               oldDatabase,
+               "CREATE TABLE players ("
+               "player_id INTEGER PRIMARY KEY AUTOINCREMENT,"
+               "name TEXT NOT NULL UNIQUE,"
+               "level INTEGER NOT NULL DEFAULT 1,"
+               "skill_points INTEGER NOT NULL DEFAULT 0"
+               ");"
+               "CREATE TABLE player_skills ("
+               "player_id INTEGER NOT NULL,"
+               "skill_id INTEGER NOT NULL,"
+               "skill_level INTEGER NOT NULL DEFAULT 1,"
+               "PRIMARY KEY(player_id, skill_id),"
+               "FOREIGN KEY(player_id) REFERENCES players(player_id)"
+               ");"
+               "INSERT INTO players(name) VALUES('ExistingPlayer');"
+               "PRAGMA user_version = 1;") == SQLITE_OK);
+    assert(sqlite3_close(oldDatabase) == SQLITE_OK);
+
+    dnf::SqliteDatabase database(databasePath.string());
+    assert(QueryInt(database.Handle(), "PRAGMA user_version;") ==
+           dnf::SQLITE_DATABASE_SCHEMA_VERSION);
+    assert(QueryInt(
+               database.Handle(),
+               "SELECT COUNT(*) FROM auth_tickets;") == 0);
+    assert(QueryInt(
+               database.Handle(),
+               "SELECT COUNT(*) FROM players "
+               "WHERE name = 'ExistingPlayer';") == 1);
 }
 
 void TestSchemaConstraints()
@@ -93,6 +150,7 @@ int main()
 {
     TestSchemaIsCreated();
     TestSchemaConstraints();
+    TestVersionOneDatabaseIsMigrated();
     TestEmptyPathIsRejected();
 
     std::cout << "All SQLite database tests passed.\n";

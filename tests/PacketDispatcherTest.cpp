@@ -90,8 +90,8 @@ struct TestContext
     boost::asio::io_context ioContext;
     dnf::SqliteDatabase database;
     dnf::SqlitePlayerRepository playerRepository;
-    dnf::DatabaseExecutor databaseExecutor;
     dnf::DevAuthTicketVerifier authTicketVerifier;
+    dnf::DatabaseExecutor databaseExecutor;
     dnf::PlayerLoginService playerLoginService;
     dnf::DungeonUdpManager dungeonUdpManager;
     dnf::ChannelManager channelManager;

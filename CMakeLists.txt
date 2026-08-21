@@ -29,7 +29,6 @@ add_library(dnf_core
     src/ChannelManager.cpp
     src/ChannelProtocol.cpp
     src/DatabaseExecutor.cpp
-    src/DevAuthTicketVerifier.cpp
     src/DungeonCombatProcessor.cpp
     src/DungeonAdmissionProtocol.cpp
     src/DungeonCatalog.cpp
@@ -62,6 +61,8 @@ add_library(dnf_core
     src/SessionAuthState.cpp
     src/SessionManager.cpp
     src/SkillCatalog.cpp
+    src/SqliteAuthTicketStore.cpp
+    src/SqliteAuthTicketVerifier.cpp
     src/SqliteDatabase.cpp
     src/SqlitePlayerRepository.cpp
     src/TcpFlatBufferCodec.cpp
@@ -89,6 +90,7 @@ enable_testing()
 
 add_executable(
     dev_auth_ticket_verifier_test
+    tests/DevAuthTicketVerifier.cpp
     tests/DevAuthTicketVerifierTest.cpp
 )
 target_link_libraries(dev_auth_ticket_verifier_test PRIVATE dnf_core)
@@ -113,7 +115,11 @@ target_link_libraries(session_auth_state_test PRIVATE dnf_core)
 
 add_test(NAME session_auth_state_test COMMAND session_auth_state_test)
 
-add_executable(packet_dispatcher_test tests/PacketDispatcherTest.cpp)
+add_executable(
+    packet_dispatcher_test
+    tests/DevAuthTicketVerifier.cpp
+    tests/PacketDispatcherTest.cpp
+)
 target_link_libraries(packet_dispatcher_test PRIVATE dnf_core)
 
 add_test(NAME packet_dispatcher_test COMMAND packet_dispatcher_test)
@@ -196,6 +202,7 @@ add_test(NAME player_profile_test COMMAND player_profile_test)
 
 add_executable(
     player_login_service_test
+    tests/DevAuthTicketVerifier.cpp
     tests/PlayerLoginServiceTest.cpp
 )
 target_link_libraries(player_login_service_test PRIVATE dnf_core)
@@ -209,6 +216,17 @@ add_executable(sqlite_database_test tests/SqliteDatabaseTest.cpp)
 target_link_libraries(sqlite_database_test PRIVATE dnf_core)
 
 add_test(NAME sqlite_database_test COMMAND sqlite_database_test)
+
+add_executable(
+    sqlite_auth_ticket_verifier_test
+    tests/SqliteAuthTicketVerifierTest.cpp
+)
+target_link_libraries(sqlite_auth_ticket_verifier_test PRIVATE dnf_core)
+
+add_test(
+    NAME sqlite_auth_ticket_verifier_test
+    COMMAND sqlite_auth_ticket_verifier_test
+)
 
 add_executable(
     sqlite_player_repository_test

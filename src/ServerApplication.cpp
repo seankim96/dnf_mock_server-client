@@ -19,6 +19,8 @@ ServerApplication::ServerApplication(
     const std::string& databasePath)
     : database_(databasePath),
       playerRepository_(database_),
+      authTicketStore_(database_),
+      authTicketVerifier_(authTicketStore_),
       databaseExecutor_(DATABASE_THREAD_COUNT),
       playerLoginService_(
           ioContext_,

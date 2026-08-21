@@ -8,7 +8,6 @@
 
 namespace dnf
 {
-// 로컬 시연용 구현이다. 등록된 티켓은 검증 성공 시 즉시 제거한다.
 class DevAuthTicketVerifier final : public AuthTicketVerifier
 {
 public:

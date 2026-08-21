@@ -46,7 +46,6 @@ dnf::PlayerLoginResult WaitForLogin(
 void TestSuccessfulLoginLoadsPlayerOnDatabaseWorker()
 {
     boost::asio::io_context ioContext;
-    dnf::DatabaseExecutor databaseExecutor(1);
     dnf::SqliteDatabase database(":memory:");
     dnf::SqlitePlayerRepository repository(database);
     const dnf::PlayerProfile created =
@@ -56,6 +55,7 @@ void TestSuccessfulLoginLoadsPlayerOnDatabaseWorker()
     assert(ticketVerifier.RegisterTicket(
         "valid-ticket",
         {10, created.playerId}));
+    dnf::DatabaseExecutor databaseExecutor(1);
 
     dnf::PlayerLoginService loginService(
         ioContext,
@@ -84,16 +84,17 @@ void TestSuccessfulLoginLoadsPlayerOnDatabaseWorker()
 void TestInvalidTicketCompletesAsynchronously()
 {
     boost::asio::io_context ioContext;
-    dnf::DatabaseExecutor databaseExecutor(1);
     dnf::SqliteDatabase database(":memory:");
     dnf::SqlitePlayerRepository repository(database);
     dnf::DevAuthTicketVerifier ticketVerifier;
+    dnf::DatabaseExecutor databaseExecutor(1);
     dnf::PlayerLoginService loginService(
         ioContext,
         databaseExecutor,
         ticketVerifier,
         repository);
 
+    auto workGuard = boost::asio::make_work_guard(ioContext);
     bool callbackCalled = false;
     loginService.Login(
         "missing-ticket",
@@ -103,6 +104,7 @@ void TestInvalidTicketCompletesAsynchronously()
             assert(result.status == dnf::PlayerLoginStatus::InvalidTicket);
             assert(!result.authContext.has_value());
             assert(!result.profile.has_value());
+            workGuard.reset();
         });
 
     assert(!callbackCalled);
@@ -113,11 +115,11 @@ void TestInvalidTicketCompletesAsynchronously()
 void TestMissingPlayerIsReported()
 {
     boost::asio::io_context ioContext;
-    dnf::DatabaseExecutor databaseExecutor(1);
     dnf::SqliteDatabase database(":memory:");
     dnf::SqlitePlayerRepository repository(database);
     dnf::DevAuthTicketVerifier ticketVerifier;
     assert(ticketVerifier.RegisterTicket("missing-player", {10, 9999}));
+    dnf::DatabaseExecutor databaseExecutor(1);
 
     dnf::PlayerLoginService loginService(
         ioContext,
@@ -163,10 +165,10 @@ public:
 void TestStorageFailureIsReturnedToIoThread()
 {
     boost::asio::io_context ioContext;
-    dnf::DatabaseExecutor databaseExecutor(1);
     FailingPlayerRepository repository;
     dnf::DevAuthTicketVerifier ticketVerifier;
     assert(ticketVerifier.RegisterTicket("db-error", {10, 100}));
+    dnf::DatabaseExecutor databaseExecutor(1);
 
     dnf::PlayerLoginService loginService(
         ioContext,

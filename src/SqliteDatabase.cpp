@@ -55,6 +55,22 @@ int ReadSchemaVersion(sqlite3* database)
     sqlite3_finalize(statement);
     return version;
 }
+
+void RunMigration(sqlite3* database, const char* sql)
+{
+    Execute(database, "BEGIN IMMEDIATE TRANSACTION;");
+
+    try
+    {
+        Execute(database, sql);
+        Execute(database, "COMMIT;");
+    }
+    catch (...)
+    {
+        sqlite3_exec(database, "ROLLBACK;", nullptr, nullptr, nullptr);
+        throw;
+    }
+}
 } // namespace
 
 SqliteDatabase::SqliteDatabase(const std::string& databasePath)
@@ -112,26 +128,24 @@ sqlite3* SqliteDatabase::Handle() const
     return database_;
 }
 
+std::mutex& SqliteDatabase::ConnectionMutex()
+{
+    return connectionMutex_;
+}
+
 void SqliteDatabase::InitializeSchema()
 {
     Execute(database_, "PRAGMA foreign_keys = ON;");
 
-    const int schemaVersion = ReadSchemaVersion(database_);
+    int schemaVersion = ReadSchemaVersion(database_);
     if (schemaVersion > SQLITE_DATABASE_SCHEMA_VERSION)
     {
         throw DatabaseError("SQLite database schema is newer than the server");
     }
 
-    if (schemaVersion == SQLITE_DATABASE_SCHEMA_VERSION)
+    if (schemaVersion < 1)
     {
-        return;
-    }
-
-    Execute(database_, "BEGIN IMMEDIATE TRANSACTION;");
-
-    try
-    {
-        Execute(
+        RunMigration(
             database_,
             "CREATE TABLE players ("
             "player_id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -151,17 +165,26 @@ void SqliteDatabase::InitializeSchema()
                 "ON DELETE CASCADE"
             ");"
             "PRAGMA user_version = 1;");
-        Execute(database_, "COMMIT;");
+        schemaVersion = 1;
     }
-    catch (...)
+
+    if (schemaVersion < 2)
     {
-        sqlite3_exec(
+        RunMigration(
             database_,
-            "ROLLBACK;",
-            nullptr,
-            nullptr,
-            nullptr);
-        throw;
+            "CREATE TABLE auth_tickets ("
+            "ticket TEXT PRIMARY KEY "
+                "CHECK(length(ticket) BETWEEN 1 AND 256),"
+            "account_id INTEGER NOT NULL CHECK(account_id > 0),"
+            "player_id INTEGER NOT NULL CHECK(player_id > 0),"
+            "expires_at_unix INTEGER NOT NULL "
+                "CHECK(expires_at_unix > 0),"
+            "FOREIGN KEY(player_id) REFERENCES players(player_id) "
+                "ON DELETE CASCADE"
+            ");"
+            "CREATE INDEX auth_tickets_expiry_index "
+            "ON auth_tickets(expires_at_unix);"
+            "PRAGMA user_version = 2;");
     }
 }
 } // namespace dnf

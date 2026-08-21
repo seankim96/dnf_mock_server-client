@@ -2,7 +2,6 @@
 
 #include "ChannelManager.h"
 #include "DatabaseExecutor.h"
-#include "DevAuthTicketVerifier.h"
 #include "DungeonCatalog.h"
 #include "DungeonManager.h"
 #include "DungeonTickService.h"
@@ -12,6 +11,8 @@
 #include "PlayerLoginService.h"
 #include "SessionManager.h"
 #include "SkillCatalog.h"
+#include "SqliteAuthTicketStore.h"
+#include "SqliteAuthTicketVerifier.h"
 #include "SqliteDatabase.h"
 #include "SqlitePlayerRepository.h"
 #include "TcpServer.h"
@@ -44,8 +45,9 @@ private:
     boost::asio::io_context ioContext_;
     SqliteDatabase database_;
     SqlitePlayerRepository playerRepository_;
+    SqliteAuthTicketStore authTicketStore_;
+    SqliteAuthTicketVerifier authTicketVerifier_;
     DatabaseExecutor databaseExecutor_;
-    DevAuthTicketVerifier authTicketVerifier_;
     PlayerLoginService playerLoginService_;
     DungeonUdpManager dungeonUdpManager_;
     ChannelManager channelManager_;

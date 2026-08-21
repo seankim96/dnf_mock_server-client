@@ -3,8 +3,6 @@
 #include "PlayerRepository.h"
 #include "SqliteDatabase.h"
 
-#include <mutex>
-
 namespace dnf
 {
 class SqlitePlayerRepository final : public PlayerRepository
@@ -22,6 +20,5 @@ public:
 
 private:
     SqliteDatabase& database_;
-    std::mutex mutex_;
 };
 } // namespace dnf

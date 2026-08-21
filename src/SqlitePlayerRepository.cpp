@@ -251,7 +251,7 @@ std::optional<PlayerProfile> SqlitePlayerRepository::FindPlayer(
         return std::nullopt;
     }
 
-    std::lock_guard lock(mutex_);
+    std::lock_guard lock(database_.ConnectionMutex());
     sqlite3* database = database_.Handle();
     Statement statement(
         database,
@@ -287,7 +287,7 @@ std::optional<PlayerProfile> SqlitePlayerRepository::FindPlayerByName(
         return std::nullopt;
     }
 
-    std::lock_guard lock(mutex_);
+    std::lock_guard lock(database_.ConnectionMutex());
     sqlite3* database = database_.Handle();
     Statement statement(
         database,
@@ -319,7 +319,7 @@ std::optional<PlayerProfile> SqlitePlayerRepository::CreatePlayer(
         return std::nullopt;
     }
 
-    std::lock_guard lock(mutex_);
+    std::lock_guard lock(database_.ConnectionMutex());
     sqlite3* database = database_.Handle();
     Statement statement(
         database,
@@ -357,7 +357,7 @@ bool SqlitePlayerRepository::SavePlayer(const PlayerProfile& profile)
         return false;
     }
 
-    std::lock_guard lock(mutex_);
+    std::lock_guard lock(database_.ConnectionMutex());
     sqlite3* database = database_.Handle();
     Transaction transaction(database);
 
