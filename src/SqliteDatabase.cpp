@@ -185,6 +185,21 @@ void SqliteDatabase::InitializeSchema()
             "CREATE INDEX auth_tickets_expiry_index "
             "ON auth_tickets(expires_at_unix);"
             "PRAGMA user_version = 2;");
+        schemaVersion = 2;
+    }
+
+    if (schemaVersion < 3)
+    {
+        RunMigration(
+            database_,
+            "CREATE TABLE accounts ("
+            "account_id INTEGER PRIMARY KEY AUTOINCREMENT,"
+            "login_id TEXT NOT NULL COLLATE NOCASE UNIQUE "
+                "CHECK(length(login_id) BETWEEN 4 AND 32),"
+            "password_hash TEXT NOT NULL "
+                "CHECK(length(password_hash) BETWEEN 1 AND 256)"
+            ");"
+            "PRAGMA user_version = 3;");
     }
 }
 } // namespace dnf

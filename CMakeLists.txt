@@ -26,6 +26,7 @@ flatbuffers_generate_headers(
 )
 
 add_library(dnf_core
+    src/Account.cpp
     src/AuthTicketIssuer.cpp
     src/AuthTicketVerifier.cpp
     src/ChannelManager.cpp
@@ -63,6 +64,7 @@ add_library(dnf_core
     src/SessionAuthState.cpp
     src/SessionManager.cpp
     src/SkillCatalog.cpp
+    src/SqliteAccountRepository.cpp
     src/SqliteAuthTicketStore.cpp
     src/SqliteAuthTicketVerifier.cpp
     src/SqliteDatabase.cpp
@@ -224,6 +226,17 @@ add_executable(sqlite_database_test tests/SqliteDatabaseTest.cpp)
 target_link_libraries(sqlite_database_test PRIVATE dnf_core)
 
 add_test(NAME sqlite_database_test COMMAND sqlite_database_test)
+
+add_executable(
+    sqlite_account_repository_test
+    tests/SqliteAccountRepositoryTest.cpp
+)
+target_link_libraries(sqlite_account_repository_test PRIVATE dnf_core)
+
+add_test(
+    NAME sqlite_account_repository_test
+    COMMAND sqlite_account_repository_test
+)
 
 add_executable(
     sqlite_auth_ticket_verifier_test
