@@ -1,5 +1,6 @@
 #include "ServerApplication.h"
 
+#include <array>
 #include <exception>
 #include <iostream>
 #include <stdexcept>
@@ -11,10 +12,35 @@ namespace dnf
 namespace
 {
 constexpr std::size_t IO_THREAD_COUNT = 4;
+constexpr std::size_t DATABASE_THREAD_COUNT = 2;
+
+struct DevelopmentAccount
+{
+    const char* ticket;
+    const char* playerName;
+    AccountId accountId;
+};
+
+constexpr std::array<DevelopmentAccount, 4> DEVELOPMENT_ACCOUNTS{{
+    {"dev-ticket-1", "DevPlayer1", 1},
+    {"dev-ticket-2", "DevPlayer2", 2},
+    {"dev-ticket-3", "DevPlayer3", 3},
+    {"dev-ticket-4", "DevPlayer4", 4},
+}};
 }
 
-ServerApplication::ServerApplication(std::uint16_t port)
-    : dungeonUdpManager_(ioContext_),
+ServerApplication::ServerApplication(
+    std::uint16_t port,
+    const std::string& databasePath)
+    : database_(databasePath),
+      playerRepository_(database_),
+      databaseExecutor_(DATABASE_THREAD_COUNT),
+      playerLoginService_(
+          ioContext_,
+          databaseExecutor_,
+          authTicketVerifier_,
+          playerRepository_),
+      dungeonUdpManager_(ioContext_),
       dungeonCatalog_(enemyCatalog_),
       dungeonManager_(partyManager_, dungeonCatalog_, enemyCatalog_),
       dungeonTickService_(
@@ -26,7 +52,8 @@ ServerApplication::ServerApplication(std::uint16_t port)
           channelManager_,
           partyManager_,
           dungeonManager_,
-          dungeonUdpManager_),
+          dungeonUdpManager_,
+          playerLoginService_),
       tcpServer_(ioContext_, port, sessionManager_)
 {
     channelManager_.AddChannel(1, "Channel 1", 100);
@@ -34,6 +61,7 @@ ServerApplication::ServerApplication(std::uint16_t port)
     channelManager_.AddChannel(3, "Channel 3", 100);
 
     LoadGameData();
+    LoadDevelopmentAccounts();
 }
 
 void ServerApplication::LoadGameData()
@@ -118,13 +146,42 @@ void ServerApplication::LoadGameData()
     }
 }
 
+void ServerApplication::LoadDevelopmentAccounts()
+{
+    for (const DevelopmentAccount& account : DEVELOPMENT_ACCOUNTS)
+    {
+        auto profile =
+            playerRepository_.FindPlayerByName(account.playerName);
+        if (!profile.has_value())
+        {
+            profile = playerRepository_.CreatePlayer(account.playerName);
+        }
+
+        if (!profile.has_value() ||
+            !authTicketVerifier_.RegisterTicket(
+                account.ticket,
+                {account.accountId, profile->playerId}))
+        {
+            throw std::runtime_error(
+                "Failed to prepare development login account");
+        }
+    }
+}
+
 void ServerApplication::Run()
 {
     dungeonTickService_.Start();
     tcpServer_.Start();
 
     std::cout << "Boost.Asio TCP server started"
-              << " ioThreads=" << IO_THREAD_COUNT << '\n';
+              << " ioThreads=" << IO_THREAD_COUNT
+              << " databaseThreads=" << DATABASE_THREAD_COUNT << '\n';
+
+    std::cout << "Development tickets ready:"
+              << " dev-ticket-1"
+              << " dev-ticket-2"
+              << " dev-ticket-3"
+              << " dev-ticket-4" << '\n';
 
     for (const ChannelInfo& channel : channelManager_.GetChannelList())
     {

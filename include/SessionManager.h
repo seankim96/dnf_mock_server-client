@@ -16,6 +16,7 @@ class ChannelManager;
 class DungeonManager;
 class DungeonUdpManager;
 class PartyManager;
+class PlayerLoginService;
 class TcpSession;
 
 class SessionManager
@@ -25,7 +26,8 @@ public:
         ChannelManager& channelManager,
         PartyManager& partyManager,
         DungeonManager& dungeonManager,
-        DungeonUdpManager& dungeonUdpManager);
+        DungeonUdpManager& dungeonUdpManager,
+        PlayerLoginService& playerLoginService);
 
     SessionId StartSession(boost::asio::ip::tcp::socket socket);
     void RemoveSession(SessionId sessionId);
@@ -37,6 +39,7 @@ private:
     PartyManager& partyManager_;
     DungeonManager& dungeonManager_;
     DungeonUdpManager& dungeonUdpManager_;
+    PlayerLoginService& playerLoginService_;
     std::atomic<SessionId> nextSessionId_{1};
 
     mutable std::mutex mutex_;

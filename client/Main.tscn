@@ -132,11 +132,11 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "2. 로그인"
 
-[node name="PlayerNameInput" type="LineEdit" parent="Margin/RootVBox/Content/LeftScroll/Steps/LoginPanel/Margin/VBox"]
+[node name="AuthTicketInput" type="LineEdit" parent="Margin/RootVBox/Content/LeftScroll/Steps/LoginPanel/Margin/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "GodotPlayer"
-placeholder_text = "영문, 숫자, 밑줄 1~16자"
+text = "dev-ticket-1"
+placeholder_text = "개발용 인증 티켓"
 
 [node name="LoginButton" type="Button" parent="Margin/RootVBox/Content/LeftScroll/Steps/LoginPanel/Margin/VBox"]
 unique_name_in_owner = true

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Google.FlatBuffers;
 using TcpSchema = Dnf.Protocol.Tcp;
 
@@ -8,27 +9,21 @@ namespace DnfMockClient.Protocol;
 
 public static class GamePayloadCodec
 {
-    public static byte[] EncodeLoginRequest(string playerName)
+    private const int MaxAuthTicketLength = 256;
+
+    public static byte[] EncodeLoginRequest(string authTicket)
     {
-        if (string.IsNullOrEmpty(playerName) || playerName.Length > 16)
+        if (string.IsNullOrEmpty(authTicket) ||
+            Encoding.UTF8.GetByteCount(authTicket) > MaxAuthTicketLength)
         {
-            throw new ArgumentException("Player name must be 1 to 16 characters.");
+            throw new ArgumentException(
+                "Auth ticket must be 1 to 256 characters.");
         }
 
-        foreach (char character in playerName)
-        {
-            bool allowed = char.IsAsciiLetterOrDigit(character) || character == '_';
-            if (!allowed)
-            {
-                throw new ArgumentException(
-                    "Player name may contain only letters, numbers, and underscore.");
-            }
-        }
-
-        var builder = new FlatBufferBuilder(128);
-        StringOffset name = builder.CreateString(playerName);
+        var builder = new FlatBufferBuilder(320);
+        StringOffset ticket = builder.CreateString(authTicket);
         Offset<TcpSchema.LoginRequest> request =
-            TcpSchema.LoginRequest.CreateLoginRequest(builder, name);
+            TcpSchema.LoginRequest.CreateLoginRequest(builder, ticket);
         return TcpFlatBufferCodec.FinishPayload(
             builder,
             TcpSchema.TcpPayload.LoginRequest,

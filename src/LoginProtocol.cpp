@@ -14,7 +14,7 @@ namespace tcp = Dnf::Protocol::Tcp;
 bool IsValidResult(LoginResult result)
 {
     return result >= LoginSuccess &&
-           result <= InvalidPlayerNameCharacter;
+           result <= LoginStorageError;
 }
 
 bool IsValidResponse(LoginResult result, SessionId sessionId)
@@ -30,11 +30,16 @@ bool IsValidResponse(LoginResult result, SessionId sessionId)
 } // namespace
 
 std::vector<std::uint8_t> EncodeLoginRequestPayload(
-    const std::string& playerName)
+    const std::string& authTicket)
 {
+    if (!IsValidAuthTicket(authTicket))
+    {
+        throw std::invalid_argument("Invalid auth ticket");
+    }
+
     flatbuffers::FlatBufferBuilder builder;
-    const auto name = builder.CreateString(playerName);
-    const auto request = tcp::CreateLoginRequest(builder, name);
+    const auto ticket = builder.CreateString(authTicket);
+    const auto request = tcp::CreateLoginRequest(builder, ticket);
     return FinishTcpPayload(
         builder,
         tcp::TcpPayload_LoginRequest,
@@ -48,12 +53,18 @@ std::string DecodeLoginRequestPayload(
         payload,
         tcp::TcpPayload_LoginRequest);
     const auto* request = message->payload_as_LoginRequest();
-    if (request == nullptr || request->player_name() == nullptr)
+    if (request == nullptr || request->auth_ticket() == nullptr)
     {
         throw std::runtime_error("Invalid login request payload");
     }
 
-    return request->player_name()->str();
+    const std::string authTicket = request->auth_ticket()->str();
+    if (!IsValidAuthTicket(authTicket))
+    {
+        throw std::runtime_error("Invalid auth ticket");
+    }
+
+    return authTicket;
 }
 
 std::vector<std::uint8_t> EncodeLoginResponsePayload(

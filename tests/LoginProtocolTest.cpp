@@ -8,11 +8,22 @@ namespace
 {
 void TestLoginRequest()
 {
-    const auto payload = dnf::EncodeLoginRequestPayload("Mock_Player");
+    const auto payload = dnf::EncodeLoginRequestPayload("valid-ticket");
     assert(!payload.empty());
-    assert(dnf::DecodeLoginRequestPayload(payload) == "Mock_Player");
+    assert(dnf::DecodeLoginRequestPayload(payload) == "valid-ticket");
 
     bool threw = false;
+    try
+    {
+        dnf::EncodeLoginRequestPayload("");
+    }
+    catch (const std::invalid_argument&)
+    {
+        threw = true;
+    }
+    assert(threw);
+
+    threw = false;
     try
     {
         dnf::DecodeLoginRequestPayload({0});
@@ -39,11 +50,11 @@ void TestSuccessfulLoginResponse()
 void TestFailedLoginResponse()
 {
     const auto payload = dnf::EncodeLoginResponsePayload(
-        dnf::EmptyPlayerName,
+        dnf::InvalidAuthTicket,
         0);
     const auto response = dnf::DecodeLoginResponsePayload(payload);
 
-    assert(response.result == dnf::EmptyPlayerName);
+    assert(response.result == dnf::InvalidAuthTicket);
     assert(response.sessionId == 0);
 }
 
@@ -77,7 +88,7 @@ void TestInvalidLoginResponse()
     try
     {
         dnf::DecodeLoginResponsePayload(
-            dnf::EncodeLoginRequestPayload("Mock"));
+            dnf::EncodeLoginRequestPayload("valid-ticket"));
     }
     catch (const std::runtime_error&)
     {

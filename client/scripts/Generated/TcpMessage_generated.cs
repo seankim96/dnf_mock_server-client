@@ -12,9 +12,9 @@ using global::Google.FlatBuffers;
 public enum LoginResult : byte
 {
   Success = 0,
-  EmptyPlayerName = 1,
-  PlayerNameTooLong = 2,
-  InvalidPlayerNameCharacter = 3,
+  InvalidTicket = 1,
+  PlayerNotFound = 2,
+  StorageError = 3,
 };
 
 public enum JoinChannelResult : byte
@@ -284,26 +284,26 @@ public struct LoginRequest : IFlatbufferObject
   public void __init(int _i, ByteBuffer _bb) { __p = new Table(_i, _bb); }
   public LoginRequest __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
-  public string PlayerName { get { int o = __p.__offset(4); return o != 0 ? __p.__string(o + __p.bb_pos) : null; } }
+  public string AuthTicket { get { int o = __p.__offset(4); return o != 0 ? __p.__string(o + __p.bb_pos) : null; } }
 #if ENABLE_SPAN_T
-  public Span<byte> GetPlayerNameBytes() { return __p.__vector_as_span<byte>(4, 1); }
+  public Span<byte> GetAuthTicketBytes() { return __p.__vector_as_span<byte>(4, 1); }
 #else
-  public ArraySegment<byte>? GetPlayerNameBytes() { return __p.__vector_as_arraysegment(4); }
+  public ArraySegment<byte>? GetAuthTicketBytes() { return __p.__vector_as_arraysegment(4); }
 #endif
-  public byte[] GetPlayerNameArray() { return __p.__vector_as_array<byte>(4); }
+  public byte[] GetAuthTicketArray() { return __p.__vector_as_array<byte>(4); }
 
   public static Offset<Dnf.Protocol.Tcp.LoginRequest> CreateLoginRequest(FlatBufferBuilder builder,
-      StringOffset player_nameOffset = default(StringOffset)) {
+      StringOffset auth_ticketOffset = default(StringOffset)) {
     builder.StartTable(1);
-    LoginRequest.AddPlayerName(builder, player_nameOffset);
+    LoginRequest.AddAuthTicket(builder, auth_ticketOffset);
     return LoginRequest.EndLoginRequest(builder);
   }
 
   public static void StartLoginRequest(FlatBufferBuilder builder) { builder.StartTable(1); }
-  public static void AddPlayerName(FlatBufferBuilder builder, StringOffset playerNameOffset) { builder.AddOffset(0, playerNameOffset.Value, 0); }
+  public static void AddAuthTicket(FlatBufferBuilder builder, StringOffset authTicketOffset) { builder.AddOffset(0, authTicketOffset.Value, 0); }
   public static Offset<Dnf.Protocol.Tcp.LoginRequest> EndLoginRequest(FlatBufferBuilder builder) {
     int o = builder.EndTable();
-    builder.Required(o, 4);  // player_name
+    builder.Required(o, 4);  // auth_ticket
     return new Offset<Dnf.Protocol.Tcp.LoginRequest>(o);
   }
 }
@@ -314,7 +314,7 @@ static public class LoginRequestVerify
   static public bool Verify(Google.FlatBuffers.Verifier verifier, uint tablePos)
   {
     return verifier.VerifyTableStart(tablePos)
-      && verifier.VerifyString(tablePos, 4 /*PlayerName*/, true)
+      && verifier.VerifyString(tablePos, 4 /*AuthTicket*/, true)
       && verifier.VerifyTableEnd(tablePos);
   }
 }
@@ -1829,7 +1829,7 @@ public struct TcpMessage : IFlatbufferObject
   public void __init(int _i, ByteBuffer _bb) { __p = new Table(_i, _bb); }
   public TcpMessage __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
-  public ushort ProtocolVersion { get { int o = __p.__offset(4); return o != 0 ? __p.bb.GetUshort(o + __p.bb_pos) : (ushort)1; } }
+  public ushort ProtocolVersion { get { int o = __p.__offset(4); return o != 0 ? __p.bb.GetUshort(o + __p.bb_pos) : (ushort)2; } }
   public Dnf.Protocol.Tcp.TcpPayload PayloadType { get { int o = __p.__offset(6); return o != 0 ? (Dnf.Protocol.Tcp.TcpPayload)__p.bb.Get(o + __p.bb_pos) : Dnf.Protocol.Tcp.TcpPayload.NONE; } }
   public TTable? Payload<TTable>() where TTable : struct, IFlatbufferObject { int o = __p.__offset(8); return o != 0 ? (TTable?)__p.__union<TTable>(o + __p.bb_pos) : null; }
   public Dnf.Protocol.Tcp.LoginRequest PayloadAsLoginRequest() { return Payload<Dnf.Protocol.Tcp.LoginRequest>().Value; }
@@ -1858,7 +1858,7 @@ public struct TcpMessage : IFlatbufferObject
   public Dnf.Protocol.Tcp.SkillCatalogResponse PayloadAsSkillCatalogResponse() { return Payload<Dnf.Protocol.Tcp.SkillCatalogResponse>().Value; }
 
   public static Offset<Dnf.Protocol.Tcp.TcpMessage> CreateTcpMessage(FlatBufferBuilder builder,
-      ushort protocol_version = 1,
+      ushort protocol_version = 2,
       Dnf.Protocol.Tcp.TcpPayload payload_type = Dnf.Protocol.Tcp.TcpPayload.NONE,
       int payloadOffset = 0) {
     builder.StartTable(3);
@@ -1869,7 +1869,7 @@ public struct TcpMessage : IFlatbufferObject
   }
 
   public static void StartTcpMessage(FlatBufferBuilder builder) { builder.StartTable(3); }
-  public static void AddProtocolVersion(FlatBufferBuilder builder, ushort protocolVersion) { builder.AddUshort(0, protocolVersion, 1); }
+  public static void AddProtocolVersion(FlatBufferBuilder builder, ushort protocolVersion) { builder.AddUshort(0, protocolVersion, 2); }
   public static void AddPayloadType(FlatBufferBuilder builder, Dnf.Protocol.Tcp.TcpPayload payloadType) { builder.AddByte(1, (byte)payloadType, 0); }
   public static void AddPayload(FlatBufferBuilder builder, int payloadOffset) { builder.AddOffset(2, payloadOffset, 0); }
   public static Offset<Dnf.Protocol.Tcp.TcpMessage> EndTcpMessage(FlatBufferBuilder builder) {

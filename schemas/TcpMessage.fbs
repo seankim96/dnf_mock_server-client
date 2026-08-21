@@ -5,9 +5,9 @@ namespace Dnf.Protocol.Tcp;
 
 enum LoginResult : ubyte {
   Success = 0,
-  EmptyPlayerName = 1,
-  PlayerNameTooLong = 2,
-  InvalidPlayerNameCharacter = 3
+  InvalidTicket = 1,
+  PlayerNotFound = 2,
+  StorageError = 3
 }
 
 enum JoinChannelResult : ubyte {
@@ -107,7 +107,7 @@ struct StaticCollisionBox {
 // Current login and channel payloads.
 
 table LoginRequest {
-  player_name:string (required);
+  auth_ticket:string (required);
 }
 
 table LoginResponse {
@@ -338,7 +338,7 @@ union TcpPayload {
 }
 
 table TcpMessage {
-  protocol_version:ushort = 1;
+  protocol_version:ushort = 2;
   payload:TcpPayload;
 }
 

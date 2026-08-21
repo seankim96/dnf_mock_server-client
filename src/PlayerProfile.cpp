@@ -12,7 +12,7 @@ bool IsValidPlayerProfile(const PlayerProfile& profile)
         LoginValidator().Validate(profile.name);
 
     if (profile.playerId == 0 || profile.level == 0 ||
-        nameValidation.result != LoginSuccess)
+        nameValidation.result != ValidPlayerName)
     {
         return false;
     }

@@ -11,7 +11,7 @@ void TestValidName()
     const dnf::LoginValidator validator;
     const auto result = validator.Validate("Mock_Player1");
 
-    assert(result.result == dnf::LoginSuccess);
+    assert(result.result == dnf::ValidPlayerName);
     assert(result.playerName == "Mock_Player1");
 }
 

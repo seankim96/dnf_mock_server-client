@@ -21,6 +21,7 @@ class ChannelManager;
 class DungeonManager;
 class DungeonUdpManager;
 class PartyManager;
+class PlayerLoginService;
 class SessionManager;
 
 class TcpSession : public std::enable_shared_from_this<TcpSession>
@@ -33,7 +34,8 @@ public:
         ChannelManager& channelManager,
         PartyManager& partyManager,
         DungeonManager& dungeonManager,
-        DungeonUdpManager& dungeonUdpManager);
+        DungeonUdpManager& dungeonUdpManager,
+        PlayerLoginService& playerLoginService);
 
     void Start();
     SessionId Id() const;

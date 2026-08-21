@@ -20,7 +20,7 @@ public partial class Main : Control
     private LineEdit _portInput = null!;
     private Button _connectButton = null!;
     private Control _loginPanel = null!;
-    private LineEdit _playerNameInput = null!;
+    private LineEdit _authTicketInput = null!;
     private Button _loginButton = null!;
     private Control _channelPanel = null!;
     private OptionButton _channelSelect = null!;
@@ -130,7 +130,7 @@ public partial class Main : Control
         _portInput = GetNode<LineEdit>("%PortInput");
         _connectButton = GetNode<Button>("%ConnectButton");
         _loginPanel = GetNode<Control>("%LoginPanel");
-        _playerNameInput = GetNode<LineEdit>("%PlayerNameInput");
+        _authTicketInput = GetNode<LineEdit>("%AuthTicketInput");
         _loginButton = GetNode<Button>("%LoginButton");
         _channelPanel = GetNode<Control>("%ChannelPanel");
         _channelSelect = GetNode<OptionButton>("%ChannelSelect");
@@ -237,7 +237,7 @@ public partial class Main : Control
         try
         {
             byte[] payload = GamePayloadCodec.EncodeLoginRequest(
-                _playerNameInput.Text.Trim());
+                _authTicketInput.Text);
             TcpPacket response = await _connection.SendRequestAsync(
                 TcpPacketType.LoginRequest,
                 payload,
@@ -255,8 +255,7 @@ public partial class Main : Control
             _loggedIn = true;
             _localSessionId = login.SessionId;
             SetStatus("로그인 성공", Colors.LightGreen);
-            AddLog(
-                $"로그인 성공: {_playerNameInput.Text.Trim()}, session={_localSessionId}");
+            AddLog($"로그인 성공: session={_localSessionId}");
             await LoadChannelsAsync(_operationCancellation.Token);
             await LoadDungeonCatalogAsync(_operationCancellation.Token);
         }
@@ -672,7 +671,7 @@ public partial class Main : Control
         _connectButton.Disabled = _busy;
         _connectButton.Text = connected ? "연결 해제" : "서버에 연결";
 
-        _playerNameInput.Editable = connected && !_loggedIn && !_busy;
+        _authTicketInput.Editable = connected && !_loggedIn && !_busy;
         _loginButton.Disabled = !connected || _loggedIn || _busy;
         _loginPanel.Modulate = connected ? Colors.White : Colors.DimGray;
 

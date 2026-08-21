@@ -1,26 +1,34 @@
 #pragma once
 
 #include "ChannelManager.h"
+#include "DatabaseExecutor.h"
+#include "DevAuthTicketVerifier.h"
 #include "DungeonCatalog.h"
 #include "DungeonManager.h"
 #include "DungeonTickService.h"
 #include "DungeonUdpManager.h"
 #include "EnemyCatalog.h"
 #include "PartyManager.h"
+#include "PlayerLoginService.h"
 #include "SessionManager.h"
 #include "SkillCatalog.h"
+#include "SqliteDatabase.h"
+#include "SqlitePlayerRepository.h"
 #include "TcpServer.h"
 
 #include <boost/asio/io_context.hpp>
 
 #include <cstdint>
+#include <string>
 
 namespace dnf
 {
 class ServerApplication
 {
 public:
-    explicit ServerApplication(std::uint16_t port);
+    ServerApplication(
+        std::uint16_t port,
+        const std::string& databasePath = "dnf_mock_server.db");
 
     void Run();
 
@@ -32,8 +40,14 @@ public:
 
 private:
     void LoadGameData();
+    void LoadDevelopmentAccounts();
 
     boost::asio::io_context ioContext_;
+    SqliteDatabase database_;
+    SqlitePlayerRepository playerRepository_;
+    DatabaseExecutor databaseExecutor_;
+    DevAuthTicketVerifier authTicketVerifier_;
+    PlayerLoginService playerLoginService_;
     DungeonUdpManager dungeonUdpManager_;
     ChannelManager channelManager_;
     PartyManager partyManager_;

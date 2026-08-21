@@ -35,6 +35,6 @@ LoginValidationResult LoginValidator::Validate(
         }
     }
 
-    return {LoginSuccess, playerName};
+    return {ValidPlayerName, playerName};
 }
 } // namespace dnf

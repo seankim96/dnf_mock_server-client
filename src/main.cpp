@@ -23,8 +23,10 @@ int main(int argc, char* argv[])
         }
 
         const auto port = static_cast<std::uint16_t>(portValue);
+        const std::string databasePath =
+            argc >= 3 ? argv[2] : "dnf_mock_server.db";
 
-        dnf::ServerApplication application(port);
+        dnf::ServerApplication application(port, databasePath);
         application.Run();
     }
     catch (const std::exception& error)

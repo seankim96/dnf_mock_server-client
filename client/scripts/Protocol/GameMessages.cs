@@ -5,9 +5,9 @@ namespace DnfMockClient.Protocol;
 public enum LoginResult : byte
 {
     Success = 0,
-    EmptyPlayerName = 1,
-    PlayerNameTooLong = 2,
-    InvalidPlayerNameCharacter = 3
+    InvalidTicket = 1,
+    PlayerNotFound = 2,
+    StorageError = 3
 }
 
 public sealed class LoginResponseData

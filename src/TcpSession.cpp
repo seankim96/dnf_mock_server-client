@@ -4,6 +4,7 @@
 #include "DungeonManager.h"
 #include "DungeonUdpManager.h"
 #include "PartyManager.h"
+#include "PlayerLoginService.h"
 #include "SessionManager.h"
 
 #include <boost/asio/bind_executor.hpp>
@@ -25,7 +26,8 @@ TcpSession::TcpSession(
     ChannelManager& channelManager,
     PartyManager& partyManager,
     DungeonManager& dungeonManager,
-    DungeonUdpManager& dungeonUdpManager)
+    DungeonUdpManager& dungeonUdpManager,
+    PlayerLoginService& playerLoginService)
     : sessionId_(sessionId),
       socket_(std::move(socket)),
       strand_(boost::asio::make_strand(socket_.get_executor())),
@@ -35,6 +37,7 @@ TcpSession::TcpSession(
           partyManager,
           dungeonManager,
           dungeonUdpManager,
+          playerLoginService,
           sessionId)
 {
 }

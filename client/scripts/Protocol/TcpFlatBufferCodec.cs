@@ -7,7 +7,7 @@ namespace DnfMockClient.Protocol;
 
 public static class TcpFlatBufferCodec
 {
-    public const ushort ProtocolVersion = 1;
+    public const ushort ProtocolVersion = 2;
 
     public static byte[] FinishPayload(
         FlatBufferBuilder builder,

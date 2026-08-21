@@ -13,6 +13,7 @@ namespace dnf
 class DungeonManager;
 class DungeonUdpManager;
 class PartyManager;
+class PlayerLoginService;
 
 class PacketDispatcher
 {
@@ -25,9 +26,11 @@ public:
         PartyManager& partyManager,
         DungeonManager& dungeonManager,
         DungeonUdpManager& dungeonUdpManager,
+        PlayerLoginService& playerLoginService,
         SessionId sessionId);
 
-    // 요청 타입에 맞는 핸들러를 실행하고 응답 패킷을 반환한다.
+    // 테스트와 즉시 처리 가능한 요청에서 사용하는 동기 경로다.
+    // 로그인처럼 DB 작업이 필요한 요청은 DispatchAsync를 사용한다.
     std::vector<std::uint8_t> Dispatch(const Packet& request) const;
 
     // 응답이 준비되면 responseHandler를 호출한다.
@@ -38,8 +41,9 @@ public:
         ResponseHandler responseHandler) const;
 
 private:
-    std::vector<std::uint8_t> HandleLoginRequest(
-        const Packet& request) const;
+    void HandleLoginRequestAsync(
+        Packet request,
+        ResponseHandler responseHandler) const;
     std::vector<std::uint8_t> HandleChannelListRequest(
         const Packet& request) const;
     std::vector<std::uint8_t> HandleJoinChannelRequest(
@@ -65,6 +69,7 @@ private:
     PartyManager& partyManager_;
     DungeonManager& dungeonManager_;
     DungeonUdpManager& dungeonUdpManager_;
+    PlayerLoginService& playerLoginService_;
     SessionId sessionId_;
 };
 } // namespace dnf

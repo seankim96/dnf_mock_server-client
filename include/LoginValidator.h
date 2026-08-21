@@ -8,9 +8,9 @@ namespace dnf
 {
 constexpr std::size_t MAX_PLAYER_NAME_LENGTH = 16;
 
-enum LoginResult : std::uint8_t
+enum PlayerNameValidationResult : std::uint8_t
 {
-    LoginSuccess = 0,
+    ValidPlayerName = 0,
     EmptyPlayerName = 1,
     PlayerNameTooLong = 2,
     InvalidPlayerNameCharacter = 3
@@ -18,7 +18,7 @@ enum LoginResult : std::uint8_t
 
 struct LoginValidationResult
 {
-    LoginResult result = LoginSuccess;
+    PlayerNameValidationResult result = ValidPlayerName;
     std::string playerName;
 };
 

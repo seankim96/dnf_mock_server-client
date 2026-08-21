@@ -1,6 +1,6 @@
 #pragma once
 
-#include "LoginValidator.h"
+#include "AuthTicketVerifier.h"
 #include "SessionId.h"
 
 #include <cstdint>
@@ -9,6 +9,14 @@
 
 namespace dnf
 {
+enum LoginResult : std::uint8_t
+{
+    LoginSuccess = 0,
+    InvalidAuthTicket = 1,
+    LoginPlayerNotFound = 2,
+    LoginStorageError = 3
+};
+
 struct LoginResponseData
 {
     LoginResult result = LoginSuccess;
@@ -16,7 +24,7 @@ struct LoginResponseData
 };
 
 std::vector<std::uint8_t> EncodeLoginRequestPayload(
-    const std::string& playerName);
+    const std::string& authTicket);
 
 std::string DecodeLoginRequestPayload(
     const std::vector<std::uint8_t>& payload);

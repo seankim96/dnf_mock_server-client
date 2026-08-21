@@ -282,7 +282,7 @@ std::optional<PlayerProfile> SqlitePlayerRepository::FindPlayer(
 std::optional<PlayerProfile> SqlitePlayerRepository::FindPlayerByName(
     const std::string& playerName)
 {
-    if (LoginValidator().Validate(playerName).result != LoginSuccess)
+    if (LoginValidator().Validate(playerName).result != ValidPlayerName)
     {
         return std::nullopt;
     }
@@ -314,7 +314,7 @@ std::optional<PlayerProfile> SqlitePlayerRepository::FindPlayerByName(
 std::optional<PlayerProfile> SqlitePlayerRepository::CreatePlayer(
     const std::string& playerName)
 {
-    if (LoginValidator().Validate(playerName).result != LoginSuccess)
+    if (LoginValidator().Validate(playerName).result != ValidPlayerName)
     {
         return std::nullopt;
     }

@@ -7,7 +7,7 @@ namespace
 {
 void TestGameDataIsLoaded()
 {
-    dnf::ServerApplication application(0);
+    dnf::ServerApplication application(0, ":memory:");
 
     const auto iceSlash = application.Skills().GetSkill(1001);
     assert(iceSlash.has_value());

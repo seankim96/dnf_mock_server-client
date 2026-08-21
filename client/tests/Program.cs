@@ -116,23 +116,29 @@ static void TestInvalidPacketSize()
 
 static void TestGamePayloads()
 {
-    byte[] loginPayload = GamePayloadCodec.EncodeLoginRequest("Player_1");
+    byte[] loginPayload = GamePayloadCodec.EncodeLoginRequest("valid-ticket");
     var loginRequestBuffer = new ByteBuffer(loginPayload);
     Assert(TcpSchema.TcpMessage.VerifyTcpMessage(loginRequestBuffer),
         "Login request FlatBuffer is invalid.");
     TcpSchema.TcpMessage loginRequestMessage =
         TcpSchema.TcpMessage.GetRootAsTcpMessage(loginRequestBuffer);
     Assert(loginRequestMessage.PayloadType == TcpSchema.TcpPayload.LoginRequest &&
-        loginRequestMessage.PayloadAsLoginRequest().PlayerName == "Player_1",
+        loginRequestMessage.PayloadAsLoginRequest().AuthTicket == "valid-ticket",
         "Login request payload is incorrect.");
+    AssertThrows<ArgumentException>(
+        () => GamePayloadCodec.EncodeLoginRequest(string.Empty),
+        "An empty auth ticket was accepted.");
+    AssertThrows<ArgumentException>(
+        () => GamePayloadCodec.EncodeLoginRequest(new string('A', 257)),
+        "An oversized auth ticket was accepted.");
     LoginResponseData login = GamePayloadCodec.DecodeLoginResponse(
         LoginResponseBytes(TcpSchema.LoginResult.Success, 42));
     Assert(login.Result == LoginResult.Success && login.SessionId == 42,
         "Login response payload is incorrect.");
 
     LoginResponseData failedLogin = GamePayloadCodec.DecodeLoginResponse(
-        LoginResponseBytes(TcpSchema.LoginResult.EmptyPlayerName, 0));
-    Assert(failedLogin.Result == LoginResult.EmptyPlayerName &&
+        LoginResponseBytes(TcpSchema.LoginResult.InvalidTicket, 0));
+    Assert(failedLogin.Result == LoginResult.InvalidTicket &&
         failedLogin.SessionId == 0, "Failed login payload is incorrect.");
 
     AssertThrows<InvalidDataException>(
@@ -141,7 +147,7 @@ static void TestGamePayloads()
         "Successful login with a zero session ID was accepted.");
     AssertThrows<InvalidDataException>(
         () => GamePayloadCodec.DecodeLoginResponse(
-            LoginResponseBytes(TcpSchema.LoginResult.EmptyPlayerName, 42)),
+            LoginResponseBytes(TcpSchema.LoginResult.InvalidTicket, 42)),
         "Failed login with a non-zero session ID was accepted.");
     AssertThrows<InvalidDataException>(
         () => GamePayloadCodec.DecodeLoginResponse(
@@ -645,13 +651,13 @@ static void TestDungeonProtocol()
 static void TestTcpFlatBufferSchema()
 {
     var builder = new FlatBufferBuilder(128);
-    StringOffset playerName = builder.CreateString("Player_1");
+    StringOffset authTicket = builder.CreateString("valid-ticket");
     Offset<TcpSchema.LoginRequest> login =
-        TcpSchema.LoginRequest.CreateLoginRequest(builder, playerName);
+        TcpSchema.LoginRequest.CreateLoginRequest(builder, authTicket);
     Offset<TcpSchema.TcpMessage> message =
         TcpSchema.TcpMessage.CreateTcpMessage(
             builder,
-            1,
+            2,
             TcpSchema.TcpPayload.LoginRequest,
             login.Value);
     TcpSchema.TcpMessage.FinishTcpMessageBuffer(builder, message);
@@ -664,9 +670,9 @@ static void TestTcpFlatBufferSchema()
 
     TcpSchema.TcpMessage decoded =
         TcpSchema.TcpMessage.GetRootAsTcpMessage(buffer);
-    Assert(decoded.ProtocolVersion == 1 &&
+    Assert(decoded.ProtocolVersion == 2 &&
         decoded.PayloadType == TcpSchema.TcpPayload.LoginRequest &&
-        decoded.PayloadAsLoginRequest().PlayerName == "Player_1",
+        decoded.PayloadAsLoginRequest().AuthTicket == "valid-ticket",
         "TCP FlatBuffer login payload is incorrect.");
 }
 
@@ -1115,7 +1121,7 @@ static async Task TestTcpConnectionAsync()
 
     Task<TcpPacket> responseTask = connection.SendRequestAsync(
         TcpPacketType.LoginRequest,
-        GamePayloadCodec.EncodeLoginRequest("P1"),
+        GamePayloadCodec.EncodeLoginRequest("valid-ticket"),
         timeout.Token);
 
     NetworkStream serverStream = acceptedClient.GetStream();
@@ -1135,7 +1141,7 @@ static async Task TestTcpConnectionAsync()
     TcpSchema.TcpMessage loginRequestMessage =
         TcpSchema.TcpMessage.GetRootAsTcpMessage(loginRequestBuffer);
     Assert(loginRequestMessage.PayloadType == TcpSchema.TcpPayload.LoginRequest &&
-        loginRequestMessage.PayloadAsLoginRequest().PlayerName == "P1",
+        loginRequestMessage.PayloadAsLoginRequest().AuthTicket == "valid-ticket",
         "TCP login request payload is incorrect.");
 
     byte[] responseBytes = TcpPacketCodec.EncodePacket(

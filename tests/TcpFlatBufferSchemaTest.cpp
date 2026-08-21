@@ -14,11 +14,11 @@ namespace
 void TestCurrentLoginPayload()
 {
     flatbuffers::FlatBufferBuilder builder;
-    const auto playerName = builder.CreateString("Player_1");
-    const auto login = protocol::CreateLoginRequest(builder, playerName);
+    const auto authTicket = builder.CreateString("valid-ticket");
+    const auto login = protocol::CreateLoginRequest(builder, authTicket);
     const auto message = protocol::CreateTcpMessage(
         builder,
-        1,
+        2,
         protocol::TcpPayload_LoginRequest,
         login.Union());
     protocol::FinishTcpMessageBuffer(builder, message);
@@ -30,11 +30,11 @@ void TestCurrentLoginPayload()
 
     const auto* decoded =
         protocol::GetTcpMessage(builder.GetBufferPointer());
-    assert(decoded->protocol_version() == 1);
+    assert(decoded->protocol_version() == 2);
     assert(decoded->payload_type() == protocol::TcpPayload_LoginRequest);
     assert(decoded->payload_as_LoginRequest() != nullptr);
-    assert(decoded->payload_as_LoginRequest()->player_name()->str() ==
-           "Player_1");
+    assert(decoded->payload_as_LoginRequest()->auth_ticket()->str() ==
+           "valid-ticket");
 }
 
 void TestCurrentPartySnapshotPayload()
@@ -50,7 +50,7 @@ void TestCurrentPartySnapshotPayload()
         memberIds);
     const auto message = protocol::CreateTcpMessage(
         builder,
-        1,
+        2,
         protocol::TcpPayload_PartySnapshotResponse,
         snapshot.Union());
     protocol::FinishTcpMessageBuffer(builder, message);
@@ -88,7 +88,7 @@ void TestPlannedCatalogPayload()
         dungeons);
     const auto message = protocol::CreateTcpMessage(
         builder,
-        1,
+        2,
         protocol::TcpPayload_DungeonCatalogResponse,
         catalog.Union());
     protocol::FinishTcpMessageBuffer(builder, message);

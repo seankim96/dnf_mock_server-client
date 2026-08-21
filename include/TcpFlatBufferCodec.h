@@ -9,7 +9,7 @@
 
 namespace dnf
 {
-constexpr std::uint16_t TCP_PAYLOAD_PROTOCOL_VERSION = 1;
+constexpr std::uint16_t TCP_PAYLOAD_PROTOCOL_VERSION = 2;
 
 std::vector<std::uint8_t> FinishTcpPayload(
     flatbuffers::FlatBufferBuilder& builder,

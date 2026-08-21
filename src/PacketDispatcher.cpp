@@ -9,26 +9,52 @@
 #include "DungeonStaticDataProtocol.h"
 #include "DungeonUdpManager.h"
 #include "LoginProtocol.h"
-#include "LoginValidator.h"
 #include "PartyManager.h"
 #include "PartyProtocol.h"
+#include "PlayerLoginService.h"
 
 #include <algorithm>
 #include <stdexcept>
 #include <unordered_set>
+#include <utility>
 
 namespace dnf
 {
+namespace
+{
+LoginResult ToLoginResult(PlayerLoginStatus status)
+{
+    switch (status)
+    {
+    case PlayerLoginStatus::Success:
+        return LoginSuccess;
+
+    case PlayerLoginStatus::InvalidTicket:
+        return InvalidAuthTicket;
+
+    case PlayerLoginStatus::PlayerNotFound:
+        return LoginPlayerNotFound;
+
+    case PlayerLoginStatus::StorageError:
+        return LoginStorageError;
+    }
+
+    throw std::runtime_error("Unknown player login status");
+}
+} // namespace
+
 PacketDispatcher::PacketDispatcher(
     ChannelManager& channelManager,
     PartyManager& partyManager,
     DungeonManager& dungeonManager,
     DungeonUdpManager& dungeonUdpManager,
+    PlayerLoginService& playerLoginService,
     SessionId sessionId)
     : channelManager_(channelManager),
       partyManager_(partyManager),
       dungeonManager_(dungeonManager),
       dungeonUdpManager_(dungeonUdpManager),
+      playerLoginService_(playerLoginService),
       sessionId_(sessionId)
 {
 }
@@ -38,9 +64,6 @@ std::vector<std::uint8_t> PacketDispatcher::Dispatch(
 {
     switch (request.header.type)
     {
-    case LoginRequest:
-        return HandleLoginRequest(request);
-
     case ChannelListRequest:
         return HandleChannelListRequest(request);
 
@@ -85,27 +108,45 @@ void PacketDispatcher::DispatchAsync(
         throw std::invalid_argument("Response handler is required");
     }
 
+    if (request.header.type == LoginRequest)
+    {
+        HandleLoginRequestAsync(
+            std::move(request),
+            std::move(responseHandler));
+        return;
+    }
+
     responseHandler(Dispatch(request));
 }
 
-std::vector<std::uint8_t> PacketDispatcher::HandleLoginRequest(
-    const Packet& request) const
+void PacketDispatcher::HandleLoginRequestAsync(
+    Packet request,
+    ResponseHandler responseHandler) const
 {
-    const std::string playerName =
+    std::string authTicket =
         DecodeLoginRequestPayload(request.payload);
-    const LoginValidator validator;
-    const LoginValidationResult validation = validator.Validate(playerName);
+    const std::uint32_t requestId = request.header.requestId;
+    const SessionId sessionId = sessionId_;
 
-    const SessionId responseSessionId =
-        validation.result == LoginSuccess ? sessionId_ : 0;
-    const auto responsePayload = EncodeLoginResponsePayload(
-        validation.result,
-        responseSessionId);
+    playerLoginService_.Login(
+        std::move(authTicket),
+        [requestId,
+         sessionId,
+         responseHandler = std::move(responseHandler)](
+            PlayerLoginResult loginResult) mutable
+        {
+            const LoginResult result = ToLoginResult(loginResult.status);
+            const SessionId responseSessionId =
+                result == LoginSuccess ? sessionId : 0;
+            const auto responsePayload = EncodeLoginResponsePayload(
+                result,
+                responseSessionId);
 
-    return EncodePacket(
-        LoginResponse,
-        request.header.requestId,
-        responsePayload);
+            responseHandler(EncodePacket(
+                LoginResponse,
+                requestId,
+                responsePayload));
+        });
 }
 
 std::vector<std::uint8_t> PacketDispatcher::HandleChannelListRequest(

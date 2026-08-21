@@ -1,4 +1,6 @@
 #include "ChannelProtocol.h"
+#include "DatabaseExecutor.h"
+#include "DevAuthTicketVerifier.h"
 #include "DungeonAdmissionProtocol.h"
 #include "DungeonCatalogProtocol.h"
 #include "DungeonConnectionProtocol.h"
@@ -10,14 +12,19 @@
 #include "PacketDispatcher.h"
 #include "PartyManager.h"
 #include "PartyProtocol.h"
+#include "PlayerLoginService.h"
 #include "ReceiveBuffer.h"
+#include "SqliteDatabase.h"
+#include "SqlitePlayerRepository.h"
 
+#include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/io_context.hpp>
 
 #include <cassert>
 #include <cstdint>
 #include <iostream>
 #include <stdexcept>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -26,7 +33,15 @@ namespace
 struct TestContext
 {
     TestContext()
-        : dungeonUdpManager(ioContext),
+        : database(":memory:"),
+          playerRepository(database),
+          databaseExecutor(1),
+          playerLoginService(
+              ioContext,
+              databaseExecutor,
+              authTicketVerifier,
+              playerRepository),
+          dungeonUdpManager(ioContext),
           dungeonCatalog(enemyCatalog),
           dungeonManager(partyManager, dungeonCatalog, enemyCatalog)
     {
@@ -61,7 +76,23 @@ struct TestContext
         assert(dungeonCatalog.AddDungeon(1001, "Forest", {room}));
     }
 
+    dnf::PacketDispatcher CreateDispatcher(dnf::SessionId sessionId)
+    {
+        return {
+            channelManager,
+            partyManager,
+            dungeonManager,
+            dungeonUdpManager,
+            playerLoginService,
+            sessionId};
+    }
+
     boost::asio::io_context ioContext;
+    dnf::SqliteDatabase database;
+    dnf::SqlitePlayerRepository playerRepository;
+    dnf::DatabaseExecutor databaseExecutor;
+    dnf::DevAuthTicketVerifier authTicketVerifier;
+    dnf::PlayerLoginService playerLoginService;
     dnf::DungeonUdpManager dungeonUdpManager;
     dnf::ChannelManager channelManager;
     dnf::PartyManager partyManager;
@@ -70,32 +101,57 @@ struct TestContext
     dnf::DungeonManager dungeonManager;
 };
 
-void TestLoginRequest()
+dnf::LoginResponseData SendLoginRequest(
+    TestContext& context,
+    const std::string& authTicket,
+    dnf::SessionId sessionId,
+    std::uint32_t requestId)
 {
-    TestContext context;
     dnf::Packet request;
     request.header.type = dnf::LoginRequest;
-    request.header.requestId = 42;
-    request.payload = dnf::EncodeLoginRequestPayload("Mock");
+    request.header.requestId = requestId;
+    request.payload = dnf::EncodeLoginRequestPayload(authTicket);
 
-    dnf::PacketDispatcher dispatcher(
-        context.channelManager,
-        context.partyManager,
-        context.dungeonManager,
-        context.dungeonUdpManager,
-        100);
-    const auto responseBytes = dispatcher.Dispatch(request);
+    auto dispatcher = context.CreateDispatcher(sessionId);
+    auto workGuard = boost::asio::make_work_guard(context.ioContext);
+    std::vector<std::uint8_t> responseBytes;
+
+    dispatcher.DispatchAsync(
+        std::move(request),
+        [&](std::vector<std::uint8_t> response)
+        {
+            responseBytes = std::move(response);
+            workGuard.reset();
+        });
+
+    assert(responseBytes.empty());
+    context.ioContext.run();
+    assert(!responseBytes.empty());
 
     dnf::ReceiveBuffer buffer;
     buffer.Append(responseBytes);
 
     dnf::Packet response;
-    assert(buffer.TryPop(response) == true);
+    assert(buffer.TryPop(response));
     assert(response.header.type == dnf::LoginResponse);
-    assert(response.header.requestId == 42);
+    assert(response.header.requestId == requestId);
+    return dnf::DecodeLoginResponsePayload(response.payload);
+}
 
-    const auto loginResponse =
-        dnf::DecodeLoginResponsePayload(response.payload);
+void TestLoginRequest()
+{
+    TestContext context;
+    const dnf::PlayerProfile profile =
+        context.playerRepository.CreatePlayer("Mock").value();
+    assert(context.authTicketVerifier.RegisterTicket(
+        "valid-ticket",
+        {10, profile.playerId}));
+
+    const auto loginResponse = SendLoginRequest(
+        context,
+        "valid-ticket",
+        100,
+        42);
     assert(loginResponse.result == dnf::LoginSuccess);
     assert(loginResponse.sessionId == 100);
 }
@@ -104,16 +160,11 @@ void TestAsyncDispatch()
 {
     TestContext context;
     dnf::Packet request;
-    request.header.type = dnf::LoginRequest;
+    request.header.type = dnf::ChannelListRequest;
     request.header.requestId = 43;
-    request.payload = dnf::EncodeLoginRequestPayload("AsyncMock");
+    request.payload = dnf::EncodeChannelListRequestPayload();
 
-    dnf::PacketDispatcher dispatcher(
-        context.channelManager,
-        context.partyManager,
-        context.dungeonManager,
-        context.dungeonUdpManager,
-        101);
+    auto dispatcher = context.CreateDispatcher(101);
 
     bool responseReceived = false;
     dispatcher.DispatchAsync(
@@ -125,13 +176,8 @@ void TestAsyncDispatch()
 
             dnf::Packet response;
             assert(buffer.TryPop(response));
-            assert(response.header.type == dnf::LoginResponse);
+            assert(response.header.type == dnf::ChannelListResponse);
             assert(response.header.requestId == 43);
-
-            const auto loginResponse =
-                dnf::DecodeLoginResponsePayload(response.payload);
-            assert(loginResponse.result == dnf::LoginSuccess);
-            assert(loginResponse.sessionId == 101);
             responseReceived = true;
         });
 
@@ -142,15 +188,10 @@ void TestAsyncDispatchRequiresResponseHandler()
 {
     TestContext context;
     dnf::Packet request;
-    request.header.type = dnf::LoginRequest;
-    request.payload = dnf::EncodeLoginRequestPayload("Mock");
+    request.header.type = dnf::ChannelListRequest;
+    request.payload = dnf::EncodeChannelListRequestPayload();
 
-    dnf::PacketDispatcher dispatcher(
-        context.channelManager,
-        context.partyManager,
-        context.dungeonManager,
-        context.dungeonUdpManager,
-        100);
+    auto dispatcher = context.CreateDispatcher(100);
 
     bool errorOccurred = false;
 
@@ -178,12 +219,7 @@ void TestChannelListRequest()
     request.header.requestId = 44;
     request.payload = dnf::EncodeChannelListRequestPayload();
 
-    dnf::PacketDispatcher dispatcher(
-        context.channelManager,
-        context.partyManager,
-        context.dungeonManager,
-        context.dungeonUdpManager,
-        100);
+    auto dispatcher = context.CreateDispatcher(100);
     const auto responseBytes = dispatcher.Dispatch(request);
 
     dnf::ReceiveBuffer buffer;
@@ -216,12 +252,7 @@ void TestDungeonCatalogRequest()
     request.header.requestId = 47;
     request.payload = dnf::EncodeDungeonCatalogRequestPayload();
 
-    dnf::PacketDispatcher dispatcher(
-        context.channelManager,
-        context.partyManager,
-        context.dungeonManager,
-        context.dungeonUdpManager,
-        100);
+    auto dispatcher = context.CreateDispatcher(100);
 
     dnf::ReceiveBuffer buffer;
     buffer.Append(dispatcher.Dispatch(request));
@@ -248,12 +279,7 @@ void TestMissingHandler()
     dnf::Packet request;
     request.header.type = dnf::LoginResponse;
 
-    dnf::PacketDispatcher dispatcher(
-        context.channelManager,
-        context.partyManager,
-        context.dungeonManager,
-        context.dungeonUdpManager,
-        100);
+    auto dispatcher = context.CreateDispatcher(100);
     bool errorOccurred = false;
 
     try
@@ -278,12 +304,7 @@ void TestJoinChannelRequest()
     request.header.requestId = 45;
     request.payload = dnf::EncodeJoinChannelRequestPayload(1);
 
-    dnf::PacketDispatcher dispatcher(
-        context.channelManager,
-        context.partyManager,
-        context.dungeonManager,
-        context.dungeonUdpManager,
-        700);
+    auto dispatcher = context.CreateDispatcher(700);
     const auto responseBytes = dispatcher.Dispatch(request);
 
     dnf::ReceiveBuffer buffer;
@@ -343,27 +364,28 @@ void TestJoinChannelRequest()
 void TestInvalidLoginRequest()
 {
     TestContext context;
-    dnf::Packet request;
-    request.header.type = dnf::LoginRequest;
-    request.header.requestId = 43;
-    request.payload = dnf::EncodeLoginRequestPayload("");
+    const auto loginResponse = SendLoginRequest(
+        context,
+        "missing-ticket",
+        100,
+        43);
+    assert(loginResponse.result == dnf::InvalidAuthTicket);
+    assert(loginResponse.sessionId == 0);
+}
 
-    dnf::PacketDispatcher dispatcher(
-        context.channelManager,
-        context.partyManager,
-        context.dungeonManager,
-        context.dungeonUdpManager,
-        100);
-    const auto responseBytes = dispatcher.Dispatch(request);
+void TestMissingPlayerLoginRequest()
+{
+    TestContext context;
+    assert(context.authTicketVerifier.RegisterTicket(
+        "missing-player-ticket",
+        {10, 9999}));
 
-    dnf::ReceiveBuffer buffer;
-    buffer.Append(responseBytes);
-
-    dnf::Packet response;
-    assert(buffer.TryPop(response) == true);
-    const auto loginResponse =
-        dnf::DecodeLoginResponsePayload(response.payload);
-    assert(loginResponse.result == dnf::EmptyPlayerName);
+    const auto loginResponse = SendLoginRequest(
+        context,
+        "missing-player-ticket",
+        100,
+        44);
+    assert(loginResponse.result == dnf::LoginPlayerNotFound);
     assert(loginResponse.sessionId == 0);
 }
 
@@ -377,12 +399,7 @@ dnf::CreatePartyResponseData SendCreatePartyRequest(
     request.header.requestId = requestId;
     request.payload = dnf::EncodeCreatePartyRequestPayload();
 
-    dnf::PacketDispatcher dispatcher(
-        context.channelManager,
-        context.partyManager,
-        context.dungeonManager,
-        context.dungeonUdpManager,
-        sessionId);
+    auto dispatcher = context.CreateDispatcher(sessionId);
     const auto responseBytes = dispatcher.Dispatch(request);
 
     dnf::ReceiveBuffer buffer;
@@ -439,12 +456,7 @@ dnf::JoinPartyResponseData SendJoinPartyRequest(
     request.header.requestId = 72;
     request.payload = dnf::EncodeJoinPartyRequestPayload(partyId);
 
-    dnf::PacketDispatcher dispatcher(
-        context.channelManager,
-        context.partyManager,
-        context.dungeonManager,
-        context.dungeonUdpManager,
-        sessionId);
+    auto dispatcher = context.CreateDispatcher(sessionId);
 
     dnf::ReceiveBuffer buffer;
     buffer.Append(dispatcher.Dispatch(request));
@@ -494,12 +506,7 @@ dnf::LeavePartyResult SendLeavePartyRequest(
     request.header.requestId = 73;
     request.payload = dnf::EncodeLeavePartyRequestPayload();
 
-    dnf::PacketDispatcher dispatcher(
-        context.channelManager,
-        context.partyManager,
-        context.dungeonManager,
-        context.dungeonUdpManager,
-        sessionId);
+    auto dispatcher = context.CreateDispatcher(sessionId);
 
     dnf::ReceiveBuffer buffer;
     buffer.Append(dispatcher.Dispatch(request));
@@ -541,12 +548,7 @@ dnf::PartySnapshotData SendPartySnapshotRequest(
     request.header.requestId = 74;
     request.payload = dnf::EncodePartySnapshotRequestPayload();
 
-    dnf::PacketDispatcher dispatcher(
-        context.channelManager,
-        context.partyManager,
-        context.dungeonManager,
-        context.dungeonUdpManager,
-        sessionId);
+    auto dispatcher = context.CreateDispatcher(sessionId);
 
     dnf::ReceiveBuffer buffer;
     buffer.Append(dispatcher.Dispatch(request));
@@ -594,12 +596,7 @@ dnf::EnterDungeonResponseData SendEnterDungeonRequest(
     request.header.requestId = 50;
     request.payload = dnf::EncodeEnterDungeonRequestPayload(templateId);
 
-    dnf::PacketDispatcher dispatcher(
-        context.channelManager,
-        context.partyManager,
-        context.dungeonManager,
-        context.dungeonUdpManager,
-        sessionId);
+    auto dispatcher = context.CreateDispatcher(sessionId);
     const auto responseBytes = dispatcher.Dispatch(request);
 
     dnf::ReceiveBuffer buffer;
@@ -622,12 +619,7 @@ dnf::DungeonConnectionInfoData SendConnectionInfoRequest(
     request.payload =
         dnf::EncodeDungeonConnectionInfoRequestPayload();
 
-    dnf::PacketDispatcher dispatcher(
-        context.channelManager,
-        context.partyManager,
-        context.dungeonManager,
-        context.dungeonUdpManager,
-        sessionId);
+    auto dispatcher = context.CreateDispatcher(sessionId);
     const auto responseBytes = dispatcher.Dispatch(request);
 
     dnf::ReceiveBuffer buffer;
@@ -652,12 +644,7 @@ dnf::DungeonStaticDataResponseData SendDungeonStaticDataRequest(
     request.payload =
         dnf::EncodeDungeonStaticDataRequestPayload(dungeonId);
 
-    dnf::PacketDispatcher dispatcher(
-        context.channelManager,
-        context.partyManager,
-        context.dungeonManager,
-        context.dungeonUdpManager,
-        sessionId);
+    auto dispatcher = context.CreateDispatcher(sessionId);
 
     dnf::ReceiveBuffer buffer;
     buffer.Append(dispatcher.Dispatch(request));
@@ -844,6 +831,7 @@ int main()
     TestAsyncDispatch();
     TestAsyncDispatchRequiresResponseHandler();
     TestInvalidLoginRequest();
+    TestMissingPlayerLoginRequest();
     TestChannelListRequest();
     TestDungeonCatalogRequest();
     TestJoinChannelRequest();

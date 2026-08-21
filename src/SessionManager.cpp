@@ -4,6 +4,7 @@
 #include "DungeonManager.h"
 #include "DungeonUdpManager.h"
 #include "PartyManager.h"
+#include "PlayerLoginService.h"
 #include "TcpSession.h"
 
 #include <iostream>
@@ -15,11 +16,13 @@ SessionManager::SessionManager(
     ChannelManager& channelManager,
     PartyManager& partyManager,
     DungeonManager& dungeonManager,
-    DungeonUdpManager& dungeonUdpManager)
+    DungeonUdpManager& dungeonUdpManager,
+    PlayerLoginService& playerLoginService)
     : channelManager_(channelManager),
       partyManager_(partyManager),
       dungeonManager_(dungeonManager),
-      dungeonUdpManager_(dungeonUdpManager)
+      dungeonUdpManager_(dungeonUdpManager),
+      playerLoginService_(playerLoginService)
 {
 }
 
@@ -33,7 +36,8 @@ SessionId SessionManager::StartSession(boost::asio::ip::tcp::socket socket)
         channelManager_,
         partyManager_,
         dungeonManager_,
-        dungeonUdpManager_);
+        dungeonUdpManager_,
+        playerLoginService_);
 
     std::size_t activeSessionCount = 0;
 
