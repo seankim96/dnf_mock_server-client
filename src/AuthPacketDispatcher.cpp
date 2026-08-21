@@ -2,6 +2,7 @@
 
 #include "AccountAuthenticationService.h"
 #include "AuthFlatBufferCodec.h"
+#include "CharacterListService.h"
 
 #include <flatbuffers/flatbuffer_builder.h>
 
@@ -55,6 +56,24 @@ protocol::LoginResult ToProtocolResult(
     throw std::runtime_error("Unknown account authentication status");
 }
 
+protocol::CharacterListResult ToProtocolResult(
+    CharacterListStatus status)
+{
+    switch (status)
+    {
+    case CharacterListStatus::Success:
+        return protocol::CharacterListResult_Success;
+
+    case CharacterListStatus::AccountNotFound:
+        return protocol::CharacterListResult_AccountNotFound;
+
+    case CharacterListStatus::ServiceError:
+        return protocol::CharacterListResult_ServiceError;
+    }
+
+    throw std::runtime_error("Unknown character list status");
+}
+
 std::vector<std::uint8_t> EncodeLoginResponse(
     std::uint32_t requestId,
     protocol::LoginResult result)
@@ -68,11 +87,50 @@ std::vector<std::uint8_t> EncodeLoginResponse(
 
     return EncodePacket(AuthLoginResponse, requestId, payload);
 }
+
+std::vector<std::uint8_t> EncodeCharacterListResponse(
+    std::uint32_t requestId,
+    protocol::CharacterListResult result,
+    const std::vector<CharacterSummary>& characters)
+{
+    flatbuffers::FlatBufferBuilder builder;
+    std::vector<flatbuffers::Offset<protocol::CharacterSummary>>
+        encodedCharacters;
+    encodedCharacters.reserve(characters.size());
+
+    for (const CharacterSummary& character : characters)
+    {
+        const auto displayName = builder.CreateString(character.name);
+        encodedCharacters.push_back(protocol::CreateCharacterSummary(
+            builder,
+            character.playerId,
+            displayName,
+            character.level));
+    }
+
+    const auto characterVector =
+        builder.CreateVector(encodedCharacters);
+    const auto response = protocol::CreateCharacterListResponse(
+        builder,
+        result,
+        characterVector);
+    const auto payload = FinishAuthPayload(
+        builder,
+        protocol::AuthPayload_CharacterListResponse,
+        response.Union());
+
+    return EncodePacket(
+        AuthCharacterListResponse,
+        requestId,
+        payload);
+}
 } // namespace
 
 AuthPacketDispatcher::AuthPacketDispatcher(
-    AccountAuthenticationService& authenticationService)
+    AccountAuthenticationService& authenticationService,
+    CharacterListService& characterListService)
     : authenticationService_(authenticationService),
+      characterListService_(characterListService),
       sessionState_(std::make_shared<AuthServerSessionState>()),
       loginInProgress_(std::make_shared<std::atomic_bool>(false))
 {
@@ -87,19 +145,29 @@ void AuthPacketDispatcher::DispatchAsync(
         throw std::invalid_argument("Response handler is required");
     }
 
-    if (request.header.type != AuthLoginRequest)
+    if (request.header.type == AuthLoginRequest)
     {
-        throw std::runtime_error("No auth handler for packet type");
+        if (sessionState_->IsAuthenticated())
+        {
+            throw std::runtime_error(
+                "Auth session is already authenticated");
+        }
+
+        HandleLoginRequestAsync(
+            std::move(request),
+            std::move(responseHandler));
+        return;
     }
 
-    if (sessionState_->IsAuthenticated())
+    if (request.header.type == AuthCharacterListRequest)
     {
-        throw std::runtime_error("Auth session is already authenticated");
+        HandleCharacterListRequestAsync(
+            std::move(request),
+            std::move(responseHandler));
+        return;
     }
 
-    HandleLoginRequestAsync(
-        std::move(request),
-        std::move(responseHandler));
+    throw std::runtime_error("No auth handler for packet type");
 }
 
 std::optional<AccountId>
@@ -164,5 +232,48 @@ void AuthPacketDispatcher::HandleLoginRequestAsync(
         loginInProgress_->store(false);
         throw;
     }
+}
+
+void AuthPacketDispatcher::HandleCharacterListRequestAsync(
+    Packet request,
+    ResponseHandler responseHandler) const
+{
+    DecodeAuthPayload(
+        request.payload,
+        protocol::AuthPayload_CharacterListRequest);
+
+    const std::uint32_t requestId = request.header.requestId;
+    const std::optional<AccountId> accountId =
+        sessionState_->AuthenticatedAccount();
+
+    if (!accountId.has_value())
+    {
+        responseHandler(EncodeCharacterListResponse(
+            requestId,
+            protocol::CharacterListResult_NotAuthenticated,
+            {}));
+        return;
+    }
+
+    characterListService_.LoadCharacters(
+        accountId.value(),
+        [requestId,
+         responseHandler = std::move(responseHandler)](
+            CharacterListResult listResult) mutable
+        {
+            const protocol::CharacterListResult responseResult =
+                ToProtocolResult(listResult.status);
+
+            if (responseResult !=
+                protocol::CharacterListResult_Success)
+            {
+                listResult.characters.clear();
+            }
+
+            responseHandler(EncodeCharacterListResponse(
+                requestId,
+                responseResult,
+                listResult.characters));
+        });
 }
 } // namespace dnf

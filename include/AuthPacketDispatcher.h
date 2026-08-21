@@ -14,6 +14,7 @@
 namespace dnf
 {
 class AccountAuthenticationService;
+class CharacterListService;
 
 class AuthPacketDispatcher
 {
@@ -22,7 +23,8 @@ public:
         std::function<void(std::vector<std::uint8_t>)>;
 
     explicit AuthPacketDispatcher(
-        AccountAuthenticationService& authenticationService);
+        AccountAuthenticationService& authenticationService,
+        CharacterListService& characterListService);
 
     void DispatchAsync(
         Packet request,
@@ -34,8 +36,12 @@ private:
     void HandleLoginRequestAsync(
         Packet request,
         ResponseHandler responseHandler) const;
+    void HandleCharacterListRequestAsync(
+        Packet request,
+        ResponseHandler responseHandler) const;
 
     AccountAuthenticationService& authenticationService_;
+    CharacterListService& characterListService_;
     std::shared_ptr<AuthServerSessionState> sessionState_;
     std::shared_ptr<std::atomic_bool> loginInProgress_;
 };
