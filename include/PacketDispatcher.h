@@ -2,10 +2,13 @@
 
 #include "ChannelManager.h"
 #include "Packet.h"
+#include "SessionAuthState.h"
 #include "SessionId.h"
 
 #include <cstdint>
 #include <functional>
+#include <memory>
+#include <optional>
 #include <vector>
 
 namespace dnf
@@ -40,6 +43,8 @@ public:
         Packet request,
         ResponseHandler responseHandler) const;
 
+    std::optional<SessionAuthSnapshot> AuthSnapshot() const;
+
 private:
     void HandleLoginRequestAsync(
         Packet request,
@@ -70,6 +75,7 @@ private:
     DungeonManager& dungeonManager_;
     DungeonUdpManager& dungeonUdpManager_;
     PlayerLoginService& playerLoginService_;
+    std::shared_ptr<SessionAuthState> authState_;
     SessionId sessionId_;
 };
 } // namespace dnf

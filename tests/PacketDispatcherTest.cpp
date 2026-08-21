@@ -103,8 +103,8 @@ struct TestContext
 
 dnf::LoginResponseData SendLoginRequest(
     TestContext& context,
+    dnf::PacketDispatcher& dispatcher,
     const std::string& authTicket,
-    dnf::SessionId sessionId,
     std::uint32_t requestId)
 {
     dnf::Packet request;
@@ -112,7 +112,6 @@ dnf::LoginResponseData SendLoginRequest(
     request.header.requestId = requestId;
     request.payload = dnf::EncodeLoginRequestPayload(authTicket);
 
-    auto dispatcher = context.CreateDispatcher(sessionId);
     auto workGuard = boost::asio::make_work_guard(context.ioContext);
     std::vector<std::uint8_t> responseBytes;
 
@@ -147,16 +146,60 @@ void TestLoginRequest()
         "valid-ticket",
         {10, profile.playerId}));
 
+    auto dispatcher = context.CreateDispatcher(100);
     const auto loginResponse = SendLoginRequest(
         context,
+        dispatcher,
         "valid-ticket",
-        100,
         42);
     assert(loginResponse.result == dnf::LoginSuccess);
     assert(loginResponse.sessionId == 100);
+
+    const auto authSnapshot = dispatcher.AuthSnapshot();
+    assert(authSnapshot.has_value());
+    assert(authSnapshot->authContext.accountId == 10);
+    assert(authSnapshot->authContext.playerId == profile.playerId);
+    assert(authSnapshot->profile.name == "Mock");
+
+    dnf::Packet channelRequest;
+    channelRequest.header.type = dnf::ChannelListRequest;
+    channelRequest.header.requestId = 43;
+    channelRequest.payload = dnf::EncodeChannelListRequestPayload();
+
+    bool responseReceived = false;
+    dispatcher.DispatchAsync(
+        std::move(channelRequest),
+        [&responseReceived](std::vector<std::uint8_t>)
+        {
+            responseReceived = true;
+        });
+    assert(responseReceived);
+
+    assert(context.authTicketVerifier.RegisterTicket(
+        "second-ticket",
+        {10, profile.playerId}));
+    dnf::Packet secondLoginRequest;
+    secondLoginRequest.header.type = dnf::LoginRequest;
+    secondLoginRequest.payload =
+        dnf::EncodeLoginRequestPayload("second-ticket");
+
+    bool duplicateLoginRejected = false;
+    try
+    {
+        dispatcher.DispatchAsync(
+            std::move(secondLoginRequest),
+            [](std::vector<std::uint8_t>) {});
+    }
+    catch (const std::runtime_error&)
+    {
+        duplicateLoginRejected = true;
+    }
+
+    assert(duplicateLoginRejected);
+    assert(context.authTicketVerifier.TicketCount() == 1);
 }
 
-void TestAsyncDispatch()
+void TestUnauthenticatedAsyncDispatchIsRejected()
 {
     TestContext context;
     dnf::Packet request;
@@ -166,22 +209,20 @@ void TestAsyncDispatch()
 
     auto dispatcher = context.CreateDispatcher(101);
 
-    bool responseReceived = false;
-    dispatcher.DispatchAsync(
-        std::move(request),
-        [&responseReceived](std::vector<std::uint8_t> responseBytes)
-        {
-            dnf::ReceiveBuffer buffer;
-            buffer.Append(responseBytes);
+    bool errorOccurred = false;
 
-            dnf::Packet response;
-            assert(buffer.TryPop(response));
-            assert(response.header.type == dnf::ChannelListResponse);
-            assert(response.header.requestId == 43);
-            responseReceived = true;
-        });
+    try
+    {
+        dispatcher.DispatchAsync(
+            std::move(request),
+            [](std::vector<std::uint8_t>) {});
+    }
+    catch (const std::runtime_error&)
+    {
+        errorOccurred = true;
+    }
 
-    assert(responseReceived);
+    assert(errorOccurred);
 }
 
 void TestAsyncDispatchRequiresResponseHandler()
@@ -364,13 +405,15 @@ void TestJoinChannelRequest()
 void TestInvalidLoginRequest()
 {
     TestContext context;
+    auto dispatcher = context.CreateDispatcher(100);
     const auto loginResponse = SendLoginRequest(
         context,
+        dispatcher,
         "missing-ticket",
-        100,
         43);
     assert(loginResponse.result == dnf::InvalidAuthTicket);
     assert(loginResponse.sessionId == 0);
+    assert(!dispatcher.AuthSnapshot().has_value());
 }
 
 void TestMissingPlayerLoginRequest()
@@ -380,13 +423,15 @@ void TestMissingPlayerLoginRequest()
         "missing-player-ticket",
         {10, 9999}));
 
+    auto dispatcher = context.CreateDispatcher(100);
     const auto loginResponse = SendLoginRequest(
         context,
+        dispatcher,
         "missing-player-ticket",
-        100,
         44);
     assert(loginResponse.result == dnf::LoginPlayerNotFound);
     assert(loginResponse.sessionId == 0);
+    assert(!dispatcher.AuthSnapshot().has_value());
 }
 
 dnf::CreatePartyResponseData SendCreatePartyRequest(
@@ -828,7 +873,7 @@ void TestConnectionInfoFailures()
 int main()
 {
     TestLoginRequest();
-    TestAsyncDispatch();
+    TestUnauthenticatedAsyncDispatchIsRejected();
     TestAsyncDispatchRequiresResponseHandler();
     TestInvalidLoginRequest();
     TestMissingPlayerLoginRequest();

@@ -59,6 +59,7 @@ add_library(dnf_core
     src/ReceiveBuffer.cpp
     src/RoomState.cpp
     src/ServerApplication.cpp
+    src/SessionAuthState.cpp
     src/SessionManager.cpp
     src/SkillCatalog.cpp
     src/SqliteDatabase.cpp
@@ -106,6 +107,11 @@ add_executable(receive_buffer_test tests/ReceiveBufferTest.cpp)
 target_link_libraries(receive_buffer_test PRIVATE dnf_core)
 
 add_test(NAME receive_buffer_test COMMAND receive_buffer_test)
+
+add_executable(session_auth_state_test tests/SessionAuthStateTest.cpp)
+target_link_libraries(session_auth_state_test PRIVATE dnf_core)
+
+add_test(NAME session_auth_state_test COMMAND session_auth_state_test)
 
 add_executable(packet_dispatcher_test tests/PacketDispatcherTest.cpp)
 target_link_libraries(packet_dispatcher_test PRIVATE dnf_core)

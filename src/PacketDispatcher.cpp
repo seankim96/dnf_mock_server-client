@@ -55,6 +55,7 @@ PacketDispatcher::PacketDispatcher(
       dungeonManager_(dungeonManager),
       dungeonUdpManager_(dungeonUdpManager),
       playerLoginService_(playerLoginService),
+      authState_(std::make_shared<SessionAuthState>()),
       sessionId_(sessionId)
 {
 }
@@ -110,13 +111,28 @@ void PacketDispatcher::DispatchAsync(
 
     if (request.header.type == LoginRequest)
     {
+        if (authState_->IsAuthenticated())
+        {
+            throw std::runtime_error("Session is already authenticated");
+        }
+
         HandleLoginRequestAsync(
             std::move(request),
             std::move(responseHandler));
         return;
     }
 
+    if (!authState_->IsAuthenticated())
+    {
+        throw std::runtime_error("Authentication is required");
+    }
+
     responseHandler(Dispatch(request));
+}
+
+std::optional<SessionAuthSnapshot> PacketDispatcher::AuthSnapshot() const
+{
+    return authState_->Snapshot();
 }
 
 void PacketDispatcher::HandleLoginRequestAsync(
@@ -127,15 +143,27 @@ void PacketDispatcher::HandleLoginRequestAsync(
         DecodeLoginRequestPayload(request.payload);
     const std::uint32_t requestId = request.header.requestId;
     const SessionId sessionId = sessionId_;
+    const std::shared_ptr<SessionAuthState> authState = authState_;
 
     playerLoginService_.Login(
         std::move(authTicket),
         [requestId,
          sessionId,
+         authState,
          responseHandler = std::move(responseHandler)](
             PlayerLoginResult loginResult) mutable
         {
-            const LoginResult result = ToLoginResult(loginResult.status);
+            LoginResult result = ToLoginResult(loginResult.status);
+            if (result == LoginSuccess &&
+                (!loginResult.authContext.has_value() ||
+                 !loginResult.profile.has_value() ||
+                 !authState->Authenticate(
+                     loginResult.authContext.value(),
+                     loginResult.profile.value())))
+            {
+                result = LoginStorageError;
+            }
+
             const SessionId responseSessionId =
                 result == LoginSuccess ? sessionId : 0;
             const auto responsePayload = EncodeLoginResponsePayload(
