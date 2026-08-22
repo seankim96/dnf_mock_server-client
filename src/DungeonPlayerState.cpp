@@ -1,5 +1,6 @@
 #include "DungeonPlayerState.h"
 
+#include <algorithm>
 #include <stdexcept>
 
 namespace dnf
@@ -63,7 +64,7 @@ Position DungeonPlayerState::CurrentPosition() const
 DungeonPlayerSnapshot DungeonPlayerState::Snapshot() const
 {
     std::lock_guard lock(mutex_);
-    return {
+    DungeonPlayerSnapshot snapshot{
         roomId_,
         position_,
         currentHp_,
@@ -72,6 +73,23 @@ DungeonPlayerSnapshot DungeonPlayerState::Snapshot() const
         currentMp_,
         maxMp_,
         {actionSkillId_, actionPhase_, actionRemainingTicks_}};
+
+    snapshot.cooldowns.reserve(cooldowns_.size());
+    for (const auto& [skillId, remainingTicks] : cooldowns_)
+    {
+        snapshot.cooldowns.push_back({skillId, remainingTicks});
+    }
+
+    std::sort(
+        snapshot.cooldowns.begin(),
+        snapshot.cooldowns.end(),
+        [](const SkillCooldownSnapshot& left,
+           const SkillCooldownSnapshot& right)
+        {
+            return left.skillId < right.skillId;
+        });
+
+    return snapshot;
 }
 
 std::uint32_t DungeonPlayerState::CurrentHp() const

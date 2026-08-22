@@ -8,7 +8,7 @@
 
 namespace dnf
 {
-constexpr std::uint16_t DUNGEON_PROTOCOL_VERSION = 1;
+constexpr std::uint16_t DUNGEON_PROTOCOL_VERSION = 2;
 
 struct PlayerMovementMessage
 {

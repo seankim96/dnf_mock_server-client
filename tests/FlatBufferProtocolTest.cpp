@@ -28,7 +28,7 @@ void TestPlayerMovement()
 
     const auto message = Dnf::Protocol::CreateDungeonMessage(
         builder,
-        1,
+        2,
         5001,
         Dnf::Protocol::DungeonPayload_PlayerMovement,
         movement.Union());
@@ -42,7 +42,7 @@ void TestPlayerMovement()
 
     const auto* received = Dnf::Protocol::GetDungeonMessage(
         builder.GetBufferPointer());
-    assert(received->protocol_version() == 1);
+    assert(received->protocol_version() == 2);
     assert(received->dungeon_id() == 5001);
 
     const auto* receivedMovement = received->payload_as_PlayerMovement();
@@ -72,7 +72,13 @@ void TestDungeonSnapshot()
         1,
         &position,
         80,
-        100);
+        100,
+        90,
+        100,
+        true,
+        1001,
+        Dnf::Protocol::SkillActionPhase_Active,
+        2);
 
     const std::vector<flatbuffers::Offset<Dnf::Protocol::PlayerSnapshot>>
         playerOffsets = {player};
@@ -95,11 +101,12 @@ void TestDungeonSnapshot()
         builder,
         77,
         players,
-        enemies);
+        enemies,
+        Dnf::Protocol::DungeonRunState_Running);
 
     const auto message = Dnf::Protocol::CreateDungeonMessage(
         builder,
-        1,
+        2,
         5001,
         Dnf::Protocol::DungeonPayload_DungeonSnapshot,
         snapshot.Union());

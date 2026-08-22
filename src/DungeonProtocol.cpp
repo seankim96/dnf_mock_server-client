@@ -70,6 +70,40 @@ bool IsValid(const UdpHeartbeatMessage& heartbeat)
     return heartbeat.dungeonId != 0 &&
            heartbeat.sessionId != 0;
 }
+
+Dnf::Protocol::SkillActionPhase ToProtocolSkillPhase(
+    SkillActionPhase phase)
+{
+    switch (phase)
+    {
+    case SkillActionPhase::Idle:
+        return Dnf::Protocol::SkillActionPhase_Idle;
+    case SkillActionPhase::Startup:
+        return Dnf::Protocol::SkillActionPhase_Startup;
+    case SkillActionPhase::Active:
+        return Dnf::Protocol::SkillActionPhase_Active;
+    case SkillActionPhase::Recovery:
+        return Dnf::Protocol::SkillActionPhase_Recovery;
+    }
+
+    throw std::runtime_error("Unknown skill action phase");
+}
+
+Dnf::Protocol::DungeonRunState ToProtocolDungeonState(
+    DungeonState state)
+{
+    switch (state)
+    {
+    case DungeonState::Waiting:
+        return Dnf::Protocol::DungeonRunState_Waiting;
+    case DungeonState::Running:
+        return Dnf::Protocol::DungeonRunState_Running;
+    case DungeonState::Finished:
+        return Dnf::Protocol::DungeonRunState_Finished;
+    }
+
+    throw std::runtime_error("Unknown dungeon state");
+}
 } // namespace
 
 std::vector<std::uint8_t> EncodePlayerMovement(
@@ -429,13 +463,35 @@ std::vector<std::uint8_t> EncodeDungeonSnapshot(
             snapshot.position.y,
             snapshot.position.z);
 
+        std::vector<flatbuffers::Offset<
+            Dnf::Protocol::SkillCooldownSnapshot>> cooldowns;
+        cooldowns.reserve(snapshot.cooldowns.size());
+
+        for (const SkillCooldownSnapshot& cooldown : snapshot.cooldowns)
+        {
+            cooldowns.push_back(
+                Dnf::Protocol::CreateSkillCooldownSnapshot(
+                    builder,
+                    cooldown.skillId,
+                    cooldown.remainingTicks));
+        }
+
+        const auto cooldownVector = builder.CreateVector(cooldowns);
+
         players.push_back(Dnf::Protocol::CreatePlayerSnapshot(
             builder,
             sessionId,
             snapshot.roomId,
             &position,
             snapshot.currentMp,
-            snapshot.maxMp));
+            snapshot.maxMp,
+            snapshot.currentHp,
+            snapshot.maxHp,
+            snapshot.alive,
+            snapshot.skillAction.skillId,
+            ToProtocolSkillPhase(snapshot.skillAction.phase),
+            snapshot.skillAction.remainingTicks,
+            cooldownVector));
     }
 
     const auto playerVector = builder.CreateVector(players);
@@ -467,7 +523,8 @@ std::vector<std::uint8_t> EncodeDungeonSnapshot(
         builder,
         serverTick,
         playerVector,
-        enemyVector);
+        enemyVector,
+        ToProtocolDungeonState(dungeon.State()));
 
     const auto message = Dnf::Protocol::CreateDungeonMessage(
         builder,

@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <mutex>
 #include <unordered_map>
+#include <vector>
 
 namespace dnf
 {
@@ -45,6 +46,12 @@ struct SkillActionSnapshot
     std::uint32_t remainingTicks = 0;
 };
 
+struct SkillCooldownSnapshot
+{
+    SkillId skillId = 0;
+    std::uint32_t remainingTicks = 0;
+};
+
 struct DungeonPlayerSnapshot
 {
     RoomId roomId = 0;
@@ -55,6 +62,7 @@ struct DungeonPlayerSnapshot
     std::uint32_t currentMp = 0;
     std::uint32_t maxMp = 0;
     SkillActionSnapshot skillAction;
+    std::vector<SkillCooldownSnapshot> cooldowns;
 };
 
 class DungeonPlayerState

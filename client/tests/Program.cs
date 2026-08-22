@@ -672,15 +672,27 @@ static void TestDungeonProtocol()
     }
 
     Assert(decoded.ServerTick == 45 && decoded.Players.Count == 1 &&
+        decoded.State == DungeonStateData.Running &&
         decoded.Players[0].X == 100.0f && decoded.Players[0].Y == 250.0f &&
+        decoded.Players[0].CurrentHp == 90 &&
+        decoded.Players[0].MaxHp == 100 &&
+        decoded.Players[0].Alive &&
         decoded.Players[0].CurrentMp == 80 &&
-        decoded.Players[0].MaxMp == 100,
+        decoded.Players[0].MaxMp == 100 &&
+        decoded.Players[0].SkillId == 1001 &&
+        decoded.Players[0].SkillPhase == SkillPhaseData.Active &&
+        decoded.Players[0].SkillRemainingTicks == 2 &&
+        decoded.Players[0].RemainingCooldown(1001) == 30,
         "Dungeon snapshot values are incorrect.");
 
     Assert(!DungeonProtocolCodec.TryDecodeSnapshot(
         CreateTestSnapshotBytes(101, 100),
         out _),
         "Dungeon snapshot with MP above the maximum was accepted.");
+    Assert(!DungeonProtocolCodec.TryDecodeSnapshot(
+        CreateTestSnapshotBytes(currentHp: 101, maxHp: 100),
+        out _),
+        "Dungeon snapshot with HP above the maximum was accepted.");
 }
 
 static void TestTcpFlatBufferSchema()
@@ -1102,9 +1114,19 @@ static byte[] DungeonConnectionInfoResponseBytes(
 
 static byte[] CreateTestSnapshotBytes(
     uint currentMp = 80,
-    uint maxMp = 100)
+    uint maxMp = 100,
+    uint currentHp = 90,
+    uint maxHp = 100)
 {
     var builder = new FlatBufferBuilder(256);
+    Offset<SkillCooldownSnapshot> cooldown =
+        SkillCooldownSnapshot.CreateSkillCooldownSnapshot(
+            builder,
+            1001,
+            30);
+    VectorOffset cooldowns = PlayerSnapshot.CreateCooldownsVector(
+        builder,
+        new[] { cooldown });
     PlayerSnapshot.StartPlayerSnapshot(builder);
     PlayerSnapshot.AddSessionId(builder, 3);
     PlayerSnapshot.AddRoomId(builder, 1);
@@ -1112,6 +1134,13 @@ static byte[] CreateTestSnapshotBytes(
     PlayerSnapshot.AddPosition(builder, position);
     PlayerSnapshot.AddCurrentMp(builder, currentMp);
     PlayerSnapshot.AddMaxMp(builder, maxMp);
+    PlayerSnapshot.AddCurrentHp(builder, currentHp);
+    PlayerSnapshot.AddMaxHp(builder, maxHp);
+    PlayerSnapshot.AddAlive(builder, currentHp > 0);
+    PlayerSnapshot.AddSkillId(builder, 1001);
+    PlayerSnapshot.AddSkillPhase(builder, SkillActionPhase.Active);
+    PlayerSnapshot.AddSkillRemainingTicks(builder, 2);
+    PlayerSnapshot.AddCooldowns(builder, cooldowns);
     Offset<PlayerSnapshot> player = PlayerSnapshot.EndPlayerSnapshot(builder);
     VectorOffset players = DungeonSnapshot.CreatePlayersVector(
         builder,
@@ -1123,10 +1152,11 @@ static byte[] CreateTestSnapshotBytes(
         builder,
         45,
         players,
-        enemies);
+        enemies,
+        DungeonRunState.Running);
     Offset<DungeonMessage> snapshotMessage = DungeonMessage.CreateDungeonMessage(
         builder,
-        1,
+        DungeonProtocolCodec.ProtocolVersion,
         9,
         DungeonPayload.DungeonSnapshot,
         snapshot.Value);
@@ -1145,7 +1175,7 @@ static byte[] CreateUdpHelloAckBytes(
         serverTick);
     Offset<DungeonMessage> message = DungeonMessage.CreateDungeonMessage(
         builder,
-        1,
+        DungeonProtocolCodec.ProtocolVersion,
         9,
         DungeonPayload.UdpHelloAck,
         ack.Value);

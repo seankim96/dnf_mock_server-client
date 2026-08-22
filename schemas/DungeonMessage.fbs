@@ -6,6 +6,24 @@ struct Vec3 {
   z:float;
 }
 
+enum DungeonRunState : ubyte {
+  Waiting = 0,
+  Running = 1,
+  Finished = 2
+}
+
+enum SkillActionPhase : ubyte {
+  Idle = 0,
+  Startup = 1,
+  Active = 2,
+  Recovery = 3
+}
+
+table SkillCooldownSnapshot {
+  skill_id:uint;
+  remaining_ticks:uint;
+}
+
 table PlayerMovement {
   sequence:uint;
   move_x:float;
@@ -19,6 +37,13 @@ table PlayerSnapshot {
   position:Vec3;
   current_mp:uint;
   max_mp:uint;
+  current_hp:uint;
+  max_hp:uint;
+  alive:bool = true;
+  skill_id:uint;
+  skill_phase:SkillActionPhase = Idle;
+  skill_remaining_ticks:uint;
+  cooldowns:[SkillCooldownSnapshot];
 }
 
 table EnemySnapshot {
@@ -34,6 +59,7 @@ table DungeonSnapshot {
   server_tick:uint;
   players:[PlayerSnapshot];
   enemies:[EnemySnapshot];
+  state:DungeonRunState = Waiting;
 }
 
 table UdpHello {
@@ -73,7 +99,7 @@ union DungeonPayload {
 }
 
 table DungeonMessage {
-  protocol_version:ushort = 1;
+  protocol_version:ushort = 2;
   dungeon_id:ulong;
   payload:DungeonPayload;
 }

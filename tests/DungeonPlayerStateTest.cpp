@@ -110,6 +110,7 @@ void TestManaAndSkillCooldown()
     const dnf::DungeonPlayerSnapshot snapshot = player.Snapshot();
     assert(snapshot.currentMp == 0);
     assert(snapshot.maxMp == 20);
+    assert(snapshot.cooldowns.empty());
 }
 
 void TestSkillActionPhases()
@@ -121,6 +122,11 @@ void TestSkillActionPhases()
 
     assert(player.BeginSkill(2001, 10, 10, 2, 1, 2) ==
            dnf::BeginSkillResult::Success);
+
+    const dnf::DungeonPlayerSnapshot snapshot = player.Snapshot();
+    assert(snapshot.cooldowns.size() == 1);
+    assert(snapshot.cooldowns[0].skillId == 2001);
+    assert(snapshot.cooldowns[0].remainingTicks == 10);
 
     dnf::SkillActionSnapshot action = player.CurrentSkillAction();
     assert(action.skillId == 2001);

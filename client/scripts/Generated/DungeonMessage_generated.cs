@@ -9,6 +9,21 @@ using global::System;
 using global::System.Collections.Generic;
 using global::Google.FlatBuffers;
 
+public enum DungeonRunState : byte
+{
+  Waiting = 0,
+  Running = 1,
+  Finished = 2,
+};
+
+public enum SkillActionPhase : byte
+{
+  Idle = 0,
+  Startup = 1,
+  Active = 2,
+  Recovery = 3,
+};
+
 public enum UdpHelloAckResult : byte
 {
   Success = 0,
@@ -81,6 +96,48 @@ public struct Vec3 : IFlatbufferObject
   }
 }
 
+public struct SkillCooldownSnapshot : IFlatbufferObject
+{
+  private Table __p;
+  public ByteBuffer ByteBuffer { get { return __p.bb; } }
+  public static void ValidateVersion() { FlatBufferConstants.FLATBUFFERS_25_2_10(); }
+  public static SkillCooldownSnapshot GetRootAsSkillCooldownSnapshot(ByteBuffer _bb) { return GetRootAsSkillCooldownSnapshot(_bb, new SkillCooldownSnapshot()); }
+  public static SkillCooldownSnapshot GetRootAsSkillCooldownSnapshot(ByteBuffer _bb, SkillCooldownSnapshot obj) { return (obj.__assign(_bb.GetInt(_bb.Position) + _bb.Position, _bb)); }
+  public void __init(int _i, ByteBuffer _bb) { __p = new Table(_i, _bb); }
+  public SkillCooldownSnapshot __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
+
+  public uint SkillId { get { int o = __p.__offset(4); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
+  public uint RemainingTicks { get { int o = __p.__offset(6); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
+
+  public static Offset<Dnf.Protocol.SkillCooldownSnapshot> CreateSkillCooldownSnapshot(FlatBufferBuilder builder,
+      uint skill_id = 0,
+      uint remaining_ticks = 0) {
+    builder.StartTable(2);
+    SkillCooldownSnapshot.AddRemainingTicks(builder, remaining_ticks);
+    SkillCooldownSnapshot.AddSkillId(builder, skill_id);
+    return SkillCooldownSnapshot.EndSkillCooldownSnapshot(builder);
+  }
+
+  public static void StartSkillCooldownSnapshot(FlatBufferBuilder builder) { builder.StartTable(2); }
+  public static void AddSkillId(FlatBufferBuilder builder, uint skillId) { builder.AddUint(0, skillId, 0); }
+  public static void AddRemainingTicks(FlatBufferBuilder builder, uint remainingTicks) { builder.AddUint(1, remainingTicks, 0); }
+  public static Offset<Dnf.Protocol.SkillCooldownSnapshot> EndSkillCooldownSnapshot(FlatBufferBuilder builder) {
+    int o = builder.EndTable();
+    return new Offset<Dnf.Protocol.SkillCooldownSnapshot>(o);
+  }
+}
+
+
+static public class SkillCooldownSnapshotVerify
+{
+  static public bool Verify(Google.FlatBuffers.Verifier verifier, uint tablePos)
+  {
+    return verifier.VerifyTableStart(tablePos)
+      && verifier.VerifyField(tablePos, 4 /*SkillId*/, 4 /*uint*/, 4, false)
+      && verifier.VerifyField(tablePos, 6 /*RemainingTicks*/, 4 /*uint*/, 4, false)
+      && verifier.VerifyTableEnd(tablePos);
+  }
+}
 public struct PlayerMovement : IFlatbufferObject
 {
   private Table __p;
@@ -148,13 +205,33 @@ public struct PlayerSnapshot : IFlatbufferObject
   public Dnf.Protocol.Vec3? Position { get { int o = __p.__offset(8); return o != 0 ? (Dnf.Protocol.Vec3?)(new Dnf.Protocol.Vec3()).__assign(o + __p.bb_pos, __p.bb) : null; } }
   public uint CurrentMp { get { int o = __p.__offset(10); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
   public uint MaxMp { get { int o = __p.__offset(12); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
+  public uint CurrentHp { get { int o = __p.__offset(14); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
+  public uint MaxHp { get { int o = __p.__offset(16); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
+  public bool Alive { get { int o = __p.__offset(18); return o != 0 ? 0!=__p.bb.Get(o + __p.bb_pos) : (bool)true; } }
+  public uint SkillId { get { int o = __p.__offset(20); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
+  public Dnf.Protocol.SkillActionPhase SkillPhase { get { int o = __p.__offset(22); return o != 0 ? (Dnf.Protocol.SkillActionPhase)__p.bb.Get(o + __p.bb_pos) : Dnf.Protocol.SkillActionPhase.Idle; } }
+  public uint SkillRemainingTicks { get { int o = __p.__offset(24); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
+  public Dnf.Protocol.SkillCooldownSnapshot? Cooldowns(int j) { int o = __p.__offset(26); return o != 0 ? (Dnf.Protocol.SkillCooldownSnapshot?)(new Dnf.Protocol.SkillCooldownSnapshot()).__assign(__p.__indirect(__p.__vector(o) + j * 4), __p.bb) : null; }
+  public int CooldownsLength { get { int o = __p.__offset(26); return o != 0 ? __p.__vector_len(o) : 0; } }
 
-  public static void StartPlayerSnapshot(FlatBufferBuilder builder) { builder.StartTable(5); }
+  public static void StartPlayerSnapshot(FlatBufferBuilder builder) { builder.StartTable(12); }
   public static void AddSessionId(FlatBufferBuilder builder, ulong sessionId) { builder.AddUlong(0, sessionId, 0); }
   public static void AddRoomId(FlatBufferBuilder builder, uint roomId) { builder.AddUint(1, roomId, 0); }
   public static void AddPosition(FlatBufferBuilder builder, Offset<Dnf.Protocol.Vec3> positionOffset) { builder.AddStruct(2, positionOffset.Value, 0); }
   public static void AddCurrentMp(FlatBufferBuilder builder, uint currentMp) { builder.AddUint(3, currentMp, 0); }
   public static void AddMaxMp(FlatBufferBuilder builder, uint maxMp) { builder.AddUint(4, maxMp, 0); }
+  public static void AddCurrentHp(FlatBufferBuilder builder, uint currentHp) { builder.AddUint(5, currentHp, 0); }
+  public static void AddMaxHp(FlatBufferBuilder builder, uint maxHp) { builder.AddUint(6, maxHp, 0); }
+  public static void AddAlive(FlatBufferBuilder builder, bool alive) { builder.AddBool(7, alive, true); }
+  public static void AddSkillId(FlatBufferBuilder builder, uint skillId) { builder.AddUint(8, skillId, 0); }
+  public static void AddSkillPhase(FlatBufferBuilder builder, Dnf.Protocol.SkillActionPhase skillPhase) { builder.AddByte(9, (byte)skillPhase, 0); }
+  public static void AddSkillRemainingTicks(FlatBufferBuilder builder, uint skillRemainingTicks) { builder.AddUint(10, skillRemainingTicks, 0); }
+  public static void AddCooldowns(FlatBufferBuilder builder, VectorOffset cooldownsOffset) { builder.AddOffset(11, cooldownsOffset.Value, 0); }
+  public static VectorOffset CreateCooldownsVector(FlatBufferBuilder builder, Offset<Dnf.Protocol.SkillCooldownSnapshot>[] data) { builder.StartVector(4, data.Length, 4); for (int i = data.Length - 1; i >= 0; i--) builder.AddOffset(data[i].Value); return builder.EndVector(); }
+  public static VectorOffset CreateCooldownsVectorBlock(FlatBufferBuilder builder, Offset<Dnf.Protocol.SkillCooldownSnapshot>[] data) { builder.StartVector(4, data.Length, 4); builder.Add(data); return builder.EndVector(); }
+  public static VectorOffset CreateCooldownsVectorBlock(FlatBufferBuilder builder, ArraySegment<Offset<Dnf.Protocol.SkillCooldownSnapshot>> data) { builder.StartVector(4, data.Count, 4); builder.Add(data); return builder.EndVector(); }
+  public static VectorOffset CreateCooldownsVectorBlock(FlatBufferBuilder builder, IntPtr dataPtr, int sizeInBytes) { builder.StartVector(1, sizeInBytes, 1); builder.Add<Offset<Dnf.Protocol.SkillCooldownSnapshot>>(dataPtr, sizeInBytes); return builder.EndVector(); }
+  public static void StartCooldownsVector(FlatBufferBuilder builder, int numElems) { builder.StartVector(4, numElems, 4); }
   public static Offset<Dnf.Protocol.PlayerSnapshot> EndPlayerSnapshot(FlatBufferBuilder builder) {
     int o = builder.EndTable();
     return new Offset<Dnf.Protocol.PlayerSnapshot>(o);
@@ -172,6 +249,13 @@ static public class PlayerSnapshotVerify
       && verifier.VerifyField(tablePos, 8 /*Position*/, 12 /*Dnf.Protocol.Vec3*/, 4, false)
       && verifier.VerifyField(tablePos, 10 /*CurrentMp*/, 4 /*uint*/, 4, false)
       && verifier.VerifyField(tablePos, 12 /*MaxMp*/, 4 /*uint*/, 4, false)
+      && verifier.VerifyField(tablePos, 14 /*CurrentHp*/, 4 /*uint*/, 4, false)
+      && verifier.VerifyField(tablePos, 16 /*MaxHp*/, 4 /*uint*/, 4, false)
+      && verifier.VerifyField(tablePos, 18 /*Alive*/, 1 /*bool*/, 1, false)
+      && verifier.VerifyField(tablePos, 20 /*SkillId*/, 4 /*uint*/, 4, false)
+      && verifier.VerifyField(tablePos, 22 /*SkillPhase*/, 1 /*Dnf.Protocol.SkillActionPhase*/, 1, false)
+      && verifier.VerifyField(tablePos, 24 /*SkillRemainingTicks*/, 4 /*uint*/, 4, false)
+      && verifier.VerifyVectorOfTables(tablePos, 26 /*Cooldowns*/, Dnf.Protocol.SkillCooldownSnapshotVerify.Verify, false)
       && verifier.VerifyTableEnd(tablePos);
   }
 }
@@ -235,19 +319,22 @@ public struct DungeonSnapshot : IFlatbufferObject
   public int PlayersLength { get { int o = __p.__offset(6); return o != 0 ? __p.__vector_len(o) : 0; } }
   public Dnf.Protocol.EnemySnapshot? Enemies(int j) { int o = __p.__offset(8); return o != 0 ? (Dnf.Protocol.EnemySnapshot?)(new Dnf.Protocol.EnemySnapshot()).__assign(__p.__indirect(__p.__vector(o) + j * 4), __p.bb) : null; }
   public int EnemiesLength { get { int o = __p.__offset(8); return o != 0 ? __p.__vector_len(o) : 0; } }
+  public Dnf.Protocol.DungeonRunState State { get { int o = __p.__offset(10); return o != 0 ? (Dnf.Protocol.DungeonRunState)__p.bb.Get(o + __p.bb_pos) : Dnf.Protocol.DungeonRunState.Waiting; } }
 
   public static Offset<Dnf.Protocol.DungeonSnapshot> CreateDungeonSnapshot(FlatBufferBuilder builder,
       uint server_tick = 0,
       VectorOffset playersOffset = default(VectorOffset),
-      VectorOffset enemiesOffset = default(VectorOffset)) {
-    builder.StartTable(3);
+      VectorOffset enemiesOffset = default(VectorOffset),
+      Dnf.Protocol.DungeonRunState state = Dnf.Protocol.DungeonRunState.Waiting) {
+    builder.StartTable(4);
     DungeonSnapshot.AddEnemies(builder, enemiesOffset);
     DungeonSnapshot.AddPlayers(builder, playersOffset);
     DungeonSnapshot.AddServerTick(builder, server_tick);
+    DungeonSnapshot.AddState(builder, state);
     return DungeonSnapshot.EndDungeonSnapshot(builder);
   }
 
-  public static void StartDungeonSnapshot(FlatBufferBuilder builder) { builder.StartTable(3); }
+  public static void StartDungeonSnapshot(FlatBufferBuilder builder) { builder.StartTable(4); }
   public static void AddServerTick(FlatBufferBuilder builder, uint serverTick) { builder.AddUint(0, serverTick, 0); }
   public static void AddPlayers(FlatBufferBuilder builder, VectorOffset playersOffset) { builder.AddOffset(1, playersOffset.Value, 0); }
   public static VectorOffset CreatePlayersVector(FlatBufferBuilder builder, Offset<Dnf.Protocol.PlayerSnapshot>[] data) { builder.StartVector(4, data.Length, 4); for (int i = data.Length - 1; i >= 0; i--) builder.AddOffset(data[i].Value); return builder.EndVector(); }
@@ -261,6 +348,7 @@ public struct DungeonSnapshot : IFlatbufferObject
   public static VectorOffset CreateEnemiesVectorBlock(FlatBufferBuilder builder, ArraySegment<Offset<Dnf.Protocol.EnemySnapshot>> data) { builder.StartVector(4, data.Count, 4); builder.Add(data); return builder.EndVector(); }
   public static VectorOffset CreateEnemiesVectorBlock(FlatBufferBuilder builder, IntPtr dataPtr, int sizeInBytes) { builder.StartVector(1, sizeInBytes, 1); builder.Add<Offset<Dnf.Protocol.EnemySnapshot>>(dataPtr, sizeInBytes); return builder.EndVector(); }
   public static void StartEnemiesVector(FlatBufferBuilder builder, int numElems) { builder.StartVector(4, numElems, 4); }
+  public static void AddState(FlatBufferBuilder builder, Dnf.Protocol.DungeonRunState state) { builder.AddByte(3, (byte)state, 0); }
   public static Offset<Dnf.Protocol.DungeonSnapshot> EndDungeonSnapshot(FlatBufferBuilder builder) {
     int o = builder.EndTable();
     return new Offset<Dnf.Protocol.DungeonSnapshot>(o);
@@ -276,6 +364,7 @@ static public class DungeonSnapshotVerify
       && verifier.VerifyField(tablePos, 4 /*ServerTick*/, 4 /*uint*/, 4, false)
       && verifier.VerifyVectorOfTables(tablePos, 6 /*Players*/, Dnf.Protocol.PlayerSnapshotVerify.Verify, false)
       && verifier.VerifyVectorOfTables(tablePos, 8 /*Enemies*/, Dnf.Protocol.EnemySnapshotVerify.Verify, false)
+      && verifier.VerifyField(tablePos, 10 /*State*/, 1 /*Dnf.Protocol.DungeonRunState*/, 1, false)
       && verifier.VerifyTableEnd(tablePos);
   }
 }
@@ -464,7 +553,7 @@ public struct DungeonMessage : IFlatbufferObject
   public void __init(int _i, ByteBuffer _bb) { __p = new Table(_i, _bb); }
   public DungeonMessage __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
-  public ushort ProtocolVersion { get { int o = __p.__offset(4); return o != 0 ? __p.bb.GetUshort(o + __p.bb_pos) : (ushort)1; } }
+  public ushort ProtocolVersion { get { int o = __p.__offset(4); return o != 0 ? __p.bb.GetUshort(o + __p.bb_pos) : (ushort)2; } }
   public ulong DungeonId { get { int o = __p.__offset(6); return o != 0 ? __p.bb.GetUlong(o + __p.bb_pos) : (ulong)0; } }
   public Dnf.Protocol.DungeonPayload PayloadType { get { int o = __p.__offset(8); return o != 0 ? (Dnf.Protocol.DungeonPayload)__p.bb.Get(o + __p.bb_pos) : Dnf.Protocol.DungeonPayload.NONE; } }
   public TTable? Payload<TTable>() where TTable : struct, IFlatbufferObject { int o = __p.__offset(10); return o != 0 ? (TTable?)__p.__union<TTable>(o + __p.bb_pos) : null; }
@@ -476,7 +565,7 @@ public struct DungeonMessage : IFlatbufferObject
   public Dnf.Protocol.UdpHelloAck PayloadAsUdpHelloAck() { return Payload<Dnf.Protocol.UdpHelloAck>().Value; }
 
   public static Offset<Dnf.Protocol.DungeonMessage> CreateDungeonMessage(FlatBufferBuilder builder,
-      ushort protocol_version = 1,
+      ushort protocol_version = 2,
       ulong dungeon_id = 0,
       Dnf.Protocol.DungeonPayload payload_type = Dnf.Protocol.DungeonPayload.NONE,
       int payloadOffset = 0) {
@@ -489,7 +578,7 @@ public struct DungeonMessage : IFlatbufferObject
   }
 
   public static void StartDungeonMessage(FlatBufferBuilder builder) { builder.StartTable(4); }
-  public static void AddProtocolVersion(FlatBufferBuilder builder, ushort protocolVersion) { builder.AddUshort(0, protocolVersion, 1); }
+  public static void AddProtocolVersion(FlatBufferBuilder builder, ushort protocolVersion) { builder.AddUshort(0, protocolVersion, 2); }
   public static void AddDungeonId(FlatBufferBuilder builder, ulong dungeonId) { builder.AddUlong(1, dungeonId, 0); }
   public static void AddPayloadType(FlatBufferBuilder builder, Dnf.Protocol.DungeonPayload payloadType) { builder.AddByte(2, (byte)payloadType, 0); }
   public static void AddPayload(FlatBufferBuilder builder, int payloadOffset) { builder.AddOffset(3, payloadOffset, 0); }

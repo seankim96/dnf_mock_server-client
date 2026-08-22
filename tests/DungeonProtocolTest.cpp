@@ -271,8 +271,19 @@ void TestDungeonSnapshotEncoding()
     assert(firstPlayer->room_id() == 1);
     assert(firstPlayer->position()->x() == 300.0f);
     assert(firstPlayer->position()->y() == 200.0f);
+    assert(firstPlayer->current_hp() == 100);
+    assert(firstPlayer->max_hp() == 100);
+    assert(firstPlayer->alive());
     assert(firstPlayer->current_mp() == 80);
     assert(firstPlayer->max_mp() == 100);
+    assert(firstPlayer->skill_id() == 1001);
+    assert(firstPlayer->skill_phase() ==
+           Dnf::Protocol::SkillActionPhase_Startup);
+    assert(firstPlayer->skill_remaining_ticks() == 5);
+    assert(firstPlayer->cooldowns()->size() == 1);
+    assert(firstPlayer->cooldowns()->Get(0)->skill_id() == 1001);
+    assert(firstPlayer->cooldowns()->Get(0)->remaining_ticks() == 90);
+    assert(snapshot->state() == Dnf::Protocol::DungeonRunState_Running);
 
     assert(snapshot->enemies()->size() == 1);
     const Dnf::Protocol::EnemySnapshot* firstEnemy =

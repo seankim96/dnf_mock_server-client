@@ -7,7 +7,7 @@ namespace DnfMockClient.Protocol;
 
 public static class DungeonProtocolCodec
 {
-    public const ushort ProtocolVersion = 1;
+    public const ushort ProtocolVersion = 2;
 
     public static byte[] EncodeUdpHello(
         ulong dungeonId,
@@ -177,6 +177,12 @@ public static class DungeonProtocolCodec
             }
 
             DungeonSnapshot snapshot = message.PayloadAsDungeonSnapshot();
+            var dungeonState = (DungeonStateData)(byte)snapshot.State;
+            if (!Enum.IsDefined(typeof(DungeonStateData), dungeonState))
+            {
+                return false;
+            }
+
             var players = new List<PlayerSnapshotData>(snapshot.PlayersLength);
             var enemies = new List<EnemySnapshotData>(snapshot.EnemiesLength);
 
@@ -188,10 +194,48 @@ public static class DungeonProtocolCodec
                     return false;
                 }
 
-                if (player.Value.MaxMp == 0 ||
+                if (player.Value.MaxHp == 0 ||
+                    player.Value.CurrentHp > player.Value.MaxHp ||
+                    player.Value.Alive != (player.Value.CurrentHp > 0) ||
+                    player.Value.MaxMp == 0 ||
                     player.Value.CurrentMp > player.Value.MaxMp)
                 {
                     return false;
+                }
+
+                var skillPhase =
+                    (SkillPhaseData)(byte)player.Value.SkillPhase;
+                if (!Enum.IsDefined(typeof(SkillPhaseData), skillPhase) ||
+                    (skillPhase == SkillPhaseData.Idle &&
+                     (player.Value.SkillId != 0 ||
+                      player.Value.SkillRemainingTicks != 0)) ||
+                    (skillPhase != SkillPhaseData.Idle &&
+                     (player.Value.SkillId == 0 ||
+                      player.Value.SkillRemainingTicks == 0)))
+                {
+                    return false;
+                }
+
+                var cooldowns = new List<SkillCooldownData>(
+                    player.Value.CooldownsLength);
+                var cooldownSkillIds = new HashSet<uint>();
+                for (int cooldownIndex = 0;
+                     cooldownIndex < player.Value.CooldownsLength;
+                     cooldownIndex++)
+                {
+                    SkillCooldownSnapshot? cooldown =
+                        player.Value.Cooldowns(cooldownIndex);
+                    if (!cooldown.HasValue ||
+                        cooldown.Value.SkillId == 0 ||
+                        cooldown.Value.RemainingTicks == 0 ||
+                        !cooldownSkillIds.Add(cooldown.Value.SkillId))
+                    {
+                        return false;
+                    }
+
+                    cooldowns.Add(new SkillCooldownData(
+                        cooldown.Value.SkillId,
+                        cooldown.Value.RemainingTicks));
                 }
 
                 Vec3 position = player.Value.Position.Value;
@@ -201,8 +245,15 @@ public static class DungeonProtocolCodec
                     position.X,
                     position.Y,
                     position.Z,
+                    player.Value.CurrentHp,
+                    player.Value.MaxHp,
+                    player.Value.Alive,
                     player.Value.CurrentMp,
-                    player.Value.MaxMp));
+                    player.Value.MaxMp,
+                    player.Value.SkillId,
+                    skillPhase,
+                    player.Value.SkillRemainingTicks,
+                    cooldowns));
             }
 
             for (int index = 0; index < snapshot.EnemiesLength; index++)
@@ -228,6 +279,7 @@ public static class DungeonProtocolCodec
             output = new DungeonSnapshotData(
                 message.DungeonId,
                 snapshot.ServerTick,
+                dungeonState,
                 players,
                 enemies);
             return true;
