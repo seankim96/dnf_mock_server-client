@@ -117,7 +117,16 @@ enable_testing()
 add_test(NAME admin_help_test COMMAND dnf_admin --help)
 set_tests_properties(
     admin_help_test
-    PROPERTIES PASS_REGULAR_EXPRESSION "create-account"
+    PROPERTIES PASS_REGULAR_EXPRESSION "create-character"
+)
+
+add_test(
+    NAME admin_invalid_account_id_test
+    COMMAND dnf_admin create-character unused.db invalid Player_1
+)
+set_tests_properties(
+    admin_invalid_account_id_test
+    PROPERTIES WILL_FAIL TRUE
 )
 
 add_test(NAME auth_server_help_test COMMAND dnf_auth_server --help)
