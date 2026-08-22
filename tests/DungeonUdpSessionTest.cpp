@@ -1,5 +1,6 @@
 #include "DungeonProtocol.h"
 #include "DungeonUdpManager.h"
+#include "DungeonMessage_generated.h"
 
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/error.hpp>
@@ -7,12 +8,14 @@
 #include <boost/asio/ip/address_v4.hpp>
 #include <boost/asio/ip/udp.hpp>
 #include <boost/system/error_code.hpp>
+#include <flatbuffers/verifier.h>
 
 #include <cassert>
 #include <array>
 #include <chrono>
 #include <iostream>
 #include <thread>
+#include <vector>
 
 namespace
 {
@@ -32,6 +35,59 @@ bool WaitUntil(Predicate predicate)
     return false;
 }
 
+std::vector<std::uint8_t> ReceiveDatagram(
+    boost::asio::ip::udp::socket& socket,
+    boost::asio::ip::udp::endpoint& sender)
+{
+    socket.non_blocking(true);
+    std::array<std::uint8_t, dnf::MAX_DUNGEON_DATAGRAM_SIZE> buffer{};
+
+    for (int attempt = 0; attempt < 100; ++attempt)
+    {
+        boost::system::error_code error;
+        const std::size_t size = socket.receive_from(
+            boost::asio::buffer(buffer),
+            sender,
+            0,
+            error);
+
+        if (!error)
+        {
+            return {buffer.begin(), buffer.begin() + size};
+        }
+
+        assert(error == boost::asio::error::would_block ||
+               error == boost::asio::error::try_again);
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    }
+
+    assert(false);
+    return {};
+}
+
+void AssertHelloAck(
+    boost::asio::ip::udp::socket& socket,
+    std::uint16_t serverPort,
+    dnf::DungeonId dungeonId,
+    Dnf::Protocol::UdpHelloAckResult expectedResult,
+    std::uint32_t expectedServerTick)
+{
+    boost::asio::ip::udp::endpoint sender;
+    const std::vector<std::uint8_t> bytes =
+        ReceiveDatagram(socket, sender);
+
+    flatbuffers::Verifier verifier(bytes.data(), bytes.size());
+    assert(Dnf::Protocol::VerifyDungeonMessageBuffer(verifier));
+
+    const auto* message = Dnf::Protocol::GetDungeonMessage(bytes.data());
+    const auto* ack = message->payload_as_UdpHelloAck();
+    assert(sender.port() == serverPort);
+    assert(message->dungeon_id() == dungeonId);
+    assert(ack != nullptr);
+    assert(ack->result() == expectedResult);
+    assert(ack->server_tick() == expectedServerTick);
+}
+
 void TestUdpHelloRegistersEndpoint()
 {
     using boost::asio::ip::udp;
@@ -45,6 +101,7 @@ void TestUdpHelloRegistersEndpoint()
     assert(token.has_value());
     assert(!manager.AllParticipantsAuthenticated(5001));
     assert(!manager.AllParticipantsAuthenticated(9999));
+    manager.SetServerTick(37);
 
     boost::asio::io_context clientIoContext;
     udp::socket firstClient(clientIoContext);
@@ -59,8 +116,12 @@ void TestUdpHelloRegistersEndpoint()
         port.value());
 
     dnf::UdpHelloMessage hello;
-    hello.dungeonId = 5001;
     hello.sessionId = 100;
+    hello.dungeonId = 9999;
+    hello.token = token.value();
+    const auto wrongDungeonHello = dnf::EncodeUdpHello(hello);
+
+    hello.dungeonId = 5001;
     hello.token = token.value() ^ 1;
     if (hello.token == 0)
     {
@@ -100,12 +161,29 @@ void TestUdpHelloRegistersEndpoint()
     const bool preAuthenticationMovementRejected =
         manager.PendingMovementCount(5001) == 0;
 
+    firstClient.send_to(
+        boost::asio::buffer(wrongDungeonHello),
+        serverEndpoint);
+    AssertHelloAck(
+        firstClient,
+        port.value(),
+        9999,
+        Dnf::Protocol::UdpHelloAckResult_InvalidDungeon,
+        0);
+
     boost::system::error_code firstSendError;
     firstClient.send_to(
         boost::asio::buffer(wrongHello),
         serverEndpoint,
         0,
         firstSendError);
+
+    AssertHelloAck(
+        firstClient,
+        port.value(),
+        5001,
+        Dnf::Protocol::UdpHelloAckResult_AuthenticationFailed,
+        0);
 
     std::this_thread::sleep_for(std::chrono::milliseconds(30));
     const bool wrongTokenRejected =
@@ -129,6 +207,13 @@ void TestUdpHelloRegistersEndpoint()
 
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
+
+    AssertHelloAck(
+        firstClient,
+        port.value(),
+        5001,
+        Dnf::Protocol::UdpHelloAckResult_Success,
+        37);
 
     boost::system::error_code firstMovementError;
     firstClient.send_to(
@@ -177,6 +262,13 @@ void TestUdpHelloRegistersEndpoint()
         serverEndpoint,
         0,
         replaySendError);
+
+    AssertHelloAck(
+        secondClient,
+        port.value(),
+        5001,
+        Dnf::Protocol::UdpHelloAckResult_AuthenticationFailed,
+        0);
 
     boost::system::error_code foreignMovementError;
     secondClient.send_to(
@@ -296,6 +388,12 @@ void TestUdpHelloRegistersEndpoint()
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
     assert(manager.FindEndpoint(5001, 100).has_value());
+    AssertHelloAck(
+        firstClient,
+        port.value(),
+        5001,
+        Dnf::Protocol::UdpHelloAckResult_Success,
+        37);
 
     manager.Release(5001);
     serverThread.join();

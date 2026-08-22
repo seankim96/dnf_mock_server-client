@@ -98,6 +98,8 @@ void DungeonTickService::HandleTick(
     }
 
     ++tickCount_;
+    udpManager_.SetServerTick(
+        static_cast<std::uint32_t>(tickCount_));
 
     const auto now = std::chrono::steady_clock::now();
     const std::vector<DungeonId> waitingDungeonIds =

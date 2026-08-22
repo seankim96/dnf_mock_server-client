@@ -6,6 +6,7 @@
 
 #include <boost/asio/io_context.hpp>
 
+#include <atomic>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
@@ -34,6 +35,7 @@ public:
         DungeonId dungeonId,
         SessionId sessionId) const;
     bool AllParticipantsAuthenticated(DungeonId dungeonId) const;
+    void SetServerTick(std::uint32_t serverTick);
     void RefreshAllActivity(DungeonId dungeonId);
     std::vector<SessionId> RemoveInactiveEndpoints(
         DungeonId dungeonId,
@@ -55,6 +57,8 @@ public:
 private:
     boost::asio::io_context& ioContext_;
     std::random_device randomDevice_;
+    std::shared_ptr<std::atomic<std::uint32_t>> serverTick_ =
+        std::make_shared<std::atomic<std::uint32_t>>(0);
 
     mutable std::mutex mutex_;
     std::unordered_map<DungeonId, std::shared_ptr<DungeonUdpSession>> sessions_;

@@ -19,8 +19,10 @@ using boost::asio::ip::udp;
 DungeonUdpSession::DungeonUdpSession(
     DungeonId dungeonId,
     udp::socket socket,
-    TokenMap tokens)
+    TokenMap tokens,
+    std::shared_ptr<const std::atomic<std::uint32_t>> serverTick)
     : dungeonId_(dungeonId),
+      serverTick_(std::move(serverTick)),
       socket_(std::move(socket)),
       strand_(boost::asio::make_strand(socket_.get_executor())),
       port_(socket_.local_endpoint().port()),
@@ -257,10 +259,18 @@ void DungeonUdpSession::HandleReceive(
             receiveBuffer_.begin() + receivedSize);
 
         UdpHelloMessage hello;
-        if (DecodeUdpHello(bytes, hello) &&
-            hello.dungeonId == dungeonId_)
+        if (DecodeUdpHello(bytes, hello))
         {
-            HandleHello(hello);
+            if (hello.dungeonId == dungeonId_)
+            {
+                HandleHello(hello);
+            }
+            else
+            {
+                SendHelloAck(
+                    hello.dungeonId,
+                    UdpHelloResult::InvalidDungeon);
+            }
         }
         else
         {
@@ -296,24 +306,65 @@ void DungeonUdpSession::HandleReceive(
 
 void DungeonUdpSession::HandleHello(const UdpHelloMessage& hello)
 {
-    std::lock_guard lock(stateMutex_);
+    UdpHelloResult result = UdpHelloResult::AuthenticationFailed;
 
-    const auto tokenIt = tokens_.find(hello.sessionId);
-    if (tokenIt == tokens_.end() || tokenIt->second != hello.token)
+    {
+        std::lock_guard lock(stateMutex_);
+
+        const auto tokenIt = tokens_.find(hello.sessionId);
+        if (tokenIt != tokens_.end() && tokenIt->second == hello.token)
+        {
+            const auto endpointIt = endpoints_.find(hello.sessionId);
+            if (endpointIt == endpoints_.end())
+            {
+                endpoints_.emplace(hello.sessionId, senderEndpoint_);
+                lastActivity_[hello.sessionId] =
+                    std::chrono::steady_clock::now();
+                result = UdpHelloResult::Success;
+            }
+            else if (endpointIt->second == senderEndpoint_)
+            {
+                lastActivity_[hello.sessionId] =
+                    std::chrono::steady_clock::now();
+                result = UdpHelloResult::Success;
+            }
+        }
+    }
+
+    SendHelloAck(hello.dungeonId, result);
+}
+
+void DungeonUdpSession::SendHelloAck(
+    DungeonId requestedDungeonId,
+    UdpHelloResult result)
+{
+    if (stopped_)
     {
         return;
     }
 
-    const auto endpointIt = endpoints_.find(hello.sessionId);
-    if (endpointIt == endpoints_.end())
-    {
-        endpoints_.emplace(hello.sessionId, senderEndpoint_);
-        lastActivity_[hello.sessionId] = std::chrono::steady_clock::now();
-    }
-    else if (endpointIt->second == senderEndpoint_)
-    {
-        lastActivity_[hello.sessionId] = std::chrono::steady_clock::now();
-    }
+    const std::uint32_t serverTick =
+        result == UdpHelloResult::Success
+            ? serverTick_->load(std::memory_order_relaxed)
+            : 0;
+    const auto bytes =
+        std::make_shared<const std::vector<std::uint8_t>>(
+            EncodeUdpHelloAck(
+                {requestedDungeonId, result, serverTick}));
+    const auto destination =
+        std::make_shared<const udp::endpoint>(senderEndpoint_);
+    const auto self = shared_from_this();
+
+    socket_.async_send_to(
+        boost::asio::buffer(*bytes),
+        *destination,
+        boost::asio::bind_executor(
+            strand_,
+            [self, bytes, destination](
+                const boost::system::error_code&,
+                std::size_t)
+            {
+            }));
 }
 
 void DungeonUdpSession::HandleHeartbeat(

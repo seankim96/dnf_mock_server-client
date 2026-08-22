@@ -10,6 +10,7 @@
 #include <boost/system/error_code.hpp>
 
 #include <array>
+#include <atomic>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
@@ -47,7 +48,8 @@ public:
     DungeonUdpSession(
         DungeonId dungeonId,
         boost::asio::ip::udp::socket socket,
-        TokenMap tokens);
+        TokenMap tokens,
+        std::shared_ptr<const std::atomic<std::uint32_t>> serverTick);
 
     void Start();
     void Stop();
@@ -72,6 +74,9 @@ private:
         const boost::system::error_code& error,
         std::size_t receivedSize);
     void HandleHello(const UdpHelloMessage& hello);
+    void SendHelloAck(
+        DungeonId requestedDungeonId,
+        UdpHelloResult result);
     void HandleHeartbeat(const UdpHeartbeatMessage& heartbeat);
     void HandlePlayerMovement(const PlayerMovementMessage& movement);
     void HandlePlayerAttack(const PlayerAttackMessage& attack);
@@ -79,6 +84,7 @@ private:
         std::shared_ptr<const std::vector<std::uint8_t>> bytes);
 
     DungeonId dungeonId_;
+    std::shared_ptr<const std::atomic<std::uint32_t>> serverTick_;
     boost::asio::ip::udp::socket socket_;
     boost::asio::strand<boost::asio::any_io_executor> strand_;
     std::uint16_t port_;

@@ -82,7 +82,8 @@ std::optional<std::uint16_t> DungeonUdpManager::Allocate(
     auto session = std::make_shared<DungeonUdpSession>(
         dungeonId,
         std::move(socket),
-        std::move(tokens));
+        std::move(tokens),
+        serverTick_);
     sessions_.emplace(dungeonId, session);
     session->Start();
     return localEndpoint.port();
@@ -144,6 +145,11 @@ bool DungeonUdpManager::AllParticipantsAuthenticated(
     }
 
     return sessionIt->second->AllParticipantsAuthenticated();
+}
+
+void DungeonUdpManager::SetServerTick(std::uint32_t serverTick)
+{
+    serverTick_->store(serverTick, std::memory_order_relaxed);
 }
 
 void DungeonUdpManager::RefreshAllActivity(DungeonId dungeonId)
