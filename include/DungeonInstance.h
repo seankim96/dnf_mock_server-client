@@ -64,6 +64,7 @@ public:
     std::vector<DungeonEnemySnapshot> EnemySnapshots() const;
     std::size_t AdvanceRoomWaves();
     UsePortalResult TryUsePortal(SessionId sessionId);
+    bool TryFinishIfCleared();
     bool Start();
     bool Finish();
 

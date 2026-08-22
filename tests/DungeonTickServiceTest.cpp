@@ -63,10 +63,21 @@ void TestDungeonStartsAfterAllUdpHelloMessages()
            dnf::JoinPartyResult::Success);
 
     dnf::EnemyCatalog enemyCatalog;
+    dnf::EnemyTemplate enemy;
+    enemy.id = 2001;
+    enemy.name = "Goblin";
+    enemy.maxHp = 100;
+    enemy.collision = {
+        {-20.0f, -15.0f, 0.0f},
+        {20.0f, 15.0f, 80.0f}};
+    assert(enemyCatalog.AddEnemy(enemy));
+
     dnf::SkillCatalog skillCatalog;
     dnf::DungeonCatalog dungeonCatalog(enemyCatalog);
-    const dnf::RoomTemplate room{
+    dnf::RoomTemplate room{
         1, 1200.0f, 500.0f, {100.0f, 250.0f, 0.0f}};
+    room.enemySpawns.push_back(
+        {1, enemy.id, {500.0f, 250.0f, 0.0f}, 1});
     assert(dungeonCatalog.AddDungeon(1001, "Forest", {room}));
 
     dnf::DungeonManager dungeonManager(

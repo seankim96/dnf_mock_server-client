@@ -165,8 +165,16 @@ void TestPortalRequiresRoomClear()
     assert(secondRoom->CurrentWave() == 1);
     assert(secondRoom->Enemies().size() == 1);
     assert(dungeon.AdvanceRoomWaves() == 0);
+    assert(!dungeon.TryFinishIfCleared());
+
+    const auto finalEnemies = secondRoom->Enemies();
+    assert(secondRoom->ApplyEnemyDamage(
+        finalEnemies[0].entityId,
+        100));
+    assert(dungeon.TryFinishIfCleared());
+    assert(dungeon.State() == dnf::DungeonState::Finished);
     assert(dungeon.TryUsePortal(100) ==
-           dnf::UsePortalResult::NotInsidePortal);
+           dnf::UsePortalResult::DungeonNotRunning);
 }
 } // namespace
 

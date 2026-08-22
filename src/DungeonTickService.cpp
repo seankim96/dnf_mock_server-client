@@ -16,6 +16,7 @@ constexpr auto TICK_INTERVAL =
     std::chrono::microseconds(1'000'000 / DUNGEON_TICKS_PER_SECOND);
 constexpr float TICK_SECONDS =
     1.0f / static_cast<float>(DUNGEON_TICKS_PER_SECOND);
+constexpr auto FINISHED_BROADCAST_DURATION = std::chrono::seconds(1);
 } // namespace
 
 DungeonTickService::DungeonTickService(
@@ -157,11 +158,46 @@ void DungeonTickService::HandleTick(
         if (dungeon != nullptr)
         {
             dungeon->AdvanceRoomWaves();
-            udpManager_.BroadcastSnapshot(
-                dungeonId,
-                EncodeDungeonSnapshot(
-                    *dungeon,
-                    static_cast<std::uint32_t>(tickCount_)));
+            dungeon->TryFinishIfCleared();
+
+            if (dungeon->State() == DungeonState::Finished)
+            {
+                finishedSince_.try_emplace(dungeonId, now);
+            }
+            else
+            {
+                udpManager_.BroadcastSnapshot(
+                    dungeonId,
+                    EncodeDungeonSnapshot(
+                        *dungeon,
+                        static_cast<std::uint32_t>(tickCount_)));
+            }
+        }
+    }
+
+    for (DungeonId dungeonId : dungeonManager_.FinishedDungeonIds())
+    {
+        const auto dungeon = dungeonManager_.FindDungeon(dungeonId);
+        if (dungeon == nullptr)
+        {
+            finishedSince_.erase(dungeonId);
+            continue;
+        }
+
+        const auto [finishedIt, inserted] =
+            finishedSince_.try_emplace(dungeonId, now);
+        (void)inserted;
+
+        udpManager_.BroadcastSnapshot(
+            dungeonId,
+            EncodeDungeonSnapshot(
+                *dungeon,
+                static_cast<std::uint32_t>(tickCount_)));
+
+        if (now - finishedIt->second >= FINISHED_BROADCAST_DURATION)
+        {
+            lifecycleService_.FinishDungeon(dungeonId);
+            finishedSince_.erase(finishedIt);
         }
     }
 

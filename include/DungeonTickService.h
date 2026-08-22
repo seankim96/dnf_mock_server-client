@@ -52,6 +52,9 @@ private:
     std::unordered_map<
         DungeonId,
         std::chrono::steady_clock::time_point> waitingSince_;
+    std::unordered_map<
+        DungeonId,
+        std::chrono::steady_clock::time_point> finishedSince_;
 
     bool running_ = false;
     std::uint64_t tickCount_ = 0;

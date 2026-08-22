@@ -128,7 +128,18 @@ bool DungeonManager::FinishDungeon(DungeonId dungeonId)
     std::lock_guard lock(mutex_);
 
     auto dungeonIt = dungeons_.find(dungeonId);
-    if (dungeonIt == dungeons_.end() || !dungeonIt->second->Finish())
+    if (dungeonIt == dungeons_.end())
+    {
+        return false;
+    }
+
+    if (dungeonIt->second->State() == DungeonState::Running &&
+        !dungeonIt->second->Finish())
+    {
+        return false;
+    }
+
+    if (dungeonIt->second->State() != DungeonState::Finished)
     {
         return false;
     }
@@ -166,6 +177,24 @@ std::vector<DungeonId> DungeonManager::RunningDungeonIds() const
     for (const auto& [dungeonId, dungeon] : dungeons_)
     {
         if (dungeon->State() == DungeonState::Running)
+        {
+            dungeonIds.push_back(dungeonId);
+        }
+    }
+
+    return dungeonIds;
+}
+
+std::vector<DungeonId> DungeonManager::FinishedDungeonIds() const
+{
+    std::lock_guard lock(mutex_);
+
+    std::vector<DungeonId> dungeonIds;
+    dungeonIds.reserve(dungeons_.size());
+
+    for (const auto& [dungeonId, dungeon] : dungeons_)
+    {
+        if (dungeon->State() == DungeonState::Finished)
         {
             dungeonIds.push_back(dungeonId);
         }

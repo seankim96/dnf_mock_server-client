@@ -50,6 +50,7 @@ public:
     bool FinishDungeon(DungeonId dungeonId);
     std::vector<DungeonId> WaitingDungeonIds() const;
     std::vector<DungeonId> RunningDungeonIds() const;
+    std::vector<DungeonId> FinishedDungeonIds() const;
     std::size_t ActiveDungeonCount() const;
 
 private:

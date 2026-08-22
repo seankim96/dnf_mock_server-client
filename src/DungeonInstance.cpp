@@ -240,6 +240,36 @@ UsePortalResult DungeonInstance::TryUsePortal(SessionId sessionId)
     return UsePortalResult::Success;
 }
 
+bool DungeonInstance::TryFinishIfCleared()
+{
+    if (State() != DungeonState::Running)
+    {
+        return false;
+    }
+
+    const RoomId finalRoomId = dungeonTemplate_.rooms.back().id;
+
+    for (const auto& [sessionId, player] : players_)
+    {
+        (void)sessionId;
+        if (player->CurrentRoom() != finalRoomId)
+        {
+            return false;
+        }
+    }
+
+    for (const auto& [roomId, room] : rooms_)
+    {
+        (void)roomId;
+        if (!room->IsCleared())
+        {
+            return false;
+        }
+    }
+
+    return Finish();
+}
+
 bool DungeonInstance::Start()
 {
     std::lock_guard lock(stateMutex_);
