@@ -1,4 +1,5 @@
 #include "AccountAuthenticationService.h"
+#include "AccountProvisioningService.h"
 #include "AuthFlatBufferCodec.h"
 #include "AuthPacketDispatcher.h"
 #include "AuthTicketIssuer.h"
@@ -8,9 +9,12 @@
 #include "DatabaseExecutor.h"
 #include "Packet.h"
 #include "PasswordHasher.h"
+#include "PlayerLoginService.h"
 #include "SqliteAccountPlayerRepository.h"
 #include "SqliteAccountRepository.h"
 #include "SqliteAuthTicketStore.h"
+#include "SqliteAuthTicketVerifier.h"
+#include "SqliteCharacterProvisioner.h"
 #include "SqliteDatabase.h"
 #include "SqlitePlayerRepository.h"
 #include "TestTlsCertificate.h"
@@ -31,8 +35,10 @@
 
 #include <array>
 #include <cassert>
+#include <chrono>
 #include <cstdint>
 #include <exception>
+#include <future>
 #include <iostream>
 #include <optional>
 #include <string>
@@ -92,6 +98,24 @@ std::vector<std::uint8_t> MakeCharacterListPacket()
         payload);
 }
 
+std::vector<std::uint8_t> MakeCharacterSelectionPacket(
+    dnf::PlayerId playerId)
+{
+    flatbuffers::FlatBufferBuilder builder;
+    const auto request = protocol::CreateCharacterSelectionRequest(
+        builder,
+        playerId);
+    const auto payload = dnf::FinishAuthPayload(
+        builder,
+        protocol::AuthPayload_CharacterSelectionRequest,
+        request.Union());
+
+    return dnf::EncodePacket(
+        dnf::AuthCharacterSelectionRequest,
+        3,
+        payload);
+}
+
 dnf::Packet ReadPacket(
     boost::asio::ssl::stream<tcp::socket>& client)
 {
@@ -111,7 +135,31 @@ dnf::Packet ReadPacket(
     return packet;
 }
 
-void TestPipelinedRequestsAreHandledSequentially()
+dnf::PlayerLoginResult WaitForGameLogin(
+    dnf::PlayerLoginService& loginService,
+    const std::string& ticket)
+{
+    std::promise<dnf::PlayerLoginResult> completion;
+    std::future<dnf::PlayerLoginResult> future =
+        completion.get_future();
+
+    loginService.Login(
+        ticket,
+        [&completion](dnf::PlayerLoginResult result)
+        {
+            completion.set_value(std::move(result));
+        });
+
+    if (future.wait_for(std::chrono::seconds(5)) !=
+        std::future_status::ready)
+    {
+        throw std::runtime_error("Game login timed out");
+    }
+
+    return future.get();
+}
+
+void TestAuthenticationFlowReachesGameLogin()
 {
     boost::asio::io_context serverIoContext;
     dnf::SqliteDatabase database(":memory:");
@@ -119,6 +167,7 @@ void TestPipelinedRequestsAreHandledSequentially()
     dnf::SqlitePlayerRepository playerRepository(database);
     dnf::SqliteAccountPlayerRepository accountPlayerRepository(database);
     dnf::SqliteAuthTicketStore ticketStore(database);
+    dnf::SqliteAuthTicketVerifier ticketVerifier(ticketStore);
     dnf::AuthTicketIssuer ticketIssuer(
         accountPlayerRepository,
         ticketStore);
@@ -139,15 +188,29 @@ void TestPipelinedRequestsAreHandledSequentially()
         serverIoContext,
         databaseExecutor,
         ticketIssuer);
+    dnf::PlayerLoginService playerLoginService(
+        serverIoContext,
+        databaseExecutor,
+        ticketVerifier,
+        playerRepository);
 
-    const dnf::Account account = accountRepository.CreateAccount(
-        "account_1",
-        passwordHasher.Hash("correct-password").value()).value();
-    const dnf::PlayerProfile player =
-        playerRepository.CreatePlayer("Player_1").value();
-    assert(accountPlayerRepository.LinkPlayer(
-        account.accountId,
-        player.playerId));
+    dnf::AccountProvisioningService accountProvisioner(
+        accountRepository,
+        passwordHasher);
+    const dnf::AccountProvisioningResult account =
+        accountProvisioner.CreateAccount(
+            "account_1",
+            "correct-password");
+    assert(account.status ==
+           dnf::AccountProvisioningStatus::Success);
+
+    dnf::SqliteCharacterProvisioner characterProvisioner(database);
+    const dnf::CharacterProvisioningResult character =
+        characterProvisioner.CreateOwnedPlayer(
+            account.accountId,
+            "Player_1");
+    assert(character.status ==
+           dnf::CharacterProvisioningStatus::Success);
 
     boost::asio::ssl::context serverTlsContext(
         boost::asio::ssl::context::tls_server);
@@ -242,7 +305,47 @@ void TestPipelinedRequestsAreHandledSequentially()
                protocol::CharacterListResult_Success);
         assert(characterList->characters()->size() == 1);
         assert(characterList->characters()->Get(0)->player_id() ==
-               player.playerId);
+               character.playerId);
+
+        const std::vector<std::uint8_t> selectionPacket =
+            MakeCharacterSelectionPacket(character.playerId);
+        boost::asio::write(
+            client,
+            boost::asio::buffer(selectionPacket));
+
+        const dnf::Packet selectionResponse = ReadPacket(client);
+        assert(selectionResponse.header.type ==
+               dnf::AuthCharacterSelectionResponse);
+        assert(selectionResponse.header.requestId == 3);
+        const auto* selectionMessage = dnf::DecodeAuthPayload(
+            selectionResponse.payload,
+            protocol::AuthPayload_CharacterSelectionResponse);
+        const auto* selection =
+            selectionMessage->payload_as_CharacterSelectionResponse();
+        assert(selection->result() ==
+               protocol::CharacterSelectionResult_Success);
+        assert(selection->game_server_host()->str() == "127.0.0.1");
+        assert(selection->game_server_port() == 7777);
+        assert(selection->expires_at_unix() > 0);
+        const std::string authTicket = selection->auth_ticket()->str();
+        assert(!authTicket.empty());
+
+        const dnf::PlayerLoginResult gameLogin = WaitForGameLogin(
+            playerLoginService,
+            authTicket);
+        assert(gameLogin.status == dnf::PlayerLoginStatus::Success);
+        assert(gameLogin.authContext.has_value());
+        assert(gameLogin.authContext->accountId == account.accountId);
+        assert(gameLogin.authContext->playerId == character.playerId);
+        assert(gameLogin.profile.has_value());
+        assert(gameLogin.profile->playerId == character.playerId);
+        assert(gameLogin.profile->name == "Player_1");
+
+        const dnf::PlayerLoginResult reusedTicket = WaitForGameLogin(
+            playerLoginService,
+            authTicket);
+        assert(reusedTicket.status ==
+               dnf::PlayerLoginStatus::InvalidTicket);
 
         boost::system::error_code ignoredError;
         client.shutdown(ignoredError);
@@ -277,7 +380,7 @@ void TestPipelinedRequestsAreHandledSequentially()
 
 int main()
 {
-    TestPipelinedRequestsAreHandledSequentially();
+    TestAuthenticationFlowReachesGameLogin();
 
     std::cout << "All auth TLS session tests passed.\n";
     return 0;
