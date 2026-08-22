@@ -26,15 +26,18 @@ DungeonPlayerState::DungeonPlayerState(
     SessionId sessionId,
     RoomId roomId,
     Position position,
-    std::uint32_t maxMp)
+    std::uint32_t maxMp,
+    std::uint32_t maxHp)
     : sessionId_(sessionId),
       roomId_(roomId),
       position_(position),
+      currentHp_(maxHp),
+      maxHp_(maxHp),
       currentMp_(maxMp),
       maxMp_(maxMp)
 {
     if (sessionId_ == 0 || roomId_ == 0 || position_.z < 0.0f ||
-        maxMp_ == 0)
+        maxMp_ == 0 || maxHp_ == 0)
     {
         throw std::invalid_argument("Invalid dungeon player state");
     }
@@ -63,9 +66,46 @@ DungeonPlayerSnapshot DungeonPlayerState::Snapshot() const
     return {
         roomId_,
         position_,
+        currentHp_,
+        maxHp_,
+        currentHp_ > 0,
         currentMp_,
         maxMp_,
         {actionSkillId_, actionPhase_, actionRemainingTicks_}};
+}
+
+std::uint32_t DungeonPlayerState::CurrentHp() const
+{
+    std::lock_guard lock(mutex_);
+    return currentHp_;
+}
+
+bool DungeonPlayerState::IsAlive() const
+{
+    std::lock_guard lock(mutex_);
+    return currentHp_ > 0;
+}
+
+bool DungeonPlayerState::ApplyDamage(std::uint32_t damage)
+{
+    std::lock_guard lock(mutex_);
+
+    if (damage == 0 || currentHp_ == 0)
+    {
+        return false;
+    }
+
+    currentHp_ = damage >= currentHp_ ? 0 : currentHp_ - damage;
+    if (currentHp_ == 0)
+    {
+        actionSkillId_ = 0;
+        actionPhase_ = SkillActionPhase::Idle;
+        actionRemainingTicks_ = 0;
+        actionActiveTicks_ = 0;
+        actionRecoveryTicks_ = 0;
+    }
+
+    return true;
 }
 
 std::uint32_t DungeonPlayerState::CurrentMp() const
@@ -102,6 +142,11 @@ BeginSkillResult DungeonPlayerState::BeginSkill(
     std::uint32_t recoveryTicks)
 {
     std::lock_guard lock(mutex_);
+
+    if (currentHp_ == 0)
+    {
+        return BeginSkillResult::Dead;
+    }
 
     if (skillId == 0 || activeTicks == 0)
     {
@@ -206,6 +251,11 @@ MovePlayerResult DungeonPlayerState::MoveTo(
 {
     std::lock_guard lock(mutex_);
 
+    if (currentHp_ == 0)
+    {
+        return MovePlayerResult::Dead;
+    }
+
     if (roomId_ != room.Id())
     {
         return MovePlayerResult::WrongRoom;
@@ -226,6 +276,11 @@ MovePlayerResult DungeonPlayerState::EnterRoom(
     const Position& spawnPosition)
 {
     std::lock_guard lock(mutex_);
+
+    if (currentHp_ == 0)
+    {
+        return MovePlayerResult::Dead;
+    }
 
     const PositionCheckResult checkResult = room.CheckPosition(spawnPosition);
     if (checkResult != PositionCheckResult::Valid)

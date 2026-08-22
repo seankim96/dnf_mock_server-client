@@ -153,6 +153,45 @@ void TestSkillActionPhases()
     assert(action.phase == dnf::SkillActionPhase::Idle);
     assert(action.remainingTicks == 0);
 }
+
+void TestHealthAndDeathRules()
+{
+    dnf::EnemyCatalog enemyCatalog;
+    dnf::RoomState room(MakeRoom(1), enemyCatalog);
+    dnf::RoomState nextRoom(MakeRoom(2), enemyCatalog);
+    dnf::DungeonPlayerState player(
+        100,
+        1,
+        {100.0f, 250.0f, 0.0f},
+        50,
+        120);
+
+    assert(player.CurrentHp() == 120);
+    assert(player.IsAlive());
+    assert(!player.ApplyDamage(0));
+    assert(player.ApplyDamage(30));
+    assert(player.CurrentHp() == 90);
+
+    assert(player.BeginSkill(3001, 10, 10, 3, 1, 2) ==
+           dnf::BeginSkillResult::Success);
+    assert(player.ApplyDamage(100));
+    assert(player.CurrentHp() == 0);
+    assert(!player.IsAlive());
+    assert(!player.ApplyDamage(1));
+
+    const dnf::DungeonPlayerSnapshot snapshot = player.Snapshot();
+    assert(snapshot.currentHp == 0);
+    assert(snapshot.maxHp == 120);
+    assert(!snapshot.alive);
+    assert(snapshot.skillAction.phase == dnf::SkillActionPhase::Idle);
+
+    assert(player.MoveTo(room, {200.0f, 250.0f, 0.0f}) ==
+           dnf::MovePlayerResult::Dead);
+    assert(player.EnterRoom(nextRoom, {100.0f, 250.0f, 0.0f}) ==
+           dnf::MovePlayerResult::Dead);
+    assert(player.BeginSkill(3002, 10, 10, 1, 1, 1) ==
+           dnf::BeginSkillResult::Dead);
+}
 } // namespace
 
 int main()
@@ -161,6 +200,7 @@ int main()
     TestRoomChange();
     TestManaAndSkillCooldown();
     TestSkillActionPhases();
+    TestHealthAndDeathRules();
 
     std::cout << "All dungeon player state tests passed.\n";
     return 0;

@@ -14,6 +14,7 @@ namespace dnf
 enum class MovePlayerResult
 {
     Success,
+    Dead,
     WrongRoom,
     OutsideRoom,
     BlockedByObstacle
@@ -22,6 +23,7 @@ enum class MovePlayerResult
 enum class BeginSkillResult
 {
     Success,
+    Dead,
     InvalidSkill,
     NotEnoughMana,
     OnCooldown,
@@ -47,6 +49,9 @@ struct DungeonPlayerSnapshot
 {
     RoomId roomId = 0;
     Position position;
+    std::uint32_t currentHp = 0;
+    std::uint32_t maxHp = 0;
+    bool alive = false;
     std::uint32_t currentMp = 0;
     std::uint32_t maxMp = 0;
     SkillActionSnapshot skillAction;
@@ -59,12 +64,16 @@ public:
         SessionId sessionId,
         RoomId roomId,
         Position position,
-        std::uint32_t maxMp = 100);
+        std::uint32_t maxMp = 100,
+        std::uint32_t maxHp = 100);
 
     SessionId Session() const;
     RoomId CurrentRoom() const;
     Position CurrentPosition() const;
     DungeonPlayerSnapshot Snapshot() const;
+    std::uint32_t CurrentHp() const;
+    bool IsAlive() const;
+    bool ApplyDamage(std::uint32_t damage);
     std::uint32_t CurrentMp() const;
     std::uint32_t RemainingCooldown(SkillId skillId) const;
     SkillActionSnapshot CurrentSkillAction() const;
@@ -92,6 +101,8 @@ private:
     mutable std::mutex mutex_;
     RoomId roomId_;
     Position position_;
+    std::uint32_t currentHp_;
+    std::uint32_t maxHp_;
     std::uint32_t currentMp_;
     std::uint32_t maxMp_;
     std::unordered_map<SkillId, std::uint32_t> cooldowns_;
