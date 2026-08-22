@@ -70,7 +70,9 @@ void TestDungeonSnapshot()
         builder,
         100,
         1,
-        &position);
+        &position,
+        80,
+        100);
 
     const std::vector<flatbuffers::Offset<Dnf::Protocol::PlayerSnapshot>>
         playerOffsets = {player};
@@ -118,6 +120,8 @@ void TestDungeonSnapshot()
     assert(receivedSnapshot->players()->size() == 1);
     assert(receivedSnapshot->players()->Get(0)->session_id() == 100);
     assert(receivedSnapshot->players()->Get(0)->position()->x() == 100.0f);
+    assert(receivedSnapshot->players()->Get(0)->current_mp() == 80);
+    assert(receivedSnapshot->players()->Get(0)->max_mp() == 100);
     assert(receivedSnapshot->enemies()->size() == 1);
     assert(receivedSnapshot->enemies()->Get(0)->entity_id() == 9001);
     assert(receivedSnapshot->enemies()->Get(0)->current_hp() == 80);

@@ -188,13 +188,21 @@ public static class DungeonProtocolCodec
                     return false;
                 }
 
+                if (player.Value.MaxMp == 0 ||
+                    player.Value.CurrentMp > player.Value.MaxMp)
+                {
+                    return false;
+                }
+
                 Vec3 position = player.Value.Position.Value;
                 players.Add(new PlayerSnapshotData(
                     player.Value.SessionId,
                     player.Value.RoomId,
                     position.X,
                     position.Y,
-                    position.Z));
+                    position.Z,
+                    player.Value.CurrentMp,
+                    player.Value.MaxMp));
             }
 
             for (int index = 0; index < snapshot.EnemiesLength; index++)

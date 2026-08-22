@@ -146,11 +146,15 @@ public struct PlayerSnapshot : IFlatbufferObject
   public ulong SessionId { get { int o = __p.__offset(4); return o != 0 ? __p.bb.GetUlong(o + __p.bb_pos) : (ulong)0; } }
   public uint RoomId { get { int o = __p.__offset(6); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
   public Dnf.Protocol.Vec3? Position { get { int o = __p.__offset(8); return o != 0 ? (Dnf.Protocol.Vec3?)(new Dnf.Protocol.Vec3()).__assign(o + __p.bb_pos, __p.bb) : null; } }
+  public uint CurrentMp { get { int o = __p.__offset(10); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
+  public uint MaxMp { get { int o = __p.__offset(12); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
 
-  public static void StartPlayerSnapshot(FlatBufferBuilder builder) { builder.StartTable(3); }
+  public static void StartPlayerSnapshot(FlatBufferBuilder builder) { builder.StartTable(5); }
   public static void AddSessionId(FlatBufferBuilder builder, ulong sessionId) { builder.AddUlong(0, sessionId, 0); }
   public static void AddRoomId(FlatBufferBuilder builder, uint roomId) { builder.AddUint(1, roomId, 0); }
   public static void AddPosition(FlatBufferBuilder builder, Offset<Dnf.Protocol.Vec3> positionOffset) { builder.AddStruct(2, positionOffset.Value, 0); }
+  public static void AddCurrentMp(FlatBufferBuilder builder, uint currentMp) { builder.AddUint(3, currentMp, 0); }
+  public static void AddMaxMp(FlatBufferBuilder builder, uint maxMp) { builder.AddUint(4, maxMp, 0); }
   public static Offset<Dnf.Protocol.PlayerSnapshot> EndPlayerSnapshot(FlatBufferBuilder builder) {
     int o = builder.EndTable();
     return new Offset<Dnf.Protocol.PlayerSnapshot>(o);
@@ -166,6 +170,8 @@ static public class PlayerSnapshotVerify
       && verifier.VerifyField(tablePos, 4 /*SessionId*/, 8 /*ulong*/, 8, false)
       && verifier.VerifyField(tablePos, 6 /*RoomId*/, 4 /*uint*/, 4, false)
       && verifier.VerifyField(tablePos, 8 /*Position*/, 12 /*Dnf.Protocol.Vec3*/, 4, false)
+      && verifier.VerifyField(tablePos, 10 /*CurrentMp*/, 4 /*uint*/, 4, false)
+      && verifier.VerifyField(tablePos, 12 /*MaxMp*/, 4 /*uint*/, 4, false)
       && verifier.VerifyTableEnd(tablePos);
   }
 }

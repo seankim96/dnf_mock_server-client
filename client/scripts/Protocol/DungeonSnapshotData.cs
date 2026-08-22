@@ -9,13 +9,17 @@ public sealed class PlayerSnapshotData
         uint roomId,
         float x,
         float y,
-        float z)
+        float z,
+        uint currentMp,
+        uint maxMp)
     {
         SessionId = sessionId;
         RoomId = roomId;
         X = x;
         Y = y;
         Z = z;
+        CurrentMp = currentMp;
+        MaxMp = maxMp;
     }
 
     public ulong SessionId { get; }
@@ -23,6 +27,8 @@ public sealed class PlayerSnapshotData
     public float X { get; }
     public float Y { get; }
     public float Z { get; }
+    public uint CurrentMp { get; }
+    public uint MaxMp { get; }
 }
 
 public sealed class EnemySnapshotData

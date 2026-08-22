@@ -239,6 +239,8 @@ void TestDungeonSnapshotEncoding()
     assert(room != nullptr);
     assert(player->MoveTo(*room, {300.0f, 200.0f, 0.0f}) ==
            dnf::MovePlayerResult::Success);
+    assert(player->BeginSkill(1001, 20, 90, 5, 3, 10) ==
+           dnf::BeginSkillResult::Success);
 
     const auto enemies = room->Enemies();
     assert(enemies.size() == 1);
@@ -269,6 +271,8 @@ void TestDungeonSnapshotEncoding()
     assert(firstPlayer->room_id() == 1);
     assert(firstPlayer->position()->x() == 300.0f);
     assert(firstPlayer->position()->y() == 200.0f);
+    assert(firstPlayer->current_mp() == 80);
+    assert(firstPlayer->max_mp() == 100);
 
     assert(snapshot->enemies()->size() == 1);
     const Dnf::Protocol::EnemySnapshot* firstEnemy =

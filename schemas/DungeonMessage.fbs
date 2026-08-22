@@ -17,6 +17,8 @@ table PlayerSnapshot {
   session_id:ulong;
   room_id:uint;
   position:Vec3;
+  current_mp:uint;
+  max_mp:uint;
 }
 
 table EnemySnapshot {

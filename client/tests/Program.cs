@@ -672,8 +672,15 @@ static void TestDungeonProtocol()
     }
 
     Assert(decoded.ServerTick == 45 && decoded.Players.Count == 1 &&
-        decoded.Players[0].X == 100.0f && decoded.Players[0].Y == 250.0f,
+        decoded.Players[0].X == 100.0f && decoded.Players[0].Y == 250.0f &&
+        decoded.Players[0].CurrentMp == 80 &&
+        decoded.Players[0].MaxMp == 100,
         "Dungeon snapshot values are incorrect.");
+
+    Assert(!DungeonProtocolCodec.TryDecodeSnapshot(
+        CreateTestSnapshotBytes(101, 100),
+        out _),
+        "Dungeon snapshot with MP above the maximum was accepted.");
 }
 
 static void TestTcpFlatBufferSchema()
@@ -1093,7 +1100,9 @@ static byte[] DungeonConnectionInfoResponseBytes(
         response.Value);
 }
 
-static byte[] CreateTestSnapshotBytes()
+static byte[] CreateTestSnapshotBytes(
+    uint currentMp = 80,
+    uint maxMp = 100)
 {
     var builder = new FlatBufferBuilder(256);
     PlayerSnapshot.StartPlayerSnapshot(builder);
@@ -1101,6 +1110,8 @@ static byte[] CreateTestSnapshotBytes()
     PlayerSnapshot.AddRoomId(builder, 1);
     Offset<Vec3> position = Vec3.CreateVec3(builder, 100.0f, 250.0f, 0.0f);
     PlayerSnapshot.AddPosition(builder, position);
+    PlayerSnapshot.AddCurrentMp(builder, currentMp);
+    PlayerSnapshot.AddMaxMp(builder, maxMp);
     Offset<PlayerSnapshot> player = PlayerSnapshot.EndPlayerSnapshot(builder);
     VectorOffset players = DungeonSnapshot.CreatePlayersVector(
         builder,

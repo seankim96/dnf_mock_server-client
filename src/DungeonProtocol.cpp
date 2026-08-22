@@ -433,7 +433,9 @@ std::vector<std::uint8_t> EncodeDungeonSnapshot(
             builder,
             sessionId,
             snapshot.roomId,
-            &position));
+            &position,
+            snapshot.currentMp,
+            snapshot.maxMp));
     }
 
     const auto playerVector = builder.CreateVector(players);
