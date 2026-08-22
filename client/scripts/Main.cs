@@ -81,7 +81,7 @@ public partial class Main : Control
 
     public override void _PhysicsProcess(double delta)
     {
-        if (!_udpService.IsRunning || !_dungeonScreen.Visible)
+        if (!_udpService.IsAuthenticated || !_dungeonScreen.Visible)
         {
             return;
         }
@@ -811,7 +811,7 @@ public partial class Main : Control
         _positionLabel.Text = "Position: -";
         _udpStatusLabel.Text = "UDP Hello 전송";
 
-        await _udpService.ConnectAsync(
+        UdpHelloAckData ack = await _udpService.ConnectAsync(
             _gameServerHost,
             udpPort,
             dungeonId,
@@ -819,9 +819,12 @@ public partial class Main : Control
             udpToken,
             cancellationToken);
 
+        _udpStatusLabel.Text = $"UDP 인증 성공 (Tick {ack.ServerTick})";
         _lobbyScreen.Visible = false;
         _dungeonScreen.Visible = true;
-        AddLog($"UDP Hello 전송: session={_localSessionId}");
+        AddLog(
+            $"UDP 인증 성공: session={_localSessionId}, " +
+            $"tick={ack.ServerTick}");
     }
 
     private void OnLeaveDungeonButtonPressed()

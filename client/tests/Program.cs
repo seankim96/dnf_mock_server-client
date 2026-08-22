@@ -1153,15 +1153,37 @@ static async Task TestUdpSessionAsync()
             TaskCreationOptions.RunContinuationsAsynchronously);
 
     client.SnapshotReceived += snapshot => snapshotCompletion.TrySetResult(snapshot);
-    await client.ConnectAsync("127.0.0.1", port, 9, 3, 77, timeout.Token);
+    Task<UdpHelloAckData> connectTask = client.ConnectAsync(
+        "127.0.0.1",
+        port,
+        9,
+        3,
+        77,
+        timeout.Token);
 
     UdpReceiveResult helloResult = await server.ReceiveAsync(timeout.Token);
     var helloBuffer = new ByteBuffer(helloResult.Buffer);
     DungeonMessage helloMessage = DungeonMessage.GetRootAsDungeonMessage(helloBuffer);
     Assert(helloMessage.PayloadType == DungeonPayload.UdpHello,
         "UDP service did not send hello first.");
+    Assert(client.IsRunning && !client.IsAuthenticated && !connectTask.IsCompleted,
+        "UDP service authenticated before receiving an acknowledgement.");
 
     byte[] snapshotBytes = CreateTestSnapshotBytes();
+    await server.SendAsync(snapshotBytes, helloResult.RemoteEndPoint, timeout.Token);
+    await Task.Delay(TimeSpan.FromMilliseconds(30), timeout.Token);
+    Assert(!snapshotCompletion.Task.IsCompleted,
+        "UDP service published a snapshot before authentication.");
+
+    byte[] ackBytes = CreateUdpHelloAckBytes(
+        UdpHelloAckResult.Success,
+        44);
+    await server.SendAsync(ackBytes, helloResult.RemoteEndPoint, timeout.Token);
+    UdpHelloAckData ack = await connectTask;
+    Assert(ack.Result == UdpHelloResult.Success && ack.ServerTick == 44 &&
+        client.IsAuthenticated,
+        "UDP service did not complete successful authentication.");
+
     await server.SendAsync(snapshotBytes, helloResult.RemoteEndPoint, timeout.Token);
     DungeonSnapshotData receivedSnapshot =
         await snapshotCompletion.Task.WaitAsync(timeout.Token);
@@ -1178,7 +1200,46 @@ static async Task TestUdpSessionAsync()
         "UDP service movement sequence is incorrect.");
 
     client.Disconnect();
-    Assert(!client.IsRunning, "UDP service did not disconnect.");
+    Assert(!client.IsRunning && !client.IsAuthenticated,
+        "UDP service did not disconnect.");
+
+    using var failureServer = new UdpClient(
+        new IPEndPoint(IPAddress.Loopback, 0));
+    int failurePort =
+        ((IPEndPoint)failureServer.Client.LocalEndPoint!).Port;
+    using var failureTimeout =
+        new CancellationTokenSource(TimeSpan.FromSeconds(3));
+    Task<UdpHelloAckData> failedConnectTask = client.ConnectAsync(
+        "127.0.0.1",
+        failurePort,
+        9,
+        3,
+        77,
+        failureTimeout.Token);
+    UdpReceiveResult failedHello =
+        await failureServer.ReceiveAsync(failureTimeout.Token);
+    byte[] failedAckBytes = CreateUdpHelloAckBytes(
+        UdpHelloAckResult.AuthenticationFailed,
+        0);
+    await failureServer.SendAsync(
+        failedAckBytes,
+        failedHello.RemoteEndPoint,
+        failureTimeout.Token);
+
+    bool authenticationRejected = false;
+    try
+    {
+        await failedConnectTask;
+    }
+    catch (InvalidDataException)
+    {
+        authenticationRejected = true;
+    }
+
+    Assert(authenticationRejected &&
+        !client.IsRunning &&
+        !client.IsAuthenticated,
+        "UDP authentication failure did not close the client session.");
 }
 
 static async Task TestTcpConnectionAsync()

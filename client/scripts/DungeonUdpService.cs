@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -16,6 +17,8 @@ public sealed class DungeonUdpService : IDisposable
     private CancellationTokenSource? _sessionCancellation;
     private Task? _receiveTask;
     private Task? _heartbeatTask;
+    private TaskCompletionSource<UdpHelloAckData>? _helloAckCompletion;
+    private volatile bool _authenticated;
     private ulong _dungeonId;
     private ulong _sessionId;
     private uint _movementSequence;
@@ -25,8 +28,9 @@ public sealed class DungeonUdpService : IDisposable
     public event Action<Exception>? ErrorOccurred;
 
     public bool IsRunning => _client is not null;
+    public bool IsAuthenticated => _authenticated;
 
-    public async Task ConnectAsync(
+    public async Task<UdpHelloAckData> ConnectAsync(
         string host,
         int port,
         ulong dungeonId,
@@ -56,6 +60,11 @@ public sealed class DungeonUdpService : IDisposable
             _movementSequence = 0;
             _attackSequence = 0;
             _sessionCancellation = new CancellationTokenSource();
+            _helloAckCompletion = new TaskCompletionSource<UdpHelloAckData>(
+                TaskCreationOptions.RunContinuationsAsynchronously);
+            _receiveTask = ReceiveLoopAsync(
+                client,
+                _sessionCancellation.Token);
 
             byte[] hello = DungeonProtocolCodec.EncodeUdpHello(
                 dungeonId,
@@ -63,8 +72,19 @@ public sealed class DungeonUdpService : IDisposable
                 token);
             await SendBytesAsync(client, hello, cancellationToken);
 
-            _receiveTask = ReceiveLoopAsync(client, _sessionCancellation.Token);
-            _heartbeatTask = HeartbeatLoopAsync(client, _sessionCancellation.Token);
+            UdpHelloAckData ack = await _helloAckCompletion.Task.WaitAsync(
+                cancellationToken);
+            if (ack.Result != UdpHelloResult.Success)
+            {
+                throw new InvalidDataException(
+                    $"UDP authentication failed: {ack.Result}.");
+            }
+
+            _helloAckCompletion = null;
+            _heartbeatTask = HeartbeatLoopAsync(
+                client,
+                _sessionCancellation.Token);
+            return ack;
         }
         catch
         {
@@ -79,7 +99,7 @@ public sealed class DungeonUdpService : IDisposable
         bool jump,
         CancellationToken cancellationToken = default)
     {
-        UdpClient client = GetConnectedClient();
+        UdpClient client = GetAuthenticatedClient();
         uint sequence = NextSequence(ref _movementSequence);
         byte[] bytes = DungeonProtocolCodec.EncodePlayerMovement(
             _dungeonId,
@@ -96,7 +116,7 @@ public sealed class DungeonUdpService : IDisposable
         float directionY,
         CancellationToken cancellationToken = default)
     {
-        UdpClient client = GetConnectedClient();
+        UdpClient client = GetAuthenticatedClient();
         uint sequence = NextSequence(ref _attackSequence);
         byte[] bytes = DungeonProtocolCodec.EncodePlayerAttack(
             _dungeonId,
@@ -109,6 +129,8 @@ public sealed class DungeonUdpService : IDisposable
 
     public void Disconnect()
     {
+        _authenticated = false;
+        _helloAckCompletion?.TrySetCanceled();
         _sessionCancellation?.Cancel();
         _client?.Dispose();
         _sessionCancellation?.Dispose();
@@ -117,6 +139,7 @@ public sealed class DungeonUdpService : IDisposable
         _sessionCancellation = null;
         _receiveTask = null;
         _heartbeatTask = null;
+        _helloAckCompletion = null;
         _dungeonId = 0;
         _sessionId = 0;
     }
@@ -140,7 +163,23 @@ public sealed class DungeonUdpService : IDisposable
                     continue;
                 }
 
-                if (DungeonProtocolCodec.TryDecodeSnapshot(
+                if (DungeonProtocolCodec.TryDecodeUdpHelloAck(
+                        received.Buffer,
+                        out UdpHelloAckData? ack) &&
+                    ack is not null &&
+                    ack.DungeonId == _dungeonId)
+                {
+                    if (ack.Result == UdpHelloResult.Success)
+                    {
+                        _authenticated = true;
+                    }
+
+                    _helloAckCompletion?.TrySetResult(ack);
+                    continue;
+                }
+
+                if (_authenticated &&
+                    DungeonProtocolCodec.TryDecodeSnapshot(
                         received.Buffer,
                         out DungeonSnapshotData? snapshot) &&
                     snapshot is not null &&
@@ -161,7 +200,10 @@ public sealed class DungeonUdpService : IDisposable
         }
         catch (Exception exception)
         {
-            ErrorOccurred?.Invoke(exception);
+            if (!(_helloAckCompletion?.TrySetException(exception) ?? false))
+            {
+                ErrorOccurred?.Invoke(exception);
+            }
         }
     }
 
@@ -212,8 +254,14 @@ public sealed class DungeonUdpService : IDisposable
         }
     }
 
-    private UdpClient GetConnectedClient()
+    private UdpClient GetAuthenticatedClient()
     {
+        if (!_authenticated)
+        {
+            throw new InvalidOperationException(
+                "Dungeon UDP session is not authenticated.");
+        }
+
         return _client ?? throw new InvalidOperationException(
             "Dungeon UDP session is not connected.");
     }
