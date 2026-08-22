@@ -1640,8 +1640,9 @@ static async Task TestAuthTlsConnectionAsync()
     Task<TcpClient> acceptTask =
         listener.AcceptTcpClientAsync(timeout.Token).AsTask();
 
-    using var connection = new AuthTlsConnectionService();
-    Task connectTask = connection.ConnectAsync(
+    var connection = new AuthTlsConnectionService();
+    using var authenticationClient = new AuthenticationClient(connection);
+    Task connectTask = authenticationClient.ConnectAsync(
         "localhost",
         port,
         timeout.Token,
@@ -1660,7 +1661,7 @@ static async Task TestAuthTlsConnectionAsync()
         checkCertificateRevocation: false);
     await connectTask;
 
-    Assert(connection.IsConnected,
+    Assert(authenticationClient.IsConnected,
         "Authentication TLS connection was not established.");
 
     bool gamePacketRejected = false;
@@ -1707,6 +1708,53 @@ static async Task TestAuthTlsConnectionAsync()
         "Authentication TLS response type is incorrect.");
     Assert(response.Payload.SequenceEqual(new byte[] { 4, 5, 6 }),
         "Authentication TLS response payload is incorrect.");
+
+    Task<AuthLoginResult> loginTask = authenticationClient.LoginAsync(
+        "account_1",
+        "password",
+        timeout.Token);
+
+    await serverStream.ReadExactlyAsync(headerBytes, timeout.Token);
+    TcpPacketHeader loginHeader = TcpPacketCodec.DecodeHeader(headerBytes);
+    var loginPayload = new byte[
+        loginHeader.PacketSize - TcpPacketCodec.HeaderSize];
+    await serverStream.ReadExactlyAsync(loginPayload, timeout.Token);
+
+    var loginBuffer = new ByteBuffer(loginPayload);
+    Assert(AuthSchema.AuthMessage.VerifyAuthMessage(loginBuffer),
+        "Authentication client sent an invalid FlatBuffer.");
+    AuthSchema.AuthMessage loginMessage =
+        AuthSchema.AuthMessage.GetRootAsAuthMessage(loginBuffer);
+    AuthSchema.LoginRequest loginRequest =
+        loginMessage.PayloadAsLoginRequest();
+    Assert(loginHeader.Type == TcpPacketType.AuthLoginRequest &&
+        loginMessage.PayloadType == AuthSchema.AuthPayload.LoginRequest &&
+        loginRequest.LoginId == "account_1" &&
+        loginRequest.Password == "password",
+        "Authentication client login request is incorrect.");
+
+    var loginResponseBuilder = new FlatBufferBuilder(64);
+    Offset<AuthSchema.LoginResponse> loginResponse =
+        AuthSchema.LoginResponse.CreateLoginResponse(
+            loginResponseBuilder,
+            AuthSchema.LoginResult.Success);
+    Offset<AuthSchema.AuthMessage> loginResponseMessage =
+        AuthSchema.AuthMessage.CreateAuthMessage(
+            loginResponseBuilder,
+            1,
+            AuthSchema.AuthPayload.LoginResponse,
+            loginResponse.Value);
+    AuthSchema.AuthMessage.FinishAuthMessageBuffer(
+        loginResponseBuilder,
+        loginResponseMessage);
+    byte[] loginResponseBytes = TcpPacketCodec.EncodePacket(
+        TcpPacketType.AuthLoginResponse,
+        loginHeader.RequestId,
+        loginResponseBuilder.SizedByteArray());
+    await serverStream.WriteAsync(loginResponseBytes, timeout.Token);
+
+    Assert(await loginTask == AuthLoginResult.Success,
+        "Authentication client did not decode the login response.");
 }
 
 static void Assert(bool condition, string message)

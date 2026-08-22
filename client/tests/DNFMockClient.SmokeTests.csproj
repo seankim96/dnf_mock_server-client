@@ -9,6 +9,7 @@
   <ItemGroup>
     <Compile Include="../scripts/TcpConnectionService.cs" Link="TcpConnectionService.cs" />
     <Compile Include="../scripts/AuthTlsConnectionService.cs" Link="AuthTlsConnectionService.cs" />
+    <Compile Include="../scripts/AuthenticationClient.cs" Link="AuthenticationClient.cs" />
     <Compile Include="../scripts/DungeonUdpService.cs" Link="DungeonUdpService.cs" />
     <Compile Include="../scripts/Protocol/TcpPacket.cs" Link="Protocol/TcpPacket.cs" />
     <Compile Include="../scripts/Protocol/TcpPacketCodec.cs" Link="Protocol/TcpPacketCodec.cs" />
