@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://scripts/Main.cs" id="1_main"]
 [ext_resource type="Script" path="res://scripts/DungeonWorldView.cs" id="2_world"]
+[ext_resource type="Script" path="res://scripts/AuthenticationPanel.cs" id="3_auth"]
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -64,6 +65,95 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 10
 
+[node name="AuthenticationPanel" type="PanelContainer" parent="Margin/RootVBox/Content/LeftScroll/Steps"]
+layout_mode = 2
+script = ExtResource("3_auth")
+
+[node name="Margin" type="MarginContainer" parent="Margin/RootVBox/Content/LeftScroll/Steps/AuthenticationPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 12
+
+[node name="VBox" type="VBoxContainer" parent="Margin/RootVBox/Content/LeftScroll/Steps/AuthenticationPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Heading" type="Label" parent="Margin/RootVBox/Content/LeftScroll/Steps/AuthenticationPanel/Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "1. 인증 서버"
+
+[node name="Fields" type="GridContainer" parent="Margin/RootVBox/Content/LeftScroll/Steps/AuthenticationPanel/Margin/VBox"]
+layout_mode = 2
+columns = 2
+
+[node name="AddressLabel" type="Label" parent="Margin/RootVBox/Content/LeftScroll/Steps/AuthenticationPanel/Margin/VBox/Fields"]
+layout_mode = 2
+text = "주소"
+
+[node name="AuthAddressInput" type="LineEdit" parent="Margin/RootVBox/Content/LeftScroll/Steps/AuthenticationPanel/Margin/VBox/Fields"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "localhost"
+
+[node name="PortLabel" type="Label" parent="Margin/RootVBox/Content/LeftScroll/Steps/AuthenticationPanel/Margin/VBox/Fields"]
+layout_mode = 2
+text = "TLS 포트"
+
+[node name="AuthPortInput" type="LineEdit" parent="Margin/RootVBox/Content/LeftScroll/Steps/AuthenticationPanel/Margin/VBox/Fields"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "7443"
+
+[node name="LoginIdLabel" type="Label" parent="Margin/RootVBox/Content/LeftScroll/Steps/AuthenticationPanel/Margin/VBox/Fields"]
+layout_mode = 2
+text = "로그인 ID"
+
+[node name="AuthLoginIdInput" type="LineEdit" parent="Margin/RootVBox/Content/LeftScroll/Steps/AuthenticationPanel/Margin/VBox/Fields"]
+unique_name_in_owner = true
+layout_mode = 2
+placeholder_text = "계정 ID"
+
+[node name="PasswordLabel" type="Label" parent="Margin/RootVBox/Content/LeftScroll/Steps/AuthenticationPanel/Margin/VBox/Fields"]
+layout_mode = 2
+text = "비밀번호"
+
+[node name="AuthPasswordInput" type="LineEdit" parent="Margin/RootVBox/Content/LeftScroll/Steps/AuthenticationPanel/Margin/VBox/Fields"]
+unique_name_in_owner = true
+layout_mode = 2
+secret = true
+placeholder_text = "비밀번호"
+
+[node name="FingerprintLabel" type="Label" parent="Margin/RootVBox/Content/LeftScroll/Steps/AuthenticationPanel/Margin/VBox/Fields"]
+layout_mode = 2
+text = "인증서 SHA-256"
+
+[node name="AuthFingerprintInput" type="LineEdit" parent="Margin/RootVBox/Content/LeftScroll/Steps/AuthenticationPanel/Margin/VBox/Fields"]
+unique_name_in_owner = true
+layout_mode = 2
+placeholder_text = "선택: 자체 서명 인증서 지문"
+
+[node name="AuthLoginButton" type="Button" parent="Margin/RootVBox/Content/LeftScroll/Steps/AuthenticationPanel/Margin/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 38)
+layout_mode = 2
+text = "인증 서버 로그인"
+
+[node name="AuthStatusLabel" type="Label" parent="Margin/RootVBox/Content/LeftScroll/Steps/AuthenticationPanel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.7, 0.8, 1)
+text = "인증 대기 중"
+autowrap_mode = 2
+
+[node name="AuthCharacterSelect" type="OptionButton" parent="Margin/RootVBox/Content/LeftScroll/Steps/AuthenticationPanel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+disabled = true
+
 [node name="ConnectionPanel" type="PanelContainer" parent="Margin/RootVBox/Content/LeftScroll/Steps"]
 layout_mode = 2
 
@@ -81,7 +171,7 @@ theme_override_constants/separation = 8
 [node name="Heading" type="Label" parent="Margin/RootVBox/Content/LeftScroll/Steps/ConnectionPanel/Margin/VBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "1. 서버 연결"
+text = "2. 게임 서버 연결"
 
 [node name="Fields" type="GridContainer" parent="Margin/RootVBox/Content/LeftScroll/Steps/ConnectionPanel/Margin/VBox"]
 layout_mode = 2
@@ -130,7 +220,7 @@ theme_override_constants/separation = 8
 [node name="Heading" type="Label" parent="Margin/RootVBox/Content/LeftScroll/Steps/LoginPanel/Margin/VBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "2. 로그인"
+text = "3. 게임 서버 로그인 (임시)"
 
 [node name="AuthTicketInput" type="LineEdit" parent="Margin/RootVBox/Content/LeftScroll/Steps/LoginPanel/Margin/VBox"]
 unique_name_in_owner = true
@@ -160,7 +250,7 @@ theme_override_constants/separation = 8
 [node name="Heading" type="Label" parent="Margin/RootVBox/Content/LeftScroll/Steps/ChannelPanel/Margin/VBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "3. 채널 선택"
+text = "4. 채널 선택"
 
 [node name="ChannelSelect" type="OptionButton" parent="Margin/RootVBox/Content/LeftScroll/Steps/ChannelPanel/Margin/VBox"]
 unique_name_in_owner = true
@@ -199,7 +289,7 @@ theme_override_constants/separation = 8
 [node name="Heading" type="Label" parent="Margin/RootVBox/Content/LeftScroll/Steps/PartyPanel/Margin/VBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "4. 파티"
+text = "5. 파티"
 
 [node name="PartyInfoLabel" type="Label" parent="Margin/RootVBox/Content/LeftScroll/Steps/PartyPanel/Margin/VBox"]
 unique_name_in_owner = true
@@ -254,7 +344,7 @@ theme_override_constants/separation = 8
 [node name="Heading" type="Label" parent="Margin/RootVBox/Content/LeftScroll/Steps/DungeonPanel/Margin/VBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "5. 던전 입장"
+text = "6. 던전 입장"
 
 [node name="DungeonTemplateInput" type="LineEdit" parent="Margin/RootVBox/Content/LeftScroll/Steps/DungeonPanel/Margin/VBox"]
 unique_name_in_owner = true
