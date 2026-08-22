@@ -19,6 +19,7 @@ TestInvalidPacketSize();
 TestGamePayloads();
 TestTcpFlatBufferSchema();
 TestAuthFlatBufferSchema();
+AuthPayloadCodecSmokeTests.Run();
 TestDungeonProtocol();
 await TestTcpConnectionAsync();
 await TestAuthTlsConnectionAsync();

@@ -13,6 +13,8 @@
     <Compile Include="../scripts/Protocol/TcpPacket.cs" Link="Protocol/TcpPacket.cs" />
     <Compile Include="../scripts/Protocol/TcpPacketCodec.cs" Link="Protocol/TcpPacketCodec.cs" />
     <Compile Include="../scripts/Protocol/TcpReceiveBuffer.cs" Link="Protocol/TcpReceiveBuffer.cs" />
+    <Compile Include="../scripts/Protocol/AuthMessages.cs" Link="Protocol/AuthMessages.cs" />
+    <Compile Include="../scripts/Protocol/AuthPayloadCodec.cs" Link="Protocol/AuthPayloadCodec.cs" />
     <Compile Include="../scripts/Protocol/GameMessages.cs" Link="Protocol/GameMessages.cs" />
     <Compile Include="../scripts/Protocol/GamePayloadCodec.cs" Link="Protocol/GamePayloadCodec.cs" />
     <Compile Include="../scripts/Protocol/TcpFlatBufferCodec.cs" Link="Protocol/TcpFlatBufferCodec.cs" />
