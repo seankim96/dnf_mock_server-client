@@ -25,9 +25,13 @@ public partial class AuthenticationPanel : PanelContainer
     private Button _loginButton = null!;
     private Label _statusLabel = null!;
     private OptionButton _characterSelect = null!;
+    private Button _selectCharacterButton = null!;
 
     private CancellationTokenSource? _operationCancellation;
     private bool _busy;
+    private bool _selectionIssued;
+
+    public event Action<AuthCharacterSelectionResponse>? GameConnectionReady;
 
     public override void _Ready()
     {
@@ -39,17 +43,63 @@ public partial class AuthenticationPanel : PanelContainer
         _loginButton = GetNode<Button>("%AuthLoginButton");
         _statusLabel = GetNode<Label>("%AuthStatusLabel");
         _characterSelect = GetNode<OptionButton>("%AuthCharacterSelect");
+        _selectCharacterButton =
+            GetNode<Button>("%SelectCharacterButton");
 
         _loginButton.Pressed += OnLoginButtonPressed;
+        _selectCharacterButton.Pressed += OnSelectCharacterButtonPressed;
         RefreshControls();
     }
 
     public override void _ExitTree()
     {
         _loginButton.Pressed -= OnLoginButtonPressed;
+        _selectCharacterButton.Pressed -= OnSelectCharacterButtonPressed;
         _operationCancellation?.Cancel();
         _operationCancellation?.Dispose();
         _authenticationClient.Dispose();
+    }
+
+    private async void OnSelectCharacterButtonPressed()
+    {
+        int selectedIndex = _characterSelect.Selected;
+        if (selectedIndex < 0 || selectedIndex >= _characters.Count)
+        {
+            SetStatus("캐릭터를 선택해 주세요.", Colors.Orange);
+            return;
+        }
+
+        AuthCharacterSummary character = _characters[selectedIndex];
+        BeginOperation();
+        SetStatus($"{character.DisplayName} 선택 중...", Colors.LightSkyBlue);
+
+        try
+        {
+            AuthCharacterSelectionResponse response =
+                await _authenticationClient.SelectCharacterAsync(
+                    character.PlayerId,
+                    _operationCancellation!.Token);
+            if (response.Result != AuthCharacterSelectionResult.Success)
+            {
+                SetStatus($"캐릭터 선택 실패: {response.Result}", Colors.Orange);
+                return;
+            }
+
+            _selectionIssued = true;
+            _authenticationClient.Disconnect();
+            SetStatus(
+                $"{character.DisplayName} 선택 완료: 게임 서버 연결 중",
+                Colors.LightGreen);
+            GameConnectionReady?.Invoke(response);
+        }
+        catch (Exception exception) when (IsExpectedOperationError(exception))
+        {
+            ShowOperationError(exception);
+        }
+        finally
+        {
+            EndOperation();
+        }
     }
 
     private async void OnLoginButtonPressed()
@@ -133,6 +183,7 @@ public partial class AuthenticationPanel : PanelContainer
 
     private void ClearCharacters()
     {
+        _selectionIssued = false;
         _characters.Clear();
         _characterSelect.Clear();
     }
@@ -166,7 +217,10 @@ public partial class AuthenticationPanel : PanelContainer
         _passwordInput.Editable = !_busy;
         _fingerprintInput.Editable = !_busy;
         _loginButton.Disabled = _busy;
-        _characterSelect.Disabled = _busy || _characters.Count == 0;
+        bool canSelectCharacter =
+            !_busy && !_selectionIssued && _characters.Count != 0;
+        _characterSelect.Disabled = !canSelectCharacter;
+        _selectCharacterButton.Disabled = !canSelectCharacter;
     }
 
     private void ShowOperationError(Exception exception)

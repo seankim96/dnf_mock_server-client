@@ -16,12 +16,7 @@ public partial class Main : Control
     private readonly DungeonUdpService _udpService = new();
     private readonly object _snapshotLock = new();
 
-    private LineEdit _addressInput = null!;
-    private LineEdit _portInput = null!;
-    private Button _connectButton = null!;
-    private Control _loginPanel = null!;
-    private LineEdit _authTicketInput = null!;
-    private Button _loginButton = null!;
+    private AuthenticationPanel _authenticationPanel = null!;
     private Control _channelPanel = null!;
     private OptionButton _channelSelect = null!;
     private Button _refreshChannelsButton = null!;
@@ -60,6 +55,7 @@ public partial class Main : Control
     private Vector2 _lastDirection = Vector2.Right;
     private ulong _localSessionId;
     private ulong _partyLeaderSessionId;
+    private string _gameServerHost = string.Empty;
     private DungeonSnapshotData? _pendingSnapshot;
     private string? _pendingUdpError;
 
@@ -126,12 +122,8 @@ public partial class Main : Control
 
     private void FindControls()
     {
-        _addressInput = GetNode<LineEdit>("%AddressInput");
-        _portInput = GetNode<LineEdit>("%PortInput");
-        _connectButton = GetNode<Button>("%ConnectButton");
-        _loginPanel = GetNode<Control>("%LoginPanel");
-        _authTicketInput = GetNode<LineEdit>("%AuthTicketInput");
-        _loginButton = GetNode<Button>("%LoginButton");
+        _authenticationPanel = GetNode<AuthenticationPanel>(
+            "Margin/RootVBox/Content/LeftScroll/Steps/AuthenticationPanel");
         _channelPanel = GetNode<Control>("%ChannelPanel");
         _channelSelect = GetNode<OptionButton>("%ChannelSelect");
         _refreshChannelsButton = GetNode<Button>("%RefreshChannelsButton");
@@ -161,8 +153,8 @@ public partial class Main : Control
 
     private void ConnectSignals()
     {
-        _connectButton.Pressed += OnConnectButtonPressed;
-        _loginButton.Pressed += OnLoginButtonPressed;
+        _authenticationPanel.GameConnectionReady +=
+            OnGameConnectionReady;
         _refreshChannelsButton.Pressed += OnRefreshChannelsButtonPressed;
         _joinChannelButton.Pressed += OnJoinChannelButtonPressed;
         _createPartyButton.Pressed += OnCreatePartyButtonPressed;
@@ -175,8 +167,8 @@ public partial class Main : Control
 
     private void DisconnectSignals()
     {
-        _connectButton.Pressed -= OnConnectButtonPressed;
-        _loginButton.Pressed -= OnLoginButtonPressed;
+        _authenticationPanel.GameConnectionReady -=
+            OnGameConnectionReady;
         _refreshChannelsButton.Pressed -= OnRefreshChannelsButtonPressed;
         _joinChannelButton.Pressed -= OnJoinChannelButtonPressed;
         _createPartyButton.Pressed -= OnCreatePartyButtonPressed;
@@ -187,75 +179,61 @@ public partial class Main : Control
         _leaveDungeonButton.Pressed -= OnLeaveDungeonButtonPressed;
     }
 
-    private async void OnConnectButtonPressed()
+    private async void OnGameConnectionReady(
+        AuthCharacterSelectionResponse selection)
     {
-        if (_connection.IsConnected)
+        if (_busy)
         {
-            _connection.Disconnect();
-            ResetSessionState();
-            SetStatus("연결을 종료했습니다.", Colors.LightGray);
-            AddLog("TCP 연결 종료");
-            RefreshControls();
+            SetStatus("다른 게임 서버 요청이 진행 중입니다.", Colors.Orange);
             return;
         }
 
-        if (!int.TryParse(_portInput.Text, out int port) || port is < 1 or > 65535)
-        {
-            SetStatus("포트는 1부터 65535 사이의 숫자여야 합니다.", Colors.Orange);
-            return;
-        }
-
-        string host = _addressInput.Text.Trim();
-        BeginOperation(TimeSpan.FromSeconds(3));
-        SetStatus($"{host}:{port} 연결 중...", Colors.LightSkyBlue);
+        BeginOperation(TimeSpan.FromSeconds(5));
+        _connection.Disconnect();
+        ResetSessionState();
+        _gameServerHost = selection.GameServerHost;
+        SetStatus(
+            $"{selection.GameServerHost}:{selection.GameServerPort} 연결 중...",
+            Colors.LightSkyBlue);
 
         try
         {
-            await _connection.ConnectAsync(host, port, _operationCancellation!.Token);
-            if (!IsInsideTree())
+            if (selection.ExpiresAtUnix <=
+                DateTimeOffset.UtcNow.ToUnixTimeSeconds())
             {
-                return;
+                throw new InvalidDataException("인증 티켓이 만료되었습니다.");
             }
 
-            SetStatus($"{host}:{port} 연결 성공", Colors.LightGreen);
-            AddLog($"TCP 연결 성공: {host}:{port}");
-        }
-        catch (Exception exception) when (IsExpectedOperationError(exception))
-        {
-            ShowOperationError(exception);
-        }
-        finally
-        {
-            EndOperation();
-        }
-    }
+            await _connection.ConnectAsync(
+                selection.GameServerHost,
+                selection.GameServerPort,
+                _operationCancellation!.Token);
+            AddLog(
+                $"게임 서버 연결: {selection.GameServerHost}:" +
+                selection.GameServerPort);
 
-    private async void OnLoginButtonPressed()
-    {
-        BeginOperation(TimeSpan.FromSeconds(5));
-
-        try
-        {
-            byte[] payload = GamePayloadCodec.EncodeLoginRequest(
-                _authTicketInput.Text);
             TcpPacket response = await _connection.SendRequestAsync(
                 TcpPacketType.LoginRequest,
-                payload,
-                _operationCancellation!.Token);
+                GamePayloadCodec.EncodeLoginRequest(selection.AuthTicket),
+                _operationCancellation.Token);
             LoginResponseData login =
                 GamePayloadCodec.DecodeLoginResponse(response.Payload);
 
             if (login.Result != LoginResult.Success)
             {
-                SetStatus($"로그인 실패: {login.Result}", Colors.Orange);
+                _connection.Disconnect();
+                ResetSessionState();
+                SetStatus(
+                    $"게임 서버 로그인 실패: {login.Result}",
+                    Colors.Orange);
                 AddLog($"LoginResponse: {login.Result}");
                 return;
             }
 
             _loggedIn = true;
             _localSessionId = login.SessionId;
-            SetStatus("로그인 성공", Colors.LightGreen);
-            AddLog($"로그인 성공: session={_localSessionId}");
+            SetStatus("게임 서버 로그인 성공", Colors.LightGreen);
+            AddLog($"게임 로그인 성공: session={_localSessionId}");
             await LoadChannelsAsync(_operationCancellation.Token);
             await LoadDungeonCatalogAsync(_operationCancellation.Token);
         }
@@ -655,6 +633,7 @@ public partial class Main : Control
         _loggedIn = false;
         _joinedChannel = false;
         _localSessionId = 0;
+        _gameServerHost = string.Empty;
         _receivedFirstSnapshot = false;
         _channelSelect.Clear();
         ClearPartyInfo();
@@ -664,17 +643,6 @@ public partial class Main : Control
 
     private void RefreshControls()
     {
-        bool connected = _connection.IsConnected;
-
-        _addressInput.Editable = !connected && !_busy;
-        _portInput.Editable = !connected && !_busy;
-        _connectButton.Disabled = _busy;
-        _connectButton.Text = connected ? "연결 해제" : "서버에 연결";
-
-        _authTicketInput.Editable = connected && !_loggedIn && !_busy;
-        _loginButton.Disabled = !connected || _loggedIn || _busy;
-        _loginPanel.Modulate = connected ? Colors.White : Colors.DimGray;
-
         _channelSelect.Disabled = !_loggedIn || _joinedChannel || _busy;
         _refreshChannelsButton.Disabled = !_loggedIn || _joinedChannel || _busy;
         _joinChannelButton.Disabled = !_loggedIn || _joinedChannel ||
@@ -844,7 +812,7 @@ public partial class Main : Control
         _udpStatusLabel.Text = "UDP Hello 전송";
 
         await _udpService.ConnectAsync(
-            _addressInput.Text.Trim(),
+            _gameServerHost,
             udpPort,
             dungeonId,
             _localSessionId,
