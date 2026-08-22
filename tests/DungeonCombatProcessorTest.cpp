@@ -55,10 +55,21 @@ void TestRegisteredSkillAttackIsAccepted()
     const dnf::PartyId partyId = partyManager.CreateParty(100).value();
 
     dnf::EnemyCatalog enemyCatalog;
+    dnf::EnemyTemplate goblin;
+    goblin.id = 2001;
+    goblin.name = "Goblin";
+    goblin.maxHp = 100;
+    goblin.collision = {
+        {-20.0f, -15.0f, 0.0f},
+        {20.0f, 15.0f, 80.0f}};
+    assert(enemyCatalog.AddEnemy(goblin));
+
     dnf::DungeonCatalog dungeonCatalog(enemyCatalog);
 
-    const dnf::RoomTemplate room{
+    dnf::RoomTemplate room{
         1, 1200.0f, 500.0f, {100.0f, 250.0f, 0.0f}};
+    room.enemySpawns.push_back(
+        {1, goblin.id, {220.0f, 250.0f, 0.0f}, 1});
     assert(dungeonCatalog.AddDungeon(1001, "Forest", {room}));
 
     dnf::DungeonManager dungeonManager(
@@ -129,12 +140,20 @@ void TestRegisteredSkillAttackIsAccepted()
     assert(result.receivedCount == 2);
     assert(result.acceptedCount == 1);
     assert(result.rejectedCount == 1);
+    assert(result.hitCount == 1);
     assert(udpManager.PendingAttackCount(dungeonId) == 0);
 
     const auto player = created.dungeon->FindPlayer(100);
     assert(player != nullptr);
     assert(player->CurrentMp() == 40);
     assert(player->RemainingCooldown(1001) == 2);
+
+    const auto dungeonRoom = created.dungeon->FindRoom(1);
+    assert(dungeonRoom != nullptr);
+    const auto enemies = dungeonRoom->Enemies();
+    assert(enemies.size() == 1);
+    assert(enemies[0].currentHp == 40);
+    assert(enemies[0].alive);
 
     attack.sequence = 3;
     attack.skillId = 1001;
@@ -147,6 +166,7 @@ void TestRegisteredSkillAttackIsAccepted()
     assert(onCooldown.receivedCount == 1);
     assert(onCooldown.acceptedCount == 0);
     assert(onCooldown.rejectedCount == 1);
+    assert(onCooldown.hitCount == 0);
     assert(player->CurrentMp() == 40);
     assert(player->RemainingCooldown(1001) == 1);
 
