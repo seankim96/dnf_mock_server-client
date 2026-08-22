@@ -46,9 +46,32 @@ public partial class AuthenticationPanel : PanelContainer
         _selectCharacterButton =
             GetNode<Button>("%SelectCharacterButton");
 
+        ApplyEnvironmentDefaults();
         _loginButton.Pressed += OnLoginButtonPressed;
         _selectCharacterButton.Pressed += OnSelectCharacterButtonPressed;
         RefreshControls();
+    }
+
+    private void ApplyEnvironmentDefaults()
+    {
+        SetEnvironmentDefault(_addressInput, "DNF_AUTH_HOST");
+        SetEnvironmentDefault(_portInput, "DNF_AUTH_PORT");
+        SetEnvironmentDefault(_loginIdInput, "DNF_AUTH_LOGIN_ID");
+        SetEnvironmentDefault(_passwordInput, "DNF_AUTH_PASSWORD");
+        SetEnvironmentDefault(
+            _fingerprintInput,
+            "DNF_AUTH_CERT_FINGERPRINT");
+    }
+
+    private static void SetEnvironmentDefault(
+        LineEdit input,
+        string variableName)
+    {
+        string value = OS.GetEnvironment(variableName);
+        if (!string.IsNullOrWhiteSpace(value))
+        {
+            input.Text = value;
+        }
     }
 
     public override void _ExitTree()

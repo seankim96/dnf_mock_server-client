@@ -130,6 +130,40 @@ public partial class Main : Control
         _attackPressed = attackPressed;
     }
 
+    public override void _Input(InputEvent inputEvent)
+    {
+        if (!_udpService.IsAuthenticated || !_dungeonScreen.Visible ||
+            _dungeonFinished || inputEvent is not InputEventKey keyEvent ||
+            !keyEvent.Pressed || keyEvent.Echo)
+        {
+            return;
+        }
+
+        Vector2 tapDirection = keyEvent.Keycode switch
+        {
+            Key.A => Vector2.Left,
+            Key.D => Vector2.Right,
+            Key.W => Vector2.Up,
+            Key.S => Vector2.Down,
+            _ => Vector2.Zero
+        };
+
+        if (tapDirection != Vector2.Zero)
+        {
+            _lastDirection = tapDirection;
+            if (!_movementSendInProgress)
+            {
+                _ = SendMovementAsync(tapDirection, false);
+            }
+        }
+
+        if (keyEvent.Keycode == Key.J && !_attackPressed)
+        {
+            _attackPressed = true;
+            _ = SendAttackAsync();
+        }
+    }
+
     private void FindControls()
     {
         _authenticationPanel = GetNode<AuthenticationPanel>(
