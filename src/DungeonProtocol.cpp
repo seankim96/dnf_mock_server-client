@@ -44,6 +44,27 @@ bool IsValid(const UdpHelloMessage& hello)
            hello.token != 0;
 }
 
+bool IsValid(UdpHelloResult result)
+{
+    switch (result)
+    {
+    case UdpHelloResult::Success:
+    case UdpHelloResult::InvalidDungeon:
+    case UdpHelloResult::AuthenticationFailed:
+        return true;
+    }
+
+    return false;
+}
+
+bool IsValid(const UdpHelloAckMessage& ack)
+{
+    return ack.dungeonId != 0 &&
+           IsValid(ack.result) &&
+           (ack.result == UdpHelloResult::Success ||
+            ack.serverTick == 0);
+}
+
 bool IsValid(const UdpHeartbeatMessage& heartbeat)
 {
     return heartbeat.dungeonId != 0 &&
@@ -281,6 +302,35 @@ bool DecodeUdpHello(
 
     output = decoded;
     return true;
+}
+
+std::vector<std::uint8_t> EncodeUdpHelloAck(
+    const UdpHelloAckMessage& ack)
+{
+    if (!IsValid(ack))
+    {
+        throw std::invalid_argument("Invalid UDP hello acknowledgement");
+    }
+
+    flatbuffers::FlatBufferBuilder builder;
+
+    const auto udpHelloAck = Dnf::Protocol::CreateUdpHelloAck(
+        builder,
+        static_cast<Dnf::Protocol::UdpHelloAckResult>(ack.result),
+        ack.serverTick);
+
+    const auto message = Dnf::Protocol::CreateDungeonMessage(
+        builder,
+        DUNGEON_PROTOCOL_VERSION,
+        ack.dungeonId,
+        Dnf::Protocol::DungeonPayload_UdpHelloAck,
+        udpHelloAck.Union());
+
+    Dnf::Protocol::FinishDungeonMessageBuffer(builder, message);
+
+    return std::vector<std::uint8_t>(
+        builder.GetBufferPointer(),
+        builder.GetBufferPointer() + builder.GetSize());
 }
 
 std::vector<std::uint8_t> EncodeUdpHeartbeat(

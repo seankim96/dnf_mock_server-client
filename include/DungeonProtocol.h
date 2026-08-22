@@ -35,6 +35,20 @@ struct UdpHelloMessage
     DungeonUdpToken token = 0;
 };
 
+enum class UdpHelloResult : std::uint8_t
+{
+    Success = 0,
+    InvalidDungeon = 1,
+    AuthenticationFailed = 2
+};
+
+struct UdpHelloAckMessage
+{
+    DungeonId dungeonId = 0;
+    UdpHelloResult result = UdpHelloResult::Success;
+    std::uint32_t serverTick = 0;
+};
+
 struct UdpHeartbeatMessage
 {
     DungeonId dungeonId = 0;
@@ -61,6 +75,9 @@ std::vector<std::uint8_t> EncodeUdpHello(
 bool DecodeUdpHello(
     const std::vector<std::uint8_t>& bytes,
     UdpHelloMessage& output);
+
+std::vector<std::uint8_t> EncodeUdpHelloAck(
+    const UdpHelloAckMessage& ack);
 
 std::vector<std::uint8_t> EncodeUdpHeartbeat(
     const UdpHeartbeatMessage& heartbeat);

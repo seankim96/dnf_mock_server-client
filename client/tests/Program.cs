@@ -630,6 +630,26 @@ static void TestDungeonProtocol()
     Assert(helloMessage.DungeonId == 9 && hello.SessionId == 3 && hello.Token == 77,
         "UDP hello values are incorrect.");
 
+    byte[] ackBytes = CreateUdpHelloAckBytes(
+        UdpHelloAckResult.Success,
+        45);
+    Assert(DungeonProtocolCodec.TryDecodeUdpHelloAck(
+        ackBytes,
+        out UdpHelloAckData? ack) && ack is not null,
+        "UDP hello acknowledgement was not decoded.");
+    Assert(ack!.DungeonId == 9 &&
+        ack.Result == UdpHelloResult.Success &&
+        ack.ServerTick == 45,
+        "UDP hello acknowledgement values are incorrect.");
+
+    byte[] invalidAckBytes = CreateUdpHelloAckBytes(
+        UdpHelloAckResult.AuthenticationFailed,
+        45);
+    Assert(!DungeonProtocolCodec.TryDecodeUdpHelloAck(
+        invalidAckBytes,
+        out _),
+        "Failed UDP hello acknowledgement with a server tick was accepted.");
+
     byte[] movementBytes = DungeonProtocolCodec.EncodePlayerMovement(
         9, 10, 0.5f, -0.25f, false);
     var movementBuffer = new ByteBuffer(movementBytes);
@@ -1100,6 +1120,25 @@ static byte[] CreateTestSnapshotBytes()
         DungeonPayload.DungeonSnapshot,
         snapshot.Value);
     DungeonMessage.FinishDungeonMessageBuffer(builder, snapshotMessage);
+    return builder.SizedByteArray();
+}
+
+static byte[] CreateUdpHelloAckBytes(
+    UdpHelloAckResult result,
+    uint serverTick)
+{
+    var builder = new FlatBufferBuilder(128);
+    Offset<UdpHelloAck> ack = UdpHelloAck.CreateUdpHelloAck(
+        builder,
+        result,
+        serverTick);
+    Offset<DungeonMessage> message = DungeonMessage.CreateDungeonMessage(
+        builder,
+        1,
+        9,
+        DungeonPayload.UdpHelloAck,
+        ack.Value);
+    DungeonMessage.FinishDungeonMessageBuffer(builder, message);
     return builder.SizedByteArray();
 }
 

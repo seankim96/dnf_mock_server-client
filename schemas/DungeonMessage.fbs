@@ -39,6 +39,17 @@ table UdpHello {
   token:ulong;
 }
 
+enum UdpHelloAckResult : ubyte {
+  Success = 0,
+  InvalidDungeon = 1,
+  AuthenticationFailed = 2
+}
+
+table UdpHelloAck {
+  result:UdpHelloAckResult = Success;
+  server_tick:uint;
+}
+
 table UdpHeartbeat {
   session_id:ulong;
 }
@@ -55,7 +66,8 @@ union DungeonPayload {
   DungeonSnapshot,
   UdpHello,
   UdpHeartbeat,
-  PlayerAttack
+  PlayerAttack,
+  UdpHelloAck
 }
 
 table DungeonMessage {

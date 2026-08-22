@@ -14,6 +14,8 @@ void TestPlayerMovement()
 {
     assert(static_cast<std::uint8_t>(
                Dnf::Protocol::DungeonPayload_PlayerMovement) == 1);
+    assert(static_cast<std::uint8_t>(
+               Dnf::Protocol::DungeonPayload_UdpHelloAck) == 6);
 
     flatbuffers::FlatBufferBuilder builder;
 

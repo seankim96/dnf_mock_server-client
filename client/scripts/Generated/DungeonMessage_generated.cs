@@ -9,6 +9,13 @@ using global::System;
 using global::System.Collections.Generic;
 using global::Google.FlatBuffers;
 
+public enum UdpHelloAckResult : byte
+{
+  Success = 0,
+  InvalidDungeon = 1,
+  AuthenticationFailed = 2,
+};
+
 public enum DungeonPayload : byte
 {
   NONE = 0,
@@ -17,6 +24,7 @@ public enum DungeonPayload : byte
   UdpHello = 3,
   UdpHeartbeat = 4,
   PlayerAttack = 5,
+  UdpHelloAck = 6,
 };
 
 
@@ -42,6 +50,9 @@ static public class DungeonPayloadVerify
         break;
       case DungeonPayload.PlayerAttack:
         result = Dnf.Protocol.PlayerAttackVerify.Verify(verifier, tablePos);
+        break;
+      case DungeonPayload.UdpHelloAck:
+        result = Dnf.Protocol.UdpHelloAckVerify.Verify(verifier, tablePos);
         break;
       default: result = true;
         break;
@@ -304,6 +315,48 @@ static public class UdpHelloVerify
       && verifier.VerifyTableEnd(tablePos);
   }
 }
+public struct UdpHelloAck : IFlatbufferObject
+{
+  private Table __p;
+  public ByteBuffer ByteBuffer { get { return __p.bb; } }
+  public static void ValidateVersion() { FlatBufferConstants.FLATBUFFERS_25_2_10(); }
+  public static UdpHelloAck GetRootAsUdpHelloAck(ByteBuffer _bb) { return GetRootAsUdpHelloAck(_bb, new UdpHelloAck()); }
+  public static UdpHelloAck GetRootAsUdpHelloAck(ByteBuffer _bb, UdpHelloAck obj) { return (obj.__assign(_bb.GetInt(_bb.Position) + _bb.Position, _bb)); }
+  public void __init(int _i, ByteBuffer _bb) { __p = new Table(_i, _bb); }
+  public UdpHelloAck __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
+
+  public Dnf.Protocol.UdpHelloAckResult Result { get { int o = __p.__offset(4); return o != 0 ? (Dnf.Protocol.UdpHelloAckResult)__p.bb.Get(o + __p.bb_pos) : Dnf.Protocol.UdpHelloAckResult.Success; } }
+  public uint ServerTick { get { int o = __p.__offset(6); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
+
+  public static Offset<Dnf.Protocol.UdpHelloAck> CreateUdpHelloAck(FlatBufferBuilder builder,
+      Dnf.Protocol.UdpHelloAckResult result = Dnf.Protocol.UdpHelloAckResult.Success,
+      uint server_tick = 0) {
+    builder.StartTable(2);
+    UdpHelloAck.AddServerTick(builder, server_tick);
+    UdpHelloAck.AddResult(builder, result);
+    return UdpHelloAck.EndUdpHelloAck(builder);
+  }
+
+  public static void StartUdpHelloAck(FlatBufferBuilder builder) { builder.StartTable(2); }
+  public static void AddResult(FlatBufferBuilder builder, Dnf.Protocol.UdpHelloAckResult result) { builder.AddByte(0, (byte)result, 0); }
+  public static void AddServerTick(FlatBufferBuilder builder, uint serverTick) { builder.AddUint(1, serverTick, 0); }
+  public static Offset<Dnf.Protocol.UdpHelloAck> EndUdpHelloAck(FlatBufferBuilder builder) {
+    int o = builder.EndTable();
+    return new Offset<Dnf.Protocol.UdpHelloAck>(o);
+  }
+}
+
+
+static public class UdpHelloAckVerify
+{
+  static public bool Verify(Google.FlatBuffers.Verifier verifier, uint tablePos)
+  {
+    return verifier.VerifyTableStart(tablePos)
+      && verifier.VerifyField(tablePos, 4 /*Result*/, 1 /*Dnf.Protocol.UdpHelloAckResult*/, 1, false)
+      && verifier.VerifyField(tablePos, 6 /*ServerTick*/, 4 /*uint*/, 4, false)
+      && verifier.VerifyTableEnd(tablePos);
+  }
+}
 public struct UdpHeartbeat : IFlatbufferObject
 {
   private Table __p;
@@ -414,6 +467,7 @@ public struct DungeonMessage : IFlatbufferObject
   public Dnf.Protocol.UdpHello PayloadAsUdpHello() { return Payload<Dnf.Protocol.UdpHello>().Value; }
   public Dnf.Protocol.UdpHeartbeat PayloadAsUdpHeartbeat() { return Payload<Dnf.Protocol.UdpHeartbeat>().Value; }
   public Dnf.Protocol.PlayerAttack PayloadAsPlayerAttack() { return Payload<Dnf.Protocol.PlayerAttack>().Value; }
+  public Dnf.Protocol.UdpHelloAck PayloadAsUdpHelloAck() { return Payload<Dnf.Protocol.UdpHelloAck>().Value; }
 
   public static Offset<Dnf.Protocol.DungeonMessage> CreateDungeonMessage(FlatBufferBuilder builder,
       ushort protocol_version = 1,

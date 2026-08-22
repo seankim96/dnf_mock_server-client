@@ -162,6 +162,46 @@ void TestInvalidUdpHelloIsRejected()
     assert(threw);
 }
 
+void TestUdpHelloAckEncoding()
+{
+    dnf::UdpHelloAckMessage sent;
+    sent.dungeonId = 5001;
+    sent.result = dnf::UdpHelloResult::Success;
+    sent.serverTick = 77;
+
+    const auto bytes = dnf::EncodeUdpHelloAck(sent);
+
+    flatbuffers::Verifier verifier(bytes.data(), bytes.size());
+    assert(Dnf::Protocol::VerifyDungeonMessageBuffer(verifier));
+
+    const auto* message = Dnf::Protocol::GetDungeonMessage(bytes.data());
+    const auto* ack = message->payload_as_UdpHelloAck();
+    assert(message->dungeon_id() == sent.dungeonId);
+    assert(ack != nullptr);
+    assert(ack->result() == Dnf::Protocol::UdpHelloAckResult_Success);
+    assert(ack->server_tick() == sent.serverTick);
+}
+
+void TestInvalidUdpHelloAckIsRejected()
+{
+    dnf::UdpHelloAckMessage ack;
+    ack.dungeonId = 5001;
+    ack.result = dnf::UdpHelloResult::AuthenticationFailed;
+    ack.serverTick = 1;
+
+    bool threw = false;
+    try
+    {
+        dnf::EncodeUdpHelloAck(ack);
+    }
+    catch (const std::invalid_argument&)
+    {
+        threw = true;
+    }
+
+    assert(threw);
+}
+
 void TestUdpHeartbeatRoundTrip()
 {
     const dnf::UdpHeartbeatMessage sent{5001, 100};
@@ -252,6 +292,8 @@ int main()
     TestInvalidPlayerAttackIsRejected();
     TestUdpHelloRoundTrip();
     TestInvalidUdpHelloIsRejected();
+    TestUdpHelloAckEncoding();
+    TestInvalidUdpHelloAckIsRejected();
     TestUdpHeartbeatRoundTrip();
     TestDungeonSnapshotEncoding();
 

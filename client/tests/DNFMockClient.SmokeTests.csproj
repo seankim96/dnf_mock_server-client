@@ -23,6 +23,7 @@
     <Compile Include="../scripts/Protocol/DungeonStaticData.cs" Link="Protocol/DungeonStaticData.cs" />
     <Compile Include="../scripts/Protocol/DungeonStaticDataCodec.cs" Link="Protocol/DungeonStaticDataCodec.cs" />
     <Compile Include="../scripts/Protocol/DungeonProtocolCodec.cs" Link="Protocol/DungeonProtocolCodec.cs" />
+    <Compile Include="../scripts/Protocol/UdpHelloAckData.cs" Link="Protocol/UdpHelloAckData.cs" />
     <Compile Include="../scripts/Generated/AuthMessage_generated.cs" Link="Generated/AuthMessage_generated.cs" />
     <Compile Include="../scripts/Generated/DungeonMessage_generated.cs" Link="Generated/DungeonMessage_generated.cs" />
     <Compile Include="../scripts/Generated/TcpMessage_generated.cs" Link="Generated/TcpMessage_generated.cs" />

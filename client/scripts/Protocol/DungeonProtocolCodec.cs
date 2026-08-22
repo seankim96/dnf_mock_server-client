@@ -43,6 +43,58 @@ public static class DungeonProtocolCodec
             heartbeat.Value);
     }
 
+    public static bool TryDecodeUdpHelloAck(
+        byte[] bytes,
+        out UdpHelloAckData? output)
+    {
+        output = null;
+
+        if (bytes.Length == 0)
+        {
+            return false;
+        }
+
+        try
+        {
+            var buffer = new ByteBuffer(bytes);
+            if (!DungeonMessage.DungeonMessageBufferHasIdentifier(buffer) ||
+                !DungeonMessage.VerifyDungeonMessage(buffer))
+            {
+                return false;
+            }
+
+            DungeonMessage message = DungeonMessage.GetRootAsDungeonMessage(buffer);
+            if (message.ProtocolVersion != ProtocolVersion ||
+                message.DungeonId == 0 ||
+                message.PayloadType != DungeonPayload.UdpHelloAck)
+            {
+                return false;
+            }
+
+            UdpHelloAck ack = message.PayloadAsUdpHelloAck();
+            var result = (UdpHelloResult)(byte)ack.Result;
+            if (!Enum.IsDefined(typeof(UdpHelloResult), result) ||
+                (result != UdpHelloResult.Success && ack.ServerTick != 0))
+            {
+                return false;
+            }
+
+            output = new UdpHelloAckData(
+                message.DungeonId,
+                result,
+                ack.ServerTick);
+            return true;
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            return false;
+        }
+        catch (InvalidOperationException)
+        {
+            return false;
+        }
+    }
+
     public static byte[] EncodePlayerMovement(
         ulong dungeonId,
         uint sequence,
