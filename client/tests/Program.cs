@@ -19,6 +19,7 @@ TestInvalidPacketSize();
 TestGamePayloads();
 TestTcpFlatBufferSchema();
 TestAuthFlatBufferSchema();
+TestCertificateFingerprint();
 AuthPayloadCodecSmokeTests.Run();
 TestDungeonProtocol();
 await TestTcpConnectionAsync();
@@ -26,6 +27,25 @@ await TestAuthTlsConnectionAsync();
 await TestUdpSessionAsync();
 
 Console.WriteLine("All client smoke tests passed.");
+
+static void TestCertificateFingerprint()
+{
+    Assert(CertificateFingerprint.CreateValidation(string.Empty) is null,
+        "An empty certificate fingerprint must use system validation.");
+
+    RemoteCertificateValidationCallback? validation =
+        CertificateFingerprint.CreateValidation(new string('A', 64));
+    Assert(validation is not null &&
+        !validation(new object(), null, null, SslPolicyErrors.None),
+        "Fingerprint validation accepted a missing certificate.");
+
+    AssertThrows<ArgumentException>(
+        () => CertificateFingerprint.CreateValidation("ABCD"),
+        "A short certificate fingerprint was accepted.");
+    AssertThrows<ArgumentException>(
+        () => CertificateFingerprint.CreateValidation(new string('Z', 64)),
+        "A non-hexadecimal certificate fingerprint was accepted.");
+}
 
 static void TestHeaderEncoding()
 {

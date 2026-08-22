@@ -4,7 +4,6 @@ using System.IO;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Authentication;
-using System.Security.Cryptography;
 using System.Threading;
 using DnfMockClient.Networking;
 using DnfMockClient.Protocol;
@@ -146,7 +145,8 @@ public partial class AuthenticationPanel : PanelContainer
         {
             _authenticationClient.Disconnect();
             RemoteCertificateValidationCallback? certificateValidation =
-                CreateCertificateValidation(_fingerprintInput.Text);
+                CertificateFingerprint.CreateValidation(
+                    _fingerprintInput.Text);
             await _authenticationClient.ConnectAsync(
                 host,
                 port,
@@ -270,41 +270,6 @@ public partial class AuthenticationPanel : PanelContainer
     {
         _statusLabel.Text = message;
         _statusLabel.Modulate = color;
-    }
-
-    private static RemoteCertificateValidationCallback?
-        CreateCertificateValidation(string fingerprint)
-    {
-        string expectedFingerprint = fingerprint
-            .Replace(":", string.Empty)
-            .Replace(" ", string.Empty)
-            .Trim();
-        if (expectedFingerprint.Length == 0)
-        {
-            return null;
-        }
-
-        if (expectedFingerprint.Length != 64)
-        {
-            throw new ArgumentException(
-                "SHA-256 인증서 지문은 64자리 16진수여야 합니다.");
-        }
-
-        foreach (char character in expectedFingerprint)
-        {
-            if (!Uri.IsHexDigit(character))
-            {
-                throw new ArgumentException(
-                    "SHA-256 인증서 지문은 16진수여야 합니다.");
-            }
-        }
-
-        return (_, certificate, _, _) =>
-            certificate is not null &&
-            string.Equals(
-                certificate.GetCertHashString(HashAlgorithmName.SHA256),
-                expectedFingerprint,
-                StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool IsExpectedOperationError(Exception exception)
