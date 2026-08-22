@@ -1,6 +1,10 @@
 using System.IO;
 using System.Net;
+using System.Net.Security;
 using System.Net.Sockets;
+using System.Security.Authentication;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using Dnf.Protocol;
 using DnfMockClient.Networking;
 using DnfMockClient.Protocol;
@@ -15,6 +19,7 @@ TestGamePayloads();
 TestTcpFlatBufferSchema();
 TestDungeonProtocol();
 await TestTcpConnectionAsync();
+await TestAuthTlsConnectionAsync();
 await TestUdpSessionAsync();
 
 Console.WriteLine("All client smoke tests passed.");
@@ -1565,6 +1570,106 @@ static async Task TestTcpConnectionAsync()
     {
         throw new InvalidOperationException("TCP connection was not closed.");
     }
+}
+
+static async Task TestAuthTlsConnectionAsync()
+{
+    using RSA key = RSA.Create(2048);
+    var certificateRequest = new CertificateRequest(
+        "CN=localhost",
+        key,
+        HashAlgorithmName.SHA256,
+        RSASignaturePadding.Pkcs1);
+    certificateRequest.CertificateExtensions.Add(
+        new X509BasicConstraintsExtension(false, false, 0, false));
+    certificateRequest.CertificateExtensions.Add(
+        new X509KeyUsageExtension(
+            X509KeyUsageFlags.DigitalSignature |
+            X509KeyUsageFlags.KeyEncipherment,
+            false));
+    certificateRequest.CertificateExtensions.Add(
+        new X509SubjectKeyIdentifierExtension(
+            certificateRequest.PublicKey,
+            false));
+    using X509Certificate2 certificate =
+        certificateRequest.CreateSelfSigned(
+            DateTimeOffset.UtcNow.AddMinutes(-1),
+            DateTimeOffset.UtcNow.AddMinutes(5));
+
+    using var listener = new TcpListener(IPAddress.Loopback, 0);
+    listener.Start();
+    int port = ((IPEndPoint)listener.LocalEndpoint).Port;
+    using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+    Task<TcpClient> acceptTask =
+        listener.AcceptTcpClientAsync(timeout.Token).AsTask();
+
+    using var connection = new AuthTlsConnectionService();
+    Task connectTask = connection.ConnectAsync(
+        "localhost",
+        port,
+        timeout.Token,
+        (_, serverCertificate, _, _) =>
+            serverCertificate?.GetCertHashString(HashAlgorithmName.SHA256) ==
+            certificate.GetCertHashString(HashAlgorithmName.SHA256));
+
+    using TcpClient acceptedClient = await acceptTask;
+    using var serverStream = new SslStream(
+        acceptedClient.GetStream(),
+        leaveInnerStreamOpen: false);
+    await serverStream.AuthenticateAsServerAsync(
+        certificate,
+        clientCertificateRequired: false,
+        SslProtocols.Tls12 | SslProtocols.Tls13,
+        checkCertificateRevocation: false);
+    await connectTask;
+
+    Assert(connection.IsConnected,
+        "Authentication TLS connection was not established.");
+
+    bool gamePacketRejected = false;
+    try
+    {
+        await connection.SendRequestAsync(
+            TcpPacketType.LoginRequest,
+            Array.Empty<byte>(),
+            timeout.Token);
+    }
+    catch (ArgumentException)
+    {
+        gamePacketRejected = true;
+    }
+    Assert(gamePacketRejected,
+        "Authentication TLS service accepted a game server packet type.");
+
+    byte[] requestPayload = { 1, 2, 3 };
+    Task<TcpPacket> responseTask = connection.SendRequestAsync(
+        TcpPacketType.AuthLoginRequest,
+        requestPayload,
+        timeout.Token);
+
+    var headerBytes = new byte[TcpPacketCodec.HeaderSize];
+    await serverStream.ReadExactlyAsync(headerBytes, timeout.Token);
+    TcpPacketHeader requestHeader = TcpPacketCodec.DecodeHeader(headerBytes);
+    var receivedPayload = new byte[
+        requestHeader.PacketSize - TcpPacketCodec.HeaderSize];
+    await serverStream.ReadExactlyAsync(receivedPayload, timeout.Token);
+
+    Assert(requestHeader.Type == TcpPacketType.AuthLoginRequest,
+        "Authentication TLS request type is incorrect.");
+    Assert(receivedPayload.SequenceEqual(requestPayload),
+        "Authentication TLS request payload is incorrect.");
+
+    byte[] responseBytes = TcpPacketCodec.EncodePacket(
+        TcpPacketType.AuthLoginResponse,
+        requestHeader.RequestId,
+        new byte[] { 4, 5, 6 });
+    await serverStream.WriteAsync(responseBytes, timeout.Token);
+
+    TcpPacket response = await responseTask;
+    Assert(response.Header.Type == TcpPacketType.AuthLoginResponse,
+        "Authentication TLS response type is incorrect.");
+    Assert(response.Payload.SequenceEqual(new byte[] { 4, 5, 6 }),
+        "Authentication TLS response payload is incorrect.");
 }
 
 static void Assert(bool condition, string message)

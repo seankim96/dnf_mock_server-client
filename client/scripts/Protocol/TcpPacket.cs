@@ -14,6 +14,10 @@ public enum TcpPacketType : ushort
     DungeonCatalogRequest = 10,
     DungeonStaticDataRequest = 11,
 
+    AuthLoginRequest = 201,
+    AuthCharacterListRequest = 202,
+    AuthCharacterSelectionRequest = 203,
+
     LoginResponse = 101,
     ChannelListResponse = 102,
     JoinChannelResponse = 103,
@@ -24,7 +28,11 @@ public enum TcpPacketType : ushort
     LeavePartyResponse = 108,
     PartySnapshotResponse = 109,
     DungeonCatalogResponse = 110,
-    DungeonStaticDataResponse = 111
+    DungeonStaticDataResponse = 111,
+
+    AuthLoginResponse = 301,
+    AuthCharacterListResponse = 302,
+    AuthCharacterSelectionResponse = 303
 }
 
 public sealed class TcpPacketHeader
