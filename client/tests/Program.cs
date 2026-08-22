@@ -9,6 +9,7 @@ using Dnf.Protocol;
 using DnfMockClient.Networking;
 using DnfMockClient.Protocol;
 using Google.FlatBuffers;
+using AuthSchema = Dnf.Protocol.Auth;
 using TcpSchema = Dnf.Protocol.Tcp;
 
 TestHeaderEncoding();
@@ -17,6 +18,7 @@ TestCombinedPackets();
 TestInvalidPacketSize();
 TestGamePayloads();
 TestTcpFlatBufferSchema();
+TestAuthFlatBufferSchema();
 TestDungeonProtocol();
 await TestTcpConnectionAsync();
 await TestAuthTlsConnectionAsync();
@@ -679,6 +681,40 @@ static void TestTcpFlatBufferSchema()
         decoded.PayloadType == TcpSchema.TcpPayload.LoginRequest &&
         decoded.PayloadAsLoginRequest().AuthTicket == "valid-ticket",
         "TCP FlatBuffer login payload is incorrect.");
+}
+
+static void TestAuthFlatBufferSchema()
+{
+    var builder = new FlatBufferBuilder(128);
+    StringOffset loginId = builder.CreateString("test-user");
+    StringOffset password = builder.CreateString("test-password");
+    Offset<AuthSchema.LoginRequest> login =
+        AuthSchema.LoginRequest.CreateLoginRequest(
+            builder,
+            loginId,
+            password);
+    Offset<AuthSchema.AuthMessage> message =
+        AuthSchema.AuthMessage.CreateAuthMessage(
+            builder,
+            1,
+            AuthSchema.AuthPayload.LoginRequest,
+            login.Value);
+    AuthSchema.AuthMessage.FinishAuthMessageBuffer(builder, message);
+
+    var buffer = new ByteBuffer(builder.SizedByteArray());
+    Assert(AuthSchema.AuthMessage.AuthMessageBufferHasIdentifier(buffer),
+        "Auth FlatBuffer identifier is incorrect.");
+    Assert(AuthSchema.AuthMessage.VerifyAuthMessage(buffer),
+        "Auth FlatBuffer verification failed.");
+
+    AuthSchema.AuthMessage decoded =
+        AuthSchema.AuthMessage.GetRootAsAuthMessage(buffer);
+    AuthSchema.LoginRequest decodedLogin = decoded.PayloadAsLoginRequest();
+    Assert(decoded.ProtocolVersion == 1 &&
+        decoded.PayloadType == AuthSchema.AuthPayload.LoginRequest &&
+        decodedLogin.LoginId == "test-user" &&
+        decodedLogin.Password == "test-password",
+        "Auth FlatBuffer login payload is incorrect.");
 }
 
 static byte[] CreatePartySnapshotResponseBytes(
