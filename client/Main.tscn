@@ -394,6 +394,39 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "던전 화면 닫기"
 
+[node name="CombatHud" type="HBoxContainer" parent="DungeonScreen/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 22
+
+[node name="HpLabel" type="Label" parent="DungeonScreen/Margin/VBox/CombatHud"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.345, 0.839, 0.553, 1)
+theme_override_font_sizes/font_size = 17
+text = "HP: -"
+
+[node name="MpLabel" type="Label" parent="DungeonScreen/Margin/VBox/CombatHud"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.35, 0.68, 1, 1)
+theme_override_font_sizes/font_size = 17
+text = "MP: -"
+
+[node name="SkillLabel" type="Label" parent="DungeonScreen/Margin/VBox/CombatHud"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.72, 0.82, 1, 1)
+theme_override_font_sizes/font_size = 17
+text = "Ice Slash: 준비"
+
+[node name="EnemyLabel" type="Label" parent="DungeonScreen/Margin/VBox/CombatHud"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.55, 0.58, 1)
+theme_override_font_sizes/font_size = 17
+text = "Enemies: -"
+
 [node name="DungeonWorldView" type="Control" parent="DungeonScreen/Margin/VBox"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 400)
@@ -405,5 +438,49 @@ script = ExtResource("2_world")
 [node name="Help" type="Label" parent="DungeonScreen/Margin/VBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.65, 0.7, 0.8, 1)
-text = "이동: WASD / 스킬 1001: J / 서버 좌표를 2D 화면에 투영"
+text = "이동: WASD / Ice Slash: J / 적을 처치한 뒤 오른쪽 포탈로 이동"
 horizontal_alignment = 1
+
+[node name="DungeonResultOverlay" type="Control" parent="DungeonScreen"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Shade" type="ColorRect" parent="DungeonScreen/DungeonResultOverlay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.02, 0.035, 0.06, 0.72)
+
+[node name="Center" type="CenterContainer" parent="DungeonScreen/DungeonResultOverlay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Panel" type="PanelContainer" parent="DungeonScreen/DungeonResultOverlay/Center"]
+custom_minimum_size = Vector2(430, 180)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="DungeonResultLabel" type="Label" parent="DungeonScreen/DungeonResultOverlay/Center/Panel"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.45, 1, 0.72, 1)
+theme_override_font_sizes/font_size = 25
+text = "DUNGEON CLEAR"
+horizontal_alignment = 1
+vertical_alignment = 1

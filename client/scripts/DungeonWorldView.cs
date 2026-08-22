@@ -103,7 +103,11 @@ public partial class DungeonWorldView : Control
 
             Vector2 position = ToScreen(player.X, player.Y, roomSize, arena);
             bool isLocal = player.SessionId == _localSessionId;
-            Color color = isLocal ? new Color("58d68d") : new Color("5dade2");
+            Color color = !player.Alive
+                ? new Color("6b7280")
+                : isLocal
+                    ? new Color("58d68d")
+                    : new Color("5dade2");
             DrawCircle(position, isLocal ? 14.0f : 11.0f, color);
             DrawCircle(position, isLocal ? 14.0f : 11.0f,
                 new Color("e8f1ff"), false, 2.0f);
@@ -115,6 +119,35 @@ public partial class DungeonWorldView : Control
                 -1,
                 12,
                 Colors.White);
+
+            float hpRatio = Mathf.Clamp(
+                player.CurrentHp / (float)player.MaxHp,
+                0.0f,
+                1.0f);
+            var hpBackground = new Rect2(
+                position + new Vector2(-20.0f, 20.0f),
+                new Vector2(40.0f, 5.0f));
+            DrawRect(hpBackground, new Color("23332a"), true);
+            DrawRect(
+                new Rect2(
+                    hpBackground.Position,
+                    new Vector2(
+                        hpBackground.Size.X * hpRatio,
+                        hpBackground.Size.Y)),
+                new Color("58d68d"),
+                true);
+
+            if (player.SkillPhase == SkillPhaseData.Active)
+            {
+                DrawArc(
+                    position,
+                    28.0f,
+                    0.0f,
+                    Mathf.Tau,
+                    32,
+                    new Color("7dd3fc"),
+                    4.0f);
+            }
         }
     }
 

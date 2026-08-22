@@ -12,6 +12,8 @@ namespace DnfMockClient;
 
 public partial class Main : Control
 {
+    private const float DungeonTicksPerSecond = 30.0f;
+
     private readonly TcpConnectionService _connection = new();
     private readonly DungeonUdpService _udpService = new();
     private readonly object _snapshotLock = new();
@@ -41,6 +43,12 @@ public partial class Main : Control
     private Label _roomLabel = null!;
     private Label _positionLabel = null!;
     private Label _udpStatusLabel = null!;
+    private Label _hpLabel = null!;
+    private Label _mpLabel = null!;
+    private Label _skillLabel = null!;
+    private Label _enemyLabel = null!;
+    private Control _dungeonResultOverlay = null!;
+    private Label _dungeonResultLabel = null!;
     private Button _leaveDungeonButton = null!;
 
     private CancellationTokenSource? _operationCancellation;
@@ -51,6 +59,7 @@ public partial class Main : Control
     private bool _movementSendInProgress;
     private bool _attackPressed;
     private bool _receivedFirstSnapshot;
+    private bool _dungeonFinished;
     private double _movementSendTime;
     private Vector2 _lastDirection = Vector2.Right;
     private ulong _localSessionId;
@@ -81,7 +90,8 @@ public partial class Main : Control
 
     public override void _PhysicsProcess(double delta)
     {
-        if (!_udpService.IsAuthenticated || !_dungeonScreen.Visible)
+        if (!_udpService.IsAuthenticated || !_dungeonScreen.Visible ||
+            _dungeonFinished)
         {
             return;
         }
@@ -148,6 +158,12 @@ public partial class Main : Control
         _roomLabel = GetNode<Label>("%RoomLabel");
         _positionLabel = GetNode<Label>("%PositionLabel");
         _udpStatusLabel = GetNode<Label>("%UdpStatusLabel");
+        _hpLabel = GetNode<Label>("%HpLabel");
+        _mpLabel = GetNode<Label>("%MpLabel");
+        _skillLabel = GetNode<Label>("%SkillLabel");
+        _enemyLabel = GetNode<Label>("%EnemyLabel");
+        _dungeonResultOverlay = GetNode<Control>("%DungeonResultOverlay");
+        _dungeonResultLabel = GetNode<Label>("%DungeonResultLabel");
         _leaveDungeonButton = GetNode<Button>("%LeaveDungeonButton");
     }
 
@@ -804,11 +820,17 @@ public partial class Main : Control
         CancellationToken cancellationToken)
     {
         _receivedFirstSnapshot = false;
+        _dungeonFinished = false;
         _dungeonWorldView.SetLocalSessionId(_localSessionId);
         _dungeonTitleLabel.Text = $"Dungeon {dungeonId}";
         _tickLabel.Text = "Tick: -";
         _roomLabel.Text = "Room: -";
         _positionLabel.Text = "Position: -";
+        _hpLabel.Text = "HP: -";
+        _mpLabel.Text = "MP: -";
+        _skillLabel.Text = "Ice Slash: 준비";
+        _enemyLabel.Text = "Enemies: -";
+        _dungeonResultOverlay.Visible = false;
         _udpStatusLabel.Text = "UDP Hello 전송";
 
         UdpHelloAckData ack = await _udpService.ConnectAsync(
@@ -831,6 +853,8 @@ public partial class Main : Control
     {
         _udpService.Disconnect();
         _dungeonWorldView.ClearStaticData();
+        _dungeonFinished = false;
+        _dungeonResultOverlay.Visible = false;
         _dungeonScreen.Visible = false;
         _lobbyScreen.Visible = true;
         SetStatus("던전 화면을 닫았습니다.", Colors.LightGray);
@@ -883,7 +907,11 @@ public partial class Main : Control
 
         _dungeonWorldView.SetSnapshot(snapshot);
         _tickLabel.Text = $"Tick: {snapshot.ServerTick}";
-        _udpStatusLabel.Text = "UDP 수신 중";
+        _udpStatusLabel.Text = snapshot.State == DungeonStateData.Finished
+            ? "던전 완료"
+            : "UDP 수신 중";
+
+        uint currentRoomId = 0;
 
         foreach (PlayerSnapshotData player in snapshot.Players)
         {
@@ -892,10 +920,46 @@ public partial class Main : Control
                 continue;
             }
 
+            currentRoomId = player.RoomId;
             _roomLabel.Text = $"Room: {player.RoomId}";
             _positionLabel.Text =
                 $"Position: ({player.X:0.0}, {player.Y:0.0}, {player.Z:0.0})";
+            _hpLabel.Text = $"HP {player.CurrentHp} / {player.MaxHp}";
+            _hpLabel.Modulate = player.Alive
+                ? Colors.LightGreen
+                : Colors.IndianRed;
+            _mpLabel.Text = $"MP {player.CurrentMp} / {player.MaxMp}";
+
+            uint cooldownTicks = player.RemainingCooldown(1001);
+            string cooldownText = cooldownTicks == 0
+                ? "준비"
+                : $"{cooldownTicks / DungeonTicksPerSecond:0.0}s";
+            _skillLabel.Text = player.SkillPhase == SkillPhaseData.Idle
+                ? $"Ice Slash: {cooldownText}"
+                : $"Ice Slash: {player.SkillPhase} " +
+                  $"({player.SkillRemainingTicks}t)";
             break;
+        }
+
+        int livingEnemyCount = 0;
+        foreach (EnemySnapshotData enemy in snapshot.Enemies)
+        {
+            if (enemy.Alive && enemy.RoomId == currentRoomId)
+            {
+                livingEnemyCount++;
+            }
+        }
+
+        _enemyLabel.Text = $"Enemies: {livingEnemyCount}";
+
+        if (snapshot.State == DungeonStateData.Finished && !_dungeonFinished)
+        {
+            _dungeonFinished = true;
+            _dungeonResultLabel.Text =
+                $"DUNGEON CLEAR\nTick {snapshot.ServerTick}\n" +
+                "상단 버튼으로 로비에 돌아갈 수 있습니다.";
+            _dungeonResultOverlay.Visible = true;
+            AddLog($"던전 클리어: tick={snapshot.ServerTick}");
         }
 
         if (!_receivedFirstSnapshot)
