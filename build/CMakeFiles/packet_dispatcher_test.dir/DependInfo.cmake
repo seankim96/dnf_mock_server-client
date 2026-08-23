@@ -8,6 +8,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
+  "/Users/sean/Documents/ChatGPT/DNF_Mock_Server/tests/DevAuthTicketVerifier.cpp" "CMakeFiles/packet_dispatcher_test.dir/tests/DevAuthTicketVerifier.cpp.o" "gcc" "CMakeFiles/packet_dispatcher_test.dir/tests/DevAuthTicketVerifier.cpp.o.d"
   "/Users/sean/Documents/ChatGPT/DNF_Mock_Server/tests/PacketDispatcherTest.cpp" "CMakeFiles/packet_dispatcher_test.dir/tests/PacketDispatcherTest.cpp.o" "gcc" "CMakeFiles/packet_dispatcher_test.dir/tests/PacketDispatcherTest.cpp.o.d"
   )
 

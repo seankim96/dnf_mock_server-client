@@ -4,7 +4,7 @@
 # compile CXX with /usr/bin/c++
 CXX_DEFINES = 
 
-CXX_INCLUDES = -I/Users/sean/Documents/ChatGPT/DNF_Mock_Server/include
+CXX_INCLUDES = -I/Users/sean/Documents/ChatGPT/DNF_Mock_Server/include -I/Users/sean/Documents/ChatGPT/DNF_Mock_Server/build/dnf_protocol_generated -isystem /opt/homebrew/include -isystem /opt/homebrew/Cellar/openssl@3/3.6.2/include
 
 CXX_FLAGSarm64 = -std=gnu++20 -arch arm64
 

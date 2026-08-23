@@ -1,0 +1,2 @@
+# Empty dependencies file for dungeon_connection_protocol_test.
+# This may be replaced when dependencies are built.

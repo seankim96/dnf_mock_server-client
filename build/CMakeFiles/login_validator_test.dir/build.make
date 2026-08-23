@@ -96,6 +96,10 @@ login_validator_test_EXTERNAL_OBJECTS =
 login_validator_test: CMakeFiles/login_validator_test.dir/tests/LoginValidatorTest.cpp.o
 login_validator_test: CMakeFiles/login_validator_test.dir/build.make
 login_validator_test: libdnf_core.a
+login_validator_test: /opt/homebrew/Cellar/openssl@3/3.6.2/lib/libssl.dylib
+login_validator_test: /opt/homebrew/Cellar/openssl@3/3.6.2/lib/libcrypto.dylib
+login_validator_test: /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib/libsqlite3.tbd
+login_validator_test: /opt/homebrew/lib/libflatbuffers.a
 login_validator_test: CMakeFiles/login_validator_test.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/sean/Documents/ChatGPT/DNF_Mock_Server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable login_validator_test"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/login_validator_test.dir/link.txt --verbose=$(VERBOSE)

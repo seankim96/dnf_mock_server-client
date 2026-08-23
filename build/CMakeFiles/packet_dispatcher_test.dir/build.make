@@ -72,10 +72,24 @@ include CMakeFiles/packet_dispatcher_test.dir/flags.make
 CMakeFiles/packet_dispatcher_test.dir/codegen:
 .PHONY : CMakeFiles/packet_dispatcher_test.dir/codegen
 
+CMakeFiles/packet_dispatcher_test.dir/tests/DevAuthTicketVerifier.cpp.o: CMakeFiles/packet_dispatcher_test.dir/flags.make
+CMakeFiles/packet_dispatcher_test.dir/tests/DevAuthTicketVerifier.cpp.o: /Users/sean/Documents/ChatGPT/DNF_Mock_Server/tests/DevAuthTicketVerifier.cpp
+CMakeFiles/packet_dispatcher_test.dir/tests/DevAuthTicketVerifier.cpp.o: CMakeFiles/packet_dispatcher_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/sean/Documents/ChatGPT/DNF_Mock_Server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/packet_dispatcher_test.dir/tests/DevAuthTicketVerifier.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/packet_dispatcher_test.dir/tests/DevAuthTicketVerifier.cpp.o -MF CMakeFiles/packet_dispatcher_test.dir/tests/DevAuthTicketVerifier.cpp.o.d -o CMakeFiles/packet_dispatcher_test.dir/tests/DevAuthTicketVerifier.cpp.o -c /Users/sean/Documents/ChatGPT/DNF_Mock_Server/tests/DevAuthTicketVerifier.cpp
+
+CMakeFiles/packet_dispatcher_test.dir/tests/DevAuthTicketVerifier.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/packet_dispatcher_test.dir/tests/DevAuthTicketVerifier.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/sean/Documents/ChatGPT/DNF_Mock_Server/tests/DevAuthTicketVerifier.cpp > CMakeFiles/packet_dispatcher_test.dir/tests/DevAuthTicketVerifier.cpp.i
+
+CMakeFiles/packet_dispatcher_test.dir/tests/DevAuthTicketVerifier.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/packet_dispatcher_test.dir/tests/DevAuthTicketVerifier.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/sean/Documents/ChatGPT/DNF_Mock_Server/tests/DevAuthTicketVerifier.cpp -o CMakeFiles/packet_dispatcher_test.dir/tests/DevAuthTicketVerifier.cpp.s
+
 CMakeFiles/packet_dispatcher_test.dir/tests/PacketDispatcherTest.cpp.o: CMakeFiles/packet_dispatcher_test.dir/flags.make
 CMakeFiles/packet_dispatcher_test.dir/tests/PacketDispatcherTest.cpp.o: /Users/sean/Documents/ChatGPT/DNF_Mock_Server/tests/PacketDispatcherTest.cpp
 CMakeFiles/packet_dispatcher_test.dir/tests/PacketDispatcherTest.cpp.o: CMakeFiles/packet_dispatcher_test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/sean/Documents/ChatGPT/DNF_Mock_Server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/packet_dispatcher_test.dir/tests/PacketDispatcherTest.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/sean/Documents/ChatGPT/DNF_Mock_Server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/packet_dispatcher_test.dir/tests/PacketDispatcherTest.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/packet_dispatcher_test.dir/tests/PacketDispatcherTest.cpp.o -MF CMakeFiles/packet_dispatcher_test.dir/tests/PacketDispatcherTest.cpp.o.d -o CMakeFiles/packet_dispatcher_test.dir/tests/PacketDispatcherTest.cpp.o -c /Users/sean/Documents/ChatGPT/DNF_Mock_Server/tests/PacketDispatcherTest.cpp
 
 CMakeFiles/packet_dispatcher_test.dir/tests/PacketDispatcherTest.cpp.i: cmake_force
@@ -88,16 +102,22 @@ CMakeFiles/packet_dispatcher_test.dir/tests/PacketDispatcherTest.cpp.s: cmake_fo
 
 # Object files for target packet_dispatcher_test
 packet_dispatcher_test_OBJECTS = \
+"CMakeFiles/packet_dispatcher_test.dir/tests/DevAuthTicketVerifier.cpp.o" \
 "CMakeFiles/packet_dispatcher_test.dir/tests/PacketDispatcherTest.cpp.o"
 
 # External object files for target packet_dispatcher_test
 packet_dispatcher_test_EXTERNAL_OBJECTS =
 
+packet_dispatcher_test: CMakeFiles/packet_dispatcher_test.dir/tests/DevAuthTicketVerifier.cpp.o
 packet_dispatcher_test: CMakeFiles/packet_dispatcher_test.dir/tests/PacketDispatcherTest.cpp.o
 packet_dispatcher_test: CMakeFiles/packet_dispatcher_test.dir/build.make
 packet_dispatcher_test: libdnf_core.a
+packet_dispatcher_test: /opt/homebrew/Cellar/openssl@3/3.6.2/lib/libssl.dylib
+packet_dispatcher_test: /opt/homebrew/Cellar/openssl@3/3.6.2/lib/libcrypto.dylib
+packet_dispatcher_test: /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib/libsqlite3.tbd
+packet_dispatcher_test: /opt/homebrew/lib/libflatbuffers.a
 packet_dispatcher_test: CMakeFiles/packet_dispatcher_test.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/sean/Documents/ChatGPT/DNF_Mock_Server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable packet_dispatcher_test"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/sean/Documents/ChatGPT/DNF_Mock_Server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Linking CXX executable packet_dispatcher_test"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/packet_dispatcher_test.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.

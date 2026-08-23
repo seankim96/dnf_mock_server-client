@@ -1,4 +1,6 @@
 file(REMOVE_RECURSE
+  "CMakeFiles/packet_dispatcher_test.dir/tests/DevAuthTicketVerifier.cpp.o"
+  "CMakeFiles/packet_dispatcher_test.dir/tests/DevAuthTicketVerifier.cpp.o.d"
   "CMakeFiles/packet_dispatcher_test.dir/tests/PacketDispatcherTest.cpp.o"
   "CMakeFiles/packet_dispatcher_test.dir/tests/PacketDispatcherTest.cpp.o.d"
   "packet_dispatcher_test"

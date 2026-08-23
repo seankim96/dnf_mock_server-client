@@ -127,6 +127,19 @@ depend:
 .PHONY : depend
 
 #=============================================================================
+# Target rules for targets named GENERATE_dnf_protocol_generated
+
+# Build rule for target.
+GENERATE_dnf_protocol_generated: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 GENERATE_dnf_protocol_generated
+.PHONY : GENERATE_dnf_protocol_generated
+
+# fast build rule for target.
+GENERATE_dnf_protocol_generated/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/GENERATE_dnf_protocol_generated.dir/build.make CMakeFiles/GENERATE_dnf_protocol_generated.dir/build
+.PHONY : GENERATE_dnf_protocol_generated/fast
+
+#=============================================================================
 # Target rules for targets named dnf_core
 
 # Build rule for target.
@@ -153,17 +166,147 @@ dnf_mock_server/fast:
 .PHONY : dnf_mock_server/fast
 
 #=============================================================================
-# Target rules for targets named dnf_mock_client
+# Target rules for targets named dnf_auth_server
 
 # Build rule for target.
-dnf_mock_client: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 dnf_mock_client
-.PHONY : dnf_mock_client
+dnf_auth_server: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 dnf_auth_server
+.PHONY : dnf_auth_server
 
 # fast build rule for target.
-dnf_mock_client/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_mock_client.dir/build.make CMakeFiles/dnf_mock_client.dir/build
-.PHONY : dnf_mock_client/fast
+dnf_auth_server/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_auth_server.dir/build.make CMakeFiles/dnf_auth_server.dir/build
+.PHONY : dnf_auth_server/fast
+
+#=============================================================================
+# Target rules for targets named dnf_admin
+
+# Build rule for target.
+dnf_admin: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 dnf_admin
+.PHONY : dnf_admin
+
+# fast build rule for target.
+dnf_admin/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_admin.dir/build.make CMakeFiles/dnf_admin.dir/build
+.PHONY : dnf_admin/fast
+
+#=============================================================================
+# Target rules for targets named dev_auth_ticket_verifier_test
+
+# Build rule for target.
+dev_auth_ticket_verifier_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 dev_auth_ticket_verifier_test
+.PHONY : dev_auth_ticket_verifier_test
+
+# fast build rule for target.
+dev_auth_ticket_verifier_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dev_auth_ticket_verifier_test.dir/build.make CMakeFiles/dev_auth_ticket_verifier_test.dir/build
+.PHONY : dev_auth_ticket_verifier_test/fast
+
+#=============================================================================
+# Target rules for targets named auth_ticket_issuer_test
+
+# Build rule for target.
+auth_ticket_issuer_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 auth_ticket_issuer_test
+.PHONY : auth_ticket_issuer_test
+
+# fast build rule for target.
+auth_ticket_issuer_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/auth_ticket_issuer_test.dir/build.make CMakeFiles/auth_ticket_issuer_test.dir/build
+.PHONY : auth_ticket_issuer_test/fast
+
+#=============================================================================
+# Target rules for targets named account_authentication_service_test
+
+# Build rule for target.
+account_authentication_service_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 account_authentication_service_test
+.PHONY : account_authentication_service_test
+
+# fast build rule for target.
+account_authentication_service_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/account_authentication_service_test.dir/build.make CMakeFiles/account_authentication_service_test.dir/build
+.PHONY : account_authentication_service_test/fast
+
+#=============================================================================
+# Target rules for targets named account_provisioning_service_test
+
+# Build rule for target.
+account_provisioning_service_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 account_provisioning_service_test
+.PHONY : account_provisioning_service_test
+
+# fast build rule for target.
+account_provisioning_service_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/account_provisioning_service_test.dir/build.make CMakeFiles/account_provisioning_service_test.dir/build
+.PHONY : account_provisioning_service_test/fast
+
+#=============================================================================
+# Target rules for targets named sqlite_character_provisioner_test
+
+# Build rule for target.
+sqlite_character_provisioner_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 sqlite_character_provisioner_test
+.PHONY : sqlite_character_provisioner_test
+
+# fast build rule for target.
+sqlite_character_provisioner_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sqlite_character_provisioner_test.dir/build.make CMakeFiles/sqlite_character_provisioner_test.dir/build
+.PHONY : sqlite_character_provisioner_test/fast
+
+#=============================================================================
+# Target rules for targets named character_selection_service_test
+
+# Build rule for target.
+character_selection_service_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 character_selection_service_test
+.PHONY : character_selection_service_test
+
+# fast build rule for target.
+character_selection_service_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/character_selection_service_test.dir/build.make CMakeFiles/character_selection_service_test.dir/build
+.PHONY : character_selection_service_test/fast
+
+#=============================================================================
+# Target rules for targets named character_list_service_test
+
+# Build rule for target.
+character_list_service_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 character_list_service_test
+.PHONY : character_list_service_test
+
+# fast build rule for target.
+character_list_service_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/character_list_service_test.dir/build.make CMakeFiles/character_list_service_test.dir/build
+.PHONY : character_list_service_test/fast
+
+#=============================================================================
+# Target rules for targets named scrypt_password_hasher_test
+
+# Build rule for target.
+scrypt_password_hasher_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 scrypt_password_hasher_test
+.PHONY : scrypt_password_hasher_test
+
+# fast build rule for target.
+scrypt_password_hasher_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/scrypt_password_hasher_test.dir/build.make CMakeFiles/scrypt_password_hasher_test.dir/build
+.PHONY : scrypt_password_hasher_test/fast
+
+#=============================================================================
+# Target rules for targets named database_executor_test
+
+# Build rule for target.
+database_executor_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 database_executor_test
+.PHONY : database_executor_test
+
+# fast build rule for target.
+database_executor_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/database_executor_test.dir/build.make CMakeFiles/database_executor_test.dir/build
+.PHONY : database_executor_test/fast
 
 #=============================================================================
 # Target rules for targets named receive_buffer_test
@@ -177,6 +320,32 @@ receive_buffer_test: cmake_check_build_system
 receive_buffer_test/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/receive_buffer_test.dir/build.make CMakeFiles/receive_buffer_test.dir/build
 .PHONY : receive_buffer_test/fast
+
+#=============================================================================
+# Target rules for targets named session_auth_state_test
+
+# Build rule for target.
+session_auth_state_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 session_auth_state_test
+.PHONY : session_auth_state_test
+
+# fast build rule for target.
+session_auth_state_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/session_auth_state_test.dir/build.make CMakeFiles/session_auth_state_test.dir/build
+.PHONY : session_auth_state_test/fast
+
+#=============================================================================
+# Target rules for targets named auth_server_session_state_test
+
+# Build rule for target.
+auth_server_session_state_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 auth_server_session_state_test
+.PHONY : auth_server_session_state_test
+
+# fast build rule for target.
+auth_server_session_state_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/auth_server_session_state_test.dir/build.make CMakeFiles/auth_server_session_state_test.dir/build
+.PHONY : auth_server_session_state_test/fast
 
 #=============================================================================
 # Target rules for targets named packet_dispatcher_test
@@ -203,6 +372,1342 @@ login_validator_test: cmake_check_build_system
 login_validator_test/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/login_validator_test.dir/build.make CMakeFiles/login_validator_test.dir/build
 .PHONY : login_validator_test/fast
+
+#=============================================================================
+# Target rules for targets named login_protocol_test
+
+# Build rule for target.
+login_protocol_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 login_protocol_test
+.PHONY : login_protocol_test
+
+# fast build rule for target.
+login_protocol_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/login_protocol_test.dir/build.make CMakeFiles/login_protocol_test.dir/build
+.PHONY : login_protocol_test/fast
+
+#=============================================================================
+# Target rules for targets named channel_manager_test
+
+# Build rule for target.
+channel_manager_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 channel_manager_test
+.PHONY : channel_manager_test
+
+# fast build rule for target.
+channel_manager_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/channel_manager_test.dir/build.make CMakeFiles/channel_manager_test.dir/build
+.PHONY : channel_manager_test/fast
+
+#=============================================================================
+# Target rules for targets named party_manager_test
+
+# Build rule for target.
+party_manager_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 party_manager_test
+.PHONY : party_manager_test
+
+# fast build rule for target.
+party_manager_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/party_manager_test.dir/build.make CMakeFiles/party_manager_test.dir/build
+.PHONY : party_manager_test/fast
+
+#=============================================================================
+# Target rules for targets named party_protocol_test
+
+# Build rule for target.
+party_protocol_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 party_protocol_test
+.PHONY : party_protocol_test
+
+# fast build rule for target.
+party_protocol_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/party_protocol_test.dir/build.make CMakeFiles/party_protocol_test.dir/build
+.PHONY : party_protocol_test/fast
+
+#=============================================================================
+# Target rules for targets named dungeon_instance_test
+
+# Build rule for target.
+dungeon_instance_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 dungeon_instance_test
+.PHONY : dungeon_instance_test
+
+# fast build rule for target.
+dungeon_instance_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_instance_test.dir/build.make CMakeFiles/dungeon_instance_test.dir/build
+.PHONY : dungeon_instance_test/fast
+
+#=============================================================================
+# Target rules for targets named dungeon_manager_test
+
+# Build rule for target.
+dungeon_manager_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 dungeon_manager_test
+.PHONY : dungeon_manager_test
+
+# fast build rule for target.
+dungeon_manager_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_manager_test.dir/build.make CMakeFiles/dungeon_manager_test.dir/build
+.PHONY : dungeon_manager_test/fast
+
+#=============================================================================
+# Target rules for targets named dungeon_catalog_test
+
+# Build rule for target.
+dungeon_catalog_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 dungeon_catalog_test
+.PHONY : dungeon_catalog_test
+
+# fast build rule for target.
+dungeon_catalog_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_catalog_test.dir/build.make CMakeFiles/dungeon_catalog_test.dir/build
+.PHONY : dungeon_catalog_test/fast
+
+#=============================================================================
+# Target rules for targets named dungeon_catalog_protocol_test
+
+# Build rule for target.
+dungeon_catalog_protocol_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 dungeon_catalog_protocol_test
+.PHONY : dungeon_catalog_protocol_test
+
+# fast build rule for target.
+dungeon_catalog_protocol_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_catalog_protocol_test.dir/build.make CMakeFiles/dungeon_catalog_protocol_test.dir/build
+.PHONY : dungeon_catalog_protocol_test/fast
+
+#=============================================================================
+# Target rules for targets named dungeon_room_test
+
+# Build rule for target.
+dungeon_room_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 dungeon_room_test
+.PHONY : dungeon_room_test
+
+# fast build rule for target.
+dungeon_room_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_room_test.dir/build.make CMakeFiles/dungeon_room_test.dir/build
+.PHONY : dungeon_room_test/fast
+
+#=============================================================================
+# Target rules for targets named enemy_catalog_test
+
+# Build rule for target.
+enemy_catalog_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 enemy_catalog_test
+.PHONY : enemy_catalog_test
+
+# fast build rule for target.
+enemy_catalog_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/enemy_catalog_test.dir/build.make CMakeFiles/enemy_catalog_test.dir/build
+.PHONY : enemy_catalog_test/fast
+
+#=============================================================================
+# Target rules for targets named skill_catalog_test
+
+# Build rule for target.
+skill_catalog_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 skill_catalog_test
+.PHONY : skill_catalog_test
+
+# fast build rule for target.
+skill_catalog_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/skill_catalog_test.dir/build.make CMakeFiles/skill_catalog_test.dir/build
+.PHONY : skill_catalog_test/fast
+
+#=============================================================================
+# Target rules for targets named player_skill_book_test
+
+# Build rule for target.
+player_skill_book_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 player_skill_book_test
+.PHONY : player_skill_book_test
+
+# fast build rule for target.
+player_skill_book_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/player_skill_book_test.dir/build.make CMakeFiles/player_skill_book_test.dir/build
+.PHONY : player_skill_book_test/fast
+
+#=============================================================================
+# Target rules for targets named player_profile_test
+
+# Build rule for target.
+player_profile_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 player_profile_test
+.PHONY : player_profile_test
+
+# fast build rule for target.
+player_profile_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/player_profile_test.dir/build.make CMakeFiles/player_profile_test.dir/build
+.PHONY : player_profile_test/fast
+
+#=============================================================================
+# Target rules for targets named player_login_service_test
+
+# Build rule for target.
+player_login_service_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 player_login_service_test
+.PHONY : player_login_service_test
+
+# fast build rule for target.
+player_login_service_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/player_login_service_test.dir/build.make CMakeFiles/player_login_service_test.dir/build
+.PHONY : player_login_service_test/fast
+
+#=============================================================================
+# Target rules for targets named sqlite_database_test
+
+# Build rule for target.
+sqlite_database_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 sqlite_database_test
+.PHONY : sqlite_database_test
+
+# fast build rule for target.
+sqlite_database_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sqlite_database_test.dir/build.make CMakeFiles/sqlite_database_test.dir/build
+.PHONY : sqlite_database_test/fast
+
+#=============================================================================
+# Target rules for targets named sqlite_account_repository_test
+
+# Build rule for target.
+sqlite_account_repository_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 sqlite_account_repository_test
+.PHONY : sqlite_account_repository_test
+
+# fast build rule for target.
+sqlite_account_repository_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sqlite_account_repository_test.dir/build.make CMakeFiles/sqlite_account_repository_test.dir/build
+.PHONY : sqlite_account_repository_test/fast
+
+#=============================================================================
+# Target rules for targets named sqlite_account_player_repository_test
+
+# Build rule for target.
+sqlite_account_player_repository_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 sqlite_account_player_repository_test
+.PHONY : sqlite_account_player_repository_test
+
+# fast build rule for target.
+sqlite_account_player_repository_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sqlite_account_player_repository_test.dir/build.make CMakeFiles/sqlite_account_player_repository_test.dir/build
+.PHONY : sqlite_account_player_repository_test/fast
+
+#=============================================================================
+# Target rules for targets named sqlite_auth_ticket_verifier_test
+
+# Build rule for target.
+sqlite_auth_ticket_verifier_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 sqlite_auth_ticket_verifier_test
+.PHONY : sqlite_auth_ticket_verifier_test
+
+# fast build rule for target.
+sqlite_auth_ticket_verifier_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sqlite_auth_ticket_verifier_test.dir/build.make CMakeFiles/sqlite_auth_ticket_verifier_test.dir/build
+.PHONY : sqlite_auth_ticket_verifier_test/fast
+
+#=============================================================================
+# Target rules for targets named sqlite_player_repository_test
+
+# Build rule for target.
+sqlite_player_repository_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 sqlite_player_repository_test
+.PHONY : sqlite_player_repository_test
+
+# fast build rule for target.
+sqlite_player_repository_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sqlite_player_repository_test.dir/build.make CMakeFiles/sqlite_player_repository_test.dir/build
+.PHONY : sqlite_player_repository_test/fast
+
+#=============================================================================
+# Target rules for targets named room_state_test
+
+# Build rule for target.
+room_state_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 room_state_test
+.PHONY : room_state_test
+
+# fast build rule for target.
+room_state_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/room_state_test.dir/build.make CMakeFiles/room_state_test.dir/build
+.PHONY : room_state_test/fast
+
+#=============================================================================
+# Target rules for targets named dungeon_player_state_test
+
+# Build rule for target.
+dungeon_player_state_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 dungeon_player_state_test
+.PHONY : dungeon_player_state_test
+
+# fast build rule for target.
+dungeon_player_state_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_player_state_test.dir/build.make CMakeFiles/dungeon_player_state_test.dir/build
+.PHONY : dungeon_player_state_test/fast
+
+#=============================================================================
+# Target rules for targets named flatbuffer_protocol_test
+
+# Build rule for target.
+flatbuffer_protocol_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 flatbuffer_protocol_test
+.PHONY : flatbuffer_protocol_test
+
+# fast build rule for target.
+flatbuffer_protocol_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/flatbuffer_protocol_test.dir/build.make CMakeFiles/flatbuffer_protocol_test.dir/build
+.PHONY : flatbuffer_protocol_test/fast
+
+#=============================================================================
+# Target rules for targets named tcp_flatbuffer_schema_test
+
+# Build rule for target.
+tcp_flatbuffer_schema_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 tcp_flatbuffer_schema_test
+.PHONY : tcp_flatbuffer_schema_test
+
+# fast build rule for target.
+tcp_flatbuffer_schema_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tcp_flatbuffer_schema_test.dir/build.make CMakeFiles/tcp_flatbuffer_schema_test.dir/build
+.PHONY : tcp_flatbuffer_schema_test/fast
+
+#=============================================================================
+# Target rules for targets named auth_flatbuffer_schema_test
+
+# Build rule for target.
+auth_flatbuffer_schema_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 auth_flatbuffer_schema_test
+.PHONY : auth_flatbuffer_schema_test
+
+# fast build rule for target.
+auth_flatbuffer_schema_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/auth_flatbuffer_schema_test.dir/build.make CMakeFiles/auth_flatbuffer_schema_test.dir/build
+.PHONY : auth_flatbuffer_schema_test/fast
+
+#=============================================================================
+# Target rules for targets named auth_flatbuffer_codec_test
+
+# Build rule for target.
+auth_flatbuffer_codec_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 auth_flatbuffer_codec_test
+.PHONY : auth_flatbuffer_codec_test
+
+# fast build rule for target.
+auth_flatbuffer_codec_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/auth_flatbuffer_codec_test.dir/build.make CMakeFiles/auth_flatbuffer_codec_test.dir/build
+.PHONY : auth_flatbuffer_codec_test/fast
+
+#=============================================================================
+# Target rules for targets named auth_packet_dispatcher_test
+
+# Build rule for target.
+auth_packet_dispatcher_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 auth_packet_dispatcher_test
+.PHONY : auth_packet_dispatcher_test
+
+# fast build rule for target.
+auth_packet_dispatcher_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/auth_packet_dispatcher_test.dir/build.make CMakeFiles/auth_packet_dispatcher_test.dir/build
+.PHONY : auth_packet_dispatcher_test/fast
+
+#=============================================================================
+# Target rules for targets named auth_tls_session_test
+
+# Build rule for target.
+auth_tls_session_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 auth_tls_session_test
+.PHONY : auth_tls_session_test
+
+# fast build rule for target.
+auth_tls_session_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/auth_tls_session_test.dir/build.make CMakeFiles/auth_tls_session_test.dir/build
+.PHONY : auth_tls_session_test/fast
+
+#=============================================================================
+# Target rules for targets named auth_tls_server_test
+
+# Build rule for target.
+auth_tls_server_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 auth_tls_server_test
+.PHONY : auth_tls_server_test
+
+# fast build rule for target.
+auth_tls_server_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/auth_tls_server_test.dir/build.make CMakeFiles/auth_tls_server_test.dir/build
+.PHONY : auth_tls_server_test/fast
+
+#=============================================================================
+# Target rules for targets named auth_server_application_test
+
+# Build rule for target.
+auth_server_application_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 auth_server_application_test
+.PHONY : auth_server_application_test
+
+# fast build rule for target.
+auth_server_application_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/auth_server_application_test.dir/build.make CMakeFiles/auth_server_application_test.dir/build
+.PHONY : auth_server_application_test/fast
+
+#=============================================================================
+# Target rules for targets named dungeon_protocol_test
+
+# Build rule for target.
+dungeon_protocol_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 dungeon_protocol_test
+.PHONY : dungeon_protocol_test
+
+# fast build rule for target.
+dungeon_protocol_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_protocol_test.dir/build.make CMakeFiles/dungeon_protocol_test.dir/build
+.PHONY : dungeon_protocol_test/fast
+
+#=============================================================================
+# Target rules for targets named server_application_test
+
+# Build rule for target.
+server_application_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 server_application_test
+.PHONY : server_application_test
+
+# fast build rule for target.
+server_application_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/server_application_test.dir/build.make CMakeFiles/server_application_test.dir/build
+.PHONY : server_application_test/fast
+
+#=============================================================================
+# Target rules for targets named dungeon_admission_protocol_test
+
+# Build rule for target.
+dungeon_admission_protocol_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 dungeon_admission_protocol_test
+.PHONY : dungeon_admission_protocol_test
+
+# fast build rule for target.
+dungeon_admission_protocol_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_admission_protocol_test.dir/build.make CMakeFiles/dungeon_admission_protocol_test.dir/build
+.PHONY : dungeon_admission_protocol_test/fast
+
+#=============================================================================
+# Target rules for targets named dungeon_udp_manager_test
+
+# Build rule for target.
+dungeon_udp_manager_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 dungeon_udp_manager_test
+.PHONY : dungeon_udp_manager_test
+
+# fast build rule for target.
+dungeon_udp_manager_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_udp_manager_test.dir/build.make CMakeFiles/dungeon_udp_manager_test.dir/build
+.PHONY : dungeon_udp_manager_test/fast
+
+#=============================================================================
+# Target rules for targets named dungeon_connection_protocol_test
+
+# Build rule for target.
+dungeon_connection_protocol_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 dungeon_connection_protocol_test
+.PHONY : dungeon_connection_protocol_test
+
+# fast build rule for target.
+dungeon_connection_protocol_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_connection_protocol_test.dir/build.make CMakeFiles/dungeon_connection_protocol_test.dir/build
+.PHONY : dungeon_connection_protocol_test/fast
+
+#=============================================================================
+# Target rules for targets named dungeon_static_data_protocol_test
+
+# Build rule for target.
+dungeon_static_data_protocol_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 dungeon_static_data_protocol_test
+.PHONY : dungeon_static_data_protocol_test
+
+# fast build rule for target.
+dungeon_static_data_protocol_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_static_data_protocol_test.dir/build.make CMakeFiles/dungeon_static_data_protocol_test.dir/build
+.PHONY : dungeon_static_data_protocol_test/fast
+
+#=============================================================================
+# Target rules for targets named dungeon_udp_session_test
+
+# Build rule for target.
+dungeon_udp_session_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 dungeon_udp_session_test
+.PHONY : dungeon_udp_session_test
+
+# fast build rule for target.
+dungeon_udp_session_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_udp_session_test.dir/build.make CMakeFiles/dungeon_udp_session_test.dir/build
+.PHONY : dungeon_udp_session_test/fast
+
+#=============================================================================
+# Target rules for targets named dungeon_combat_processor_test
+
+# Build rule for target.
+dungeon_combat_processor_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 dungeon_combat_processor_test
+.PHONY : dungeon_combat_processor_test
+
+# fast build rule for target.
+dungeon_combat_processor_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_combat_processor_test.dir/build.make CMakeFiles/dungeon_combat_processor_test.dir/build
+.PHONY : dungeon_combat_processor_test/fast
+
+#=============================================================================
+# Target rules for targets named dungeon_movement_processor_test
+
+# Build rule for target.
+dungeon_movement_processor_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 dungeon_movement_processor_test
+.PHONY : dungeon_movement_processor_test
+
+# fast build rule for target.
+dungeon_movement_processor_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_movement_processor_test.dir/build.make CMakeFiles/dungeon_movement_processor_test.dir/build
+.PHONY : dungeon_movement_processor_test/fast
+
+#=============================================================================
+# Target rules for targets named dungeon_tick_service_test
+
+# Build rule for target.
+dungeon_tick_service_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 dungeon_tick_service_test
+.PHONY : dungeon_tick_service_test
+
+# fast build rule for target.
+dungeon_tick_service_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_tick_service_test.dir/build.make CMakeFiles/dungeon_tick_service_test.dir/build
+.PHONY : dungeon_tick_service_test/fast
+
+#=============================================================================
+# Target rules for targets named dungeon_lifecycle_service_test
+
+# Build rule for target.
+dungeon_lifecycle_service_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 dungeon_lifecycle_service_test
+.PHONY : dungeon_lifecycle_service_test
+
+# fast build rule for target.
+dungeon_lifecycle_service_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_lifecycle_service_test.dir/build.make CMakeFiles/dungeon_lifecycle_service_test.dir/build
+.PHONY : dungeon_lifecycle_service_test/fast
+
+src/Account.o: src/Account.cpp.o
+.PHONY : src/Account.o
+
+# target to build an object file
+src/Account.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/Account.cpp.o
+.PHONY : src/Account.cpp.o
+
+src/Account.i: src/Account.cpp.i
+.PHONY : src/Account.i
+
+# target to preprocess a source file
+src/Account.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/Account.cpp.i
+.PHONY : src/Account.cpp.i
+
+src/Account.s: src/Account.cpp.s
+.PHONY : src/Account.s
+
+# target to generate assembly for a file
+src/Account.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/Account.cpp.s
+.PHONY : src/Account.cpp.s
+
+src/AccountAuthenticationService.o: src/AccountAuthenticationService.cpp.o
+.PHONY : src/AccountAuthenticationService.o
+
+# target to build an object file
+src/AccountAuthenticationService.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/AccountAuthenticationService.cpp.o
+.PHONY : src/AccountAuthenticationService.cpp.o
+
+src/AccountAuthenticationService.i: src/AccountAuthenticationService.cpp.i
+.PHONY : src/AccountAuthenticationService.i
+
+# target to preprocess a source file
+src/AccountAuthenticationService.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/AccountAuthenticationService.cpp.i
+.PHONY : src/AccountAuthenticationService.cpp.i
+
+src/AccountAuthenticationService.s: src/AccountAuthenticationService.cpp.s
+.PHONY : src/AccountAuthenticationService.s
+
+# target to generate assembly for a file
+src/AccountAuthenticationService.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/AccountAuthenticationService.cpp.s
+.PHONY : src/AccountAuthenticationService.cpp.s
+
+src/AccountProvisioningService.o: src/AccountProvisioningService.cpp.o
+.PHONY : src/AccountProvisioningService.o
+
+# target to build an object file
+src/AccountProvisioningService.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/AccountProvisioningService.cpp.o
+.PHONY : src/AccountProvisioningService.cpp.o
+
+src/AccountProvisioningService.i: src/AccountProvisioningService.cpp.i
+.PHONY : src/AccountProvisioningService.i
+
+# target to preprocess a source file
+src/AccountProvisioningService.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/AccountProvisioningService.cpp.i
+.PHONY : src/AccountProvisioningService.cpp.i
+
+src/AccountProvisioningService.s: src/AccountProvisioningService.cpp.s
+.PHONY : src/AccountProvisioningService.s
+
+# target to generate assembly for a file
+src/AccountProvisioningService.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/AccountProvisioningService.cpp.s
+.PHONY : src/AccountProvisioningService.cpp.s
+
+src/AuthFlatBufferCodec.o: src/AuthFlatBufferCodec.cpp.o
+.PHONY : src/AuthFlatBufferCodec.o
+
+# target to build an object file
+src/AuthFlatBufferCodec.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/AuthFlatBufferCodec.cpp.o
+.PHONY : src/AuthFlatBufferCodec.cpp.o
+
+src/AuthFlatBufferCodec.i: src/AuthFlatBufferCodec.cpp.i
+.PHONY : src/AuthFlatBufferCodec.i
+
+# target to preprocess a source file
+src/AuthFlatBufferCodec.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/AuthFlatBufferCodec.cpp.i
+.PHONY : src/AuthFlatBufferCodec.cpp.i
+
+src/AuthFlatBufferCodec.s: src/AuthFlatBufferCodec.cpp.s
+.PHONY : src/AuthFlatBufferCodec.s
+
+# target to generate assembly for a file
+src/AuthFlatBufferCodec.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/AuthFlatBufferCodec.cpp.s
+.PHONY : src/AuthFlatBufferCodec.cpp.s
+
+src/AuthPacketDispatcher.o: src/AuthPacketDispatcher.cpp.o
+.PHONY : src/AuthPacketDispatcher.o
+
+# target to build an object file
+src/AuthPacketDispatcher.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/AuthPacketDispatcher.cpp.o
+.PHONY : src/AuthPacketDispatcher.cpp.o
+
+src/AuthPacketDispatcher.i: src/AuthPacketDispatcher.cpp.i
+.PHONY : src/AuthPacketDispatcher.i
+
+# target to preprocess a source file
+src/AuthPacketDispatcher.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/AuthPacketDispatcher.cpp.i
+.PHONY : src/AuthPacketDispatcher.cpp.i
+
+src/AuthPacketDispatcher.s: src/AuthPacketDispatcher.cpp.s
+.PHONY : src/AuthPacketDispatcher.s
+
+# target to generate assembly for a file
+src/AuthPacketDispatcher.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/AuthPacketDispatcher.cpp.s
+.PHONY : src/AuthPacketDispatcher.cpp.s
+
+src/AuthServerApplication.o: src/AuthServerApplication.cpp.o
+.PHONY : src/AuthServerApplication.o
+
+# target to build an object file
+src/AuthServerApplication.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/AuthServerApplication.cpp.o
+.PHONY : src/AuthServerApplication.cpp.o
+
+src/AuthServerApplication.i: src/AuthServerApplication.cpp.i
+.PHONY : src/AuthServerApplication.i
+
+# target to preprocess a source file
+src/AuthServerApplication.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/AuthServerApplication.cpp.i
+.PHONY : src/AuthServerApplication.cpp.i
+
+src/AuthServerApplication.s: src/AuthServerApplication.cpp.s
+.PHONY : src/AuthServerApplication.s
+
+# target to generate assembly for a file
+src/AuthServerApplication.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/AuthServerApplication.cpp.s
+.PHONY : src/AuthServerApplication.cpp.s
+
+src/AuthServerSessionState.o: src/AuthServerSessionState.cpp.o
+.PHONY : src/AuthServerSessionState.o
+
+# target to build an object file
+src/AuthServerSessionState.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/AuthServerSessionState.cpp.o
+.PHONY : src/AuthServerSessionState.cpp.o
+
+src/AuthServerSessionState.i: src/AuthServerSessionState.cpp.i
+.PHONY : src/AuthServerSessionState.i
+
+# target to preprocess a source file
+src/AuthServerSessionState.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/AuthServerSessionState.cpp.i
+.PHONY : src/AuthServerSessionState.cpp.i
+
+src/AuthServerSessionState.s: src/AuthServerSessionState.cpp.s
+.PHONY : src/AuthServerSessionState.s
+
+# target to generate assembly for a file
+src/AuthServerSessionState.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/AuthServerSessionState.cpp.s
+.PHONY : src/AuthServerSessionState.cpp.s
+
+src/AuthTicketIssuer.o: src/AuthTicketIssuer.cpp.o
+.PHONY : src/AuthTicketIssuer.o
+
+# target to build an object file
+src/AuthTicketIssuer.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/AuthTicketIssuer.cpp.o
+.PHONY : src/AuthTicketIssuer.cpp.o
+
+src/AuthTicketIssuer.i: src/AuthTicketIssuer.cpp.i
+.PHONY : src/AuthTicketIssuer.i
+
+# target to preprocess a source file
+src/AuthTicketIssuer.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/AuthTicketIssuer.cpp.i
+.PHONY : src/AuthTicketIssuer.cpp.i
+
+src/AuthTicketIssuer.s: src/AuthTicketIssuer.cpp.s
+.PHONY : src/AuthTicketIssuer.s
+
+# target to generate assembly for a file
+src/AuthTicketIssuer.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/AuthTicketIssuer.cpp.s
+.PHONY : src/AuthTicketIssuer.cpp.s
+
+src/AuthTicketVerifier.o: src/AuthTicketVerifier.cpp.o
+.PHONY : src/AuthTicketVerifier.o
+
+# target to build an object file
+src/AuthTicketVerifier.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/AuthTicketVerifier.cpp.o
+.PHONY : src/AuthTicketVerifier.cpp.o
+
+src/AuthTicketVerifier.i: src/AuthTicketVerifier.cpp.i
+.PHONY : src/AuthTicketVerifier.i
+
+# target to preprocess a source file
+src/AuthTicketVerifier.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/AuthTicketVerifier.cpp.i
+.PHONY : src/AuthTicketVerifier.cpp.i
+
+src/AuthTicketVerifier.s: src/AuthTicketVerifier.cpp.s
+.PHONY : src/AuthTicketVerifier.s
+
+# target to generate assembly for a file
+src/AuthTicketVerifier.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/AuthTicketVerifier.cpp.s
+.PHONY : src/AuthTicketVerifier.cpp.s
+
+src/AuthTlsServer.o: src/AuthTlsServer.cpp.o
+.PHONY : src/AuthTlsServer.o
+
+# target to build an object file
+src/AuthTlsServer.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/AuthTlsServer.cpp.o
+.PHONY : src/AuthTlsServer.cpp.o
+
+src/AuthTlsServer.i: src/AuthTlsServer.cpp.i
+.PHONY : src/AuthTlsServer.i
+
+# target to preprocess a source file
+src/AuthTlsServer.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/AuthTlsServer.cpp.i
+.PHONY : src/AuthTlsServer.cpp.i
+
+src/AuthTlsServer.s: src/AuthTlsServer.cpp.s
+.PHONY : src/AuthTlsServer.s
+
+# target to generate assembly for a file
+src/AuthTlsServer.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/AuthTlsServer.cpp.s
+.PHONY : src/AuthTlsServer.cpp.s
+
+src/AuthTlsSession.o: src/AuthTlsSession.cpp.o
+.PHONY : src/AuthTlsSession.o
+
+# target to build an object file
+src/AuthTlsSession.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/AuthTlsSession.cpp.o
+.PHONY : src/AuthTlsSession.cpp.o
+
+src/AuthTlsSession.i: src/AuthTlsSession.cpp.i
+.PHONY : src/AuthTlsSession.i
+
+# target to preprocess a source file
+src/AuthTlsSession.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/AuthTlsSession.cpp.i
+.PHONY : src/AuthTlsSession.cpp.i
+
+src/AuthTlsSession.s: src/AuthTlsSession.cpp.s
+.PHONY : src/AuthTlsSession.s
+
+# target to generate assembly for a file
+src/AuthTlsSession.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/AuthTlsSession.cpp.s
+.PHONY : src/AuthTlsSession.cpp.s
+
+src/ChannelManager.o: src/ChannelManager.cpp.o
+.PHONY : src/ChannelManager.o
+
+# target to build an object file
+src/ChannelManager.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/ChannelManager.cpp.o
+.PHONY : src/ChannelManager.cpp.o
+
+src/ChannelManager.i: src/ChannelManager.cpp.i
+.PHONY : src/ChannelManager.i
+
+# target to preprocess a source file
+src/ChannelManager.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/ChannelManager.cpp.i
+.PHONY : src/ChannelManager.cpp.i
+
+src/ChannelManager.s: src/ChannelManager.cpp.s
+.PHONY : src/ChannelManager.s
+
+# target to generate assembly for a file
+src/ChannelManager.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/ChannelManager.cpp.s
+.PHONY : src/ChannelManager.cpp.s
+
+src/ChannelProtocol.o: src/ChannelProtocol.cpp.o
+.PHONY : src/ChannelProtocol.o
+
+# target to build an object file
+src/ChannelProtocol.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/ChannelProtocol.cpp.o
+.PHONY : src/ChannelProtocol.cpp.o
+
+src/ChannelProtocol.i: src/ChannelProtocol.cpp.i
+.PHONY : src/ChannelProtocol.i
+
+# target to preprocess a source file
+src/ChannelProtocol.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/ChannelProtocol.cpp.i
+.PHONY : src/ChannelProtocol.cpp.i
+
+src/ChannelProtocol.s: src/ChannelProtocol.cpp.s
+.PHONY : src/ChannelProtocol.s
+
+# target to generate assembly for a file
+src/ChannelProtocol.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/ChannelProtocol.cpp.s
+.PHONY : src/ChannelProtocol.cpp.s
+
+src/CharacterListService.o: src/CharacterListService.cpp.o
+.PHONY : src/CharacterListService.o
+
+# target to build an object file
+src/CharacterListService.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/CharacterListService.cpp.o
+.PHONY : src/CharacterListService.cpp.o
+
+src/CharacterListService.i: src/CharacterListService.cpp.i
+.PHONY : src/CharacterListService.i
+
+# target to preprocess a source file
+src/CharacterListService.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/CharacterListService.cpp.i
+.PHONY : src/CharacterListService.cpp.i
+
+src/CharacterListService.s: src/CharacterListService.cpp.s
+.PHONY : src/CharacterListService.s
+
+# target to generate assembly for a file
+src/CharacterListService.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/CharacterListService.cpp.s
+.PHONY : src/CharacterListService.cpp.s
+
+src/CharacterSelectionService.o: src/CharacterSelectionService.cpp.o
+.PHONY : src/CharacterSelectionService.o
+
+# target to build an object file
+src/CharacterSelectionService.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/CharacterSelectionService.cpp.o
+.PHONY : src/CharacterSelectionService.cpp.o
+
+src/CharacterSelectionService.i: src/CharacterSelectionService.cpp.i
+.PHONY : src/CharacterSelectionService.i
+
+# target to preprocess a source file
+src/CharacterSelectionService.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/CharacterSelectionService.cpp.i
+.PHONY : src/CharacterSelectionService.cpp.i
+
+src/CharacterSelectionService.s: src/CharacterSelectionService.cpp.s
+.PHONY : src/CharacterSelectionService.s
+
+# target to generate assembly for a file
+src/CharacterSelectionService.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/CharacterSelectionService.cpp.s
+.PHONY : src/CharacterSelectionService.cpp.s
+
+src/DatabaseExecutor.o: src/DatabaseExecutor.cpp.o
+.PHONY : src/DatabaseExecutor.o
+
+# target to build an object file
+src/DatabaseExecutor.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/DatabaseExecutor.cpp.o
+.PHONY : src/DatabaseExecutor.cpp.o
+
+src/DatabaseExecutor.i: src/DatabaseExecutor.cpp.i
+.PHONY : src/DatabaseExecutor.i
+
+# target to preprocess a source file
+src/DatabaseExecutor.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/DatabaseExecutor.cpp.i
+.PHONY : src/DatabaseExecutor.cpp.i
+
+src/DatabaseExecutor.s: src/DatabaseExecutor.cpp.s
+.PHONY : src/DatabaseExecutor.s
+
+# target to generate assembly for a file
+src/DatabaseExecutor.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/DatabaseExecutor.cpp.s
+.PHONY : src/DatabaseExecutor.cpp.s
+
+src/DungeonAdmissionProtocol.o: src/DungeonAdmissionProtocol.cpp.o
+.PHONY : src/DungeonAdmissionProtocol.o
+
+# target to build an object file
+src/DungeonAdmissionProtocol.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/DungeonAdmissionProtocol.cpp.o
+.PHONY : src/DungeonAdmissionProtocol.cpp.o
+
+src/DungeonAdmissionProtocol.i: src/DungeonAdmissionProtocol.cpp.i
+.PHONY : src/DungeonAdmissionProtocol.i
+
+# target to preprocess a source file
+src/DungeonAdmissionProtocol.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/DungeonAdmissionProtocol.cpp.i
+.PHONY : src/DungeonAdmissionProtocol.cpp.i
+
+src/DungeonAdmissionProtocol.s: src/DungeonAdmissionProtocol.cpp.s
+.PHONY : src/DungeonAdmissionProtocol.s
+
+# target to generate assembly for a file
+src/DungeonAdmissionProtocol.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/DungeonAdmissionProtocol.cpp.s
+.PHONY : src/DungeonAdmissionProtocol.cpp.s
+
+src/DungeonCatalog.o: src/DungeonCatalog.cpp.o
+.PHONY : src/DungeonCatalog.o
+
+# target to build an object file
+src/DungeonCatalog.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/DungeonCatalog.cpp.o
+.PHONY : src/DungeonCatalog.cpp.o
+
+src/DungeonCatalog.i: src/DungeonCatalog.cpp.i
+.PHONY : src/DungeonCatalog.i
+
+# target to preprocess a source file
+src/DungeonCatalog.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/DungeonCatalog.cpp.i
+.PHONY : src/DungeonCatalog.cpp.i
+
+src/DungeonCatalog.s: src/DungeonCatalog.cpp.s
+.PHONY : src/DungeonCatalog.s
+
+# target to generate assembly for a file
+src/DungeonCatalog.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/DungeonCatalog.cpp.s
+.PHONY : src/DungeonCatalog.cpp.s
+
+src/DungeonCatalogProtocol.o: src/DungeonCatalogProtocol.cpp.o
+.PHONY : src/DungeonCatalogProtocol.o
+
+# target to build an object file
+src/DungeonCatalogProtocol.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/DungeonCatalogProtocol.cpp.o
+.PHONY : src/DungeonCatalogProtocol.cpp.o
+
+src/DungeonCatalogProtocol.i: src/DungeonCatalogProtocol.cpp.i
+.PHONY : src/DungeonCatalogProtocol.i
+
+# target to preprocess a source file
+src/DungeonCatalogProtocol.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/DungeonCatalogProtocol.cpp.i
+.PHONY : src/DungeonCatalogProtocol.cpp.i
+
+src/DungeonCatalogProtocol.s: src/DungeonCatalogProtocol.cpp.s
+.PHONY : src/DungeonCatalogProtocol.s
+
+# target to generate assembly for a file
+src/DungeonCatalogProtocol.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/DungeonCatalogProtocol.cpp.s
+.PHONY : src/DungeonCatalogProtocol.cpp.s
+
+src/DungeonCombatProcessor.o: src/DungeonCombatProcessor.cpp.o
+.PHONY : src/DungeonCombatProcessor.o
+
+# target to build an object file
+src/DungeonCombatProcessor.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/DungeonCombatProcessor.cpp.o
+.PHONY : src/DungeonCombatProcessor.cpp.o
+
+src/DungeonCombatProcessor.i: src/DungeonCombatProcessor.cpp.i
+.PHONY : src/DungeonCombatProcessor.i
+
+# target to preprocess a source file
+src/DungeonCombatProcessor.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/DungeonCombatProcessor.cpp.i
+.PHONY : src/DungeonCombatProcessor.cpp.i
+
+src/DungeonCombatProcessor.s: src/DungeonCombatProcessor.cpp.s
+.PHONY : src/DungeonCombatProcessor.s
+
+# target to generate assembly for a file
+src/DungeonCombatProcessor.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/DungeonCombatProcessor.cpp.s
+.PHONY : src/DungeonCombatProcessor.cpp.s
+
+src/DungeonConnectionProtocol.o: src/DungeonConnectionProtocol.cpp.o
+.PHONY : src/DungeonConnectionProtocol.o
+
+# target to build an object file
+src/DungeonConnectionProtocol.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/DungeonConnectionProtocol.cpp.o
+.PHONY : src/DungeonConnectionProtocol.cpp.o
+
+src/DungeonConnectionProtocol.i: src/DungeonConnectionProtocol.cpp.i
+.PHONY : src/DungeonConnectionProtocol.i
+
+# target to preprocess a source file
+src/DungeonConnectionProtocol.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/DungeonConnectionProtocol.cpp.i
+.PHONY : src/DungeonConnectionProtocol.cpp.i
+
+src/DungeonConnectionProtocol.s: src/DungeonConnectionProtocol.cpp.s
+.PHONY : src/DungeonConnectionProtocol.s
+
+# target to generate assembly for a file
+src/DungeonConnectionProtocol.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/DungeonConnectionProtocol.cpp.s
+.PHONY : src/DungeonConnectionProtocol.cpp.s
+
+src/DungeonInstance.o: src/DungeonInstance.cpp.o
+.PHONY : src/DungeonInstance.o
+
+# target to build an object file
+src/DungeonInstance.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/DungeonInstance.cpp.o
+.PHONY : src/DungeonInstance.cpp.o
+
+src/DungeonInstance.i: src/DungeonInstance.cpp.i
+.PHONY : src/DungeonInstance.i
+
+# target to preprocess a source file
+src/DungeonInstance.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/DungeonInstance.cpp.i
+.PHONY : src/DungeonInstance.cpp.i
+
+src/DungeonInstance.s: src/DungeonInstance.cpp.s
+.PHONY : src/DungeonInstance.s
+
+# target to generate assembly for a file
+src/DungeonInstance.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/DungeonInstance.cpp.s
+.PHONY : src/DungeonInstance.cpp.s
+
+src/DungeonLifecycleService.o: src/DungeonLifecycleService.cpp.o
+.PHONY : src/DungeonLifecycleService.o
+
+# target to build an object file
+src/DungeonLifecycleService.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/DungeonLifecycleService.cpp.o
+.PHONY : src/DungeonLifecycleService.cpp.o
+
+src/DungeonLifecycleService.i: src/DungeonLifecycleService.cpp.i
+.PHONY : src/DungeonLifecycleService.i
+
+# target to preprocess a source file
+src/DungeonLifecycleService.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/DungeonLifecycleService.cpp.i
+.PHONY : src/DungeonLifecycleService.cpp.i
+
+src/DungeonLifecycleService.s: src/DungeonLifecycleService.cpp.s
+.PHONY : src/DungeonLifecycleService.s
+
+# target to generate assembly for a file
+src/DungeonLifecycleService.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/DungeonLifecycleService.cpp.s
+.PHONY : src/DungeonLifecycleService.cpp.s
+
+src/DungeonManager.o: src/DungeonManager.cpp.o
+.PHONY : src/DungeonManager.o
+
+# target to build an object file
+src/DungeonManager.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/DungeonManager.cpp.o
+.PHONY : src/DungeonManager.cpp.o
+
+src/DungeonManager.i: src/DungeonManager.cpp.i
+.PHONY : src/DungeonManager.i
+
+# target to preprocess a source file
+src/DungeonManager.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/DungeonManager.cpp.i
+.PHONY : src/DungeonManager.cpp.i
+
+src/DungeonManager.s: src/DungeonManager.cpp.s
+.PHONY : src/DungeonManager.s
+
+# target to generate assembly for a file
+src/DungeonManager.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/DungeonManager.cpp.s
+.PHONY : src/DungeonManager.cpp.s
+
+src/DungeonMovementProcessor.o: src/DungeonMovementProcessor.cpp.o
+.PHONY : src/DungeonMovementProcessor.o
+
+# target to build an object file
+src/DungeonMovementProcessor.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/DungeonMovementProcessor.cpp.o
+.PHONY : src/DungeonMovementProcessor.cpp.o
+
+src/DungeonMovementProcessor.i: src/DungeonMovementProcessor.cpp.i
+.PHONY : src/DungeonMovementProcessor.i
+
+# target to preprocess a source file
+src/DungeonMovementProcessor.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/DungeonMovementProcessor.cpp.i
+.PHONY : src/DungeonMovementProcessor.cpp.i
+
+src/DungeonMovementProcessor.s: src/DungeonMovementProcessor.cpp.s
+.PHONY : src/DungeonMovementProcessor.s
+
+# target to generate assembly for a file
+src/DungeonMovementProcessor.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/DungeonMovementProcessor.cpp.s
+.PHONY : src/DungeonMovementProcessor.cpp.s
+
+src/DungeonPlayerState.o: src/DungeonPlayerState.cpp.o
+.PHONY : src/DungeonPlayerState.o
+
+# target to build an object file
+src/DungeonPlayerState.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/DungeonPlayerState.cpp.o
+.PHONY : src/DungeonPlayerState.cpp.o
+
+src/DungeonPlayerState.i: src/DungeonPlayerState.cpp.i
+.PHONY : src/DungeonPlayerState.i
+
+# target to preprocess a source file
+src/DungeonPlayerState.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/DungeonPlayerState.cpp.i
+.PHONY : src/DungeonPlayerState.cpp.i
+
+src/DungeonPlayerState.s: src/DungeonPlayerState.cpp.s
+.PHONY : src/DungeonPlayerState.s
+
+# target to generate assembly for a file
+src/DungeonPlayerState.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/DungeonPlayerState.cpp.s
+.PHONY : src/DungeonPlayerState.cpp.s
+
+src/DungeonProtocol.o: src/DungeonProtocol.cpp.o
+.PHONY : src/DungeonProtocol.o
+
+# target to build an object file
+src/DungeonProtocol.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/DungeonProtocol.cpp.o
+.PHONY : src/DungeonProtocol.cpp.o
+
+src/DungeonProtocol.i: src/DungeonProtocol.cpp.i
+.PHONY : src/DungeonProtocol.i
+
+# target to preprocess a source file
+src/DungeonProtocol.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/DungeonProtocol.cpp.i
+.PHONY : src/DungeonProtocol.cpp.i
+
+src/DungeonProtocol.s: src/DungeonProtocol.cpp.s
+.PHONY : src/DungeonProtocol.s
+
+# target to generate assembly for a file
+src/DungeonProtocol.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/DungeonProtocol.cpp.s
+.PHONY : src/DungeonProtocol.cpp.s
+
+src/DungeonRoom.o: src/DungeonRoom.cpp.o
+.PHONY : src/DungeonRoom.o
+
+# target to build an object file
+src/DungeonRoom.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/DungeonRoom.cpp.o
+.PHONY : src/DungeonRoom.cpp.o
+
+src/DungeonRoom.i: src/DungeonRoom.cpp.i
+.PHONY : src/DungeonRoom.i
+
+# target to preprocess a source file
+src/DungeonRoom.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/DungeonRoom.cpp.i
+.PHONY : src/DungeonRoom.cpp.i
+
+src/DungeonRoom.s: src/DungeonRoom.cpp.s
+.PHONY : src/DungeonRoom.s
+
+# target to generate assembly for a file
+src/DungeonRoom.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/DungeonRoom.cpp.s
+.PHONY : src/DungeonRoom.cpp.s
+
+src/DungeonStaticDataProtocol.o: src/DungeonStaticDataProtocol.cpp.o
+.PHONY : src/DungeonStaticDataProtocol.o
+
+# target to build an object file
+src/DungeonStaticDataProtocol.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/DungeonStaticDataProtocol.cpp.o
+.PHONY : src/DungeonStaticDataProtocol.cpp.o
+
+src/DungeonStaticDataProtocol.i: src/DungeonStaticDataProtocol.cpp.i
+.PHONY : src/DungeonStaticDataProtocol.i
+
+# target to preprocess a source file
+src/DungeonStaticDataProtocol.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/DungeonStaticDataProtocol.cpp.i
+.PHONY : src/DungeonStaticDataProtocol.cpp.i
+
+src/DungeonStaticDataProtocol.s: src/DungeonStaticDataProtocol.cpp.s
+.PHONY : src/DungeonStaticDataProtocol.s
+
+# target to generate assembly for a file
+src/DungeonStaticDataProtocol.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/DungeonStaticDataProtocol.cpp.s
+.PHONY : src/DungeonStaticDataProtocol.cpp.s
+
+src/DungeonTickService.o: src/DungeonTickService.cpp.o
+.PHONY : src/DungeonTickService.o
+
+# target to build an object file
+src/DungeonTickService.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/DungeonTickService.cpp.o
+.PHONY : src/DungeonTickService.cpp.o
+
+src/DungeonTickService.i: src/DungeonTickService.cpp.i
+.PHONY : src/DungeonTickService.i
+
+# target to preprocess a source file
+src/DungeonTickService.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/DungeonTickService.cpp.i
+.PHONY : src/DungeonTickService.cpp.i
+
+src/DungeonTickService.s: src/DungeonTickService.cpp.s
+.PHONY : src/DungeonTickService.s
+
+# target to generate assembly for a file
+src/DungeonTickService.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/DungeonTickService.cpp.s
+.PHONY : src/DungeonTickService.cpp.s
+
+src/DungeonUdpManager.o: src/DungeonUdpManager.cpp.o
+.PHONY : src/DungeonUdpManager.o
+
+# target to build an object file
+src/DungeonUdpManager.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/DungeonUdpManager.cpp.o
+.PHONY : src/DungeonUdpManager.cpp.o
+
+src/DungeonUdpManager.i: src/DungeonUdpManager.cpp.i
+.PHONY : src/DungeonUdpManager.i
+
+# target to preprocess a source file
+src/DungeonUdpManager.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/DungeonUdpManager.cpp.i
+.PHONY : src/DungeonUdpManager.cpp.i
+
+src/DungeonUdpManager.s: src/DungeonUdpManager.cpp.s
+.PHONY : src/DungeonUdpManager.s
+
+# target to generate assembly for a file
+src/DungeonUdpManager.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/DungeonUdpManager.cpp.s
+.PHONY : src/DungeonUdpManager.cpp.s
+
+src/DungeonUdpSession.o: src/DungeonUdpSession.cpp.o
+.PHONY : src/DungeonUdpSession.o
+
+# target to build an object file
+src/DungeonUdpSession.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/DungeonUdpSession.cpp.o
+.PHONY : src/DungeonUdpSession.cpp.o
+
+src/DungeonUdpSession.i: src/DungeonUdpSession.cpp.i
+.PHONY : src/DungeonUdpSession.i
+
+# target to preprocess a source file
+src/DungeonUdpSession.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/DungeonUdpSession.cpp.i
+.PHONY : src/DungeonUdpSession.cpp.i
+
+src/DungeonUdpSession.s: src/DungeonUdpSession.cpp.s
+.PHONY : src/DungeonUdpSession.s
+
+# target to generate assembly for a file
+src/DungeonUdpSession.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/DungeonUdpSession.cpp.s
+.PHONY : src/DungeonUdpSession.cpp.s
+
+src/EnemyCatalog.o: src/EnemyCatalog.cpp.o
+.PHONY : src/EnemyCatalog.o
+
+# target to build an object file
+src/EnemyCatalog.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/EnemyCatalog.cpp.o
+.PHONY : src/EnemyCatalog.cpp.o
+
+src/EnemyCatalog.i: src/EnemyCatalog.cpp.i
+.PHONY : src/EnemyCatalog.i
+
+# target to preprocess a source file
+src/EnemyCatalog.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/EnemyCatalog.cpp.i
+.PHONY : src/EnemyCatalog.cpp.i
+
+src/EnemyCatalog.s: src/EnemyCatalog.cpp.s
+.PHONY : src/EnemyCatalog.s
+
+# target to generate assembly for a file
+src/EnemyCatalog.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/EnemyCatalog.cpp.s
+.PHONY : src/EnemyCatalog.cpp.s
+
+src/LoginProtocol.o: src/LoginProtocol.cpp.o
+.PHONY : src/LoginProtocol.o
+
+# target to build an object file
+src/LoginProtocol.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/LoginProtocol.cpp.o
+.PHONY : src/LoginProtocol.cpp.o
+
+src/LoginProtocol.i: src/LoginProtocol.cpp.i
+.PHONY : src/LoginProtocol.i
+
+# target to preprocess a source file
+src/LoginProtocol.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/LoginProtocol.cpp.i
+.PHONY : src/LoginProtocol.cpp.i
+
+src/LoginProtocol.s: src/LoginProtocol.cpp.s
+.PHONY : src/LoginProtocol.s
+
+# target to generate assembly for a file
+src/LoginProtocol.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/LoginProtocol.cpp.s
+.PHONY : src/LoginProtocol.cpp.s
 
 src/LoginValidator.o: src/LoginValidator.cpp.o
 .PHONY : src/LoginValidator.o
@@ -276,6 +1781,126 @@ src/PacketDispatcher.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/PacketDispatcher.cpp.s
 .PHONY : src/PacketDispatcher.cpp.s
 
+src/PartyManager.o: src/PartyManager.cpp.o
+.PHONY : src/PartyManager.o
+
+# target to build an object file
+src/PartyManager.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/PartyManager.cpp.o
+.PHONY : src/PartyManager.cpp.o
+
+src/PartyManager.i: src/PartyManager.cpp.i
+.PHONY : src/PartyManager.i
+
+# target to preprocess a source file
+src/PartyManager.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/PartyManager.cpp.i
+.PHONY : src/PartyManager.cpp.i
+
+src/PartyManager.s: src/PartyManager.cpp.s
+.PHONY : src/PartyManager.s
+
+# target to generate assembly for a file
+src/PartyManager.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/PartyManager.cpp.s
+.PHONY : src/PartyManager.cpp.s
+
+src/PartyProtocol.o: src/PartyProtocol.cpp.o
+.PHONY : src/PartyProtocol.o
+
+# target to build an object file
+src/PartyProtocol.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/PartyProtocol.cpp.o
+.PHONY : src/PartyProtocol.cpp.o
+
+src/PartyProtocol.i: src/PartyProtocol.cpp.i
+.PHONY : src/PartyProtocol.i
+
+# target to preprocess a source file
+src/PartyProtocol.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/PartyProtocol.cpp.i
+.PHONY : src/PartyProtocol.cpp.i
+
+src/PartyProtocol.s: src/PartyProtocol.cpp.s
+.PHONY : src/PartyProtocol.s
+
+# target to generate assembly for a file
+src/PartyProtocol.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/PartyProtocol.cpp.s
+.PHONY : src/PartyProtocol.cpp.s
+
+src/PlayerLoginService.o: src/PlayerLoginService.cpp.o
+.PHONY : src/PlayerLoginService.o
+
+# target to build an object file
+src/PlayerLoginService.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/PlayerLoginService.cpp.o
+.PHONY : src/PlayerLoginService.cpp.o
+
+src/PlayerLoginService.i: src/PlayerLoginService.cpp.i
+.PHONY : src/PlayerLoginService.i
+
+# target to preprocess a source file
+src/PlayerLoginService.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/PlayerLoginService.cpp.i
+.PHONY : src/PlayerLoginService.cpp.i
+
+src/PlayerLoginService.s: src/PlayerLoginService.cpp.s
+.PHONY : src/PlayerLoginService.s
+
+# target to generate assembly for a file
+src/PlayerLoginService.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/PlayerLoginService.cpp.s
+.PHONY : src/PlayerLoginService.cpp.s
+
+src/PlayerProfile.o: src/PlayerProfile.cpp.o
+.PHONY : src/PlayerProfile.o
+
+# target to build an object file
+src/PlayerProfile.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/PlayerProfile.cpp.o
+.PHONY : src/PlayerProfile.cpp.o
+
+src/PlayerProfile.i: src/PlayerProfile.cpp.i
+.PHONY : src/PlayerProfile.i
+
+# target to preprocess a source file
+src/PlayerProfile.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/PlayerProfile.cpp.i
+.PHONY : src/PlayerProfile.cpp.i
+
+src/PlayerProfile.s: src/PlayerProfile.cpp.s
+.PHONY : src/PlayerProfile.s
+
+# target to generate assembly for a file
+src/PlayerProfile.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/PlayerProfile.cpp.s
+.PHONY : src/PlayerProfile.cpp.s
+
+src/PlayerSkillBook.o: src/PlayerSkillBook.cpp.o
+.PHONY : src/PlayerSkillBook.o
+
+# target to build an object file
+src/PlayerSkillBook.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/PlayerSkillBook.cpp.o
+.PHONY : src/PlayerSkillBook.cpp.o
+
+src/PlayerSkillBook.i: src/PlayerSkillBook.cpp.i
+.PHONY : src/PlayerSkillBook.i
+
+# target to preprocess a source file
+src/PlayerSkillBook.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/PlayerSkillBook.cpp.i
+.PHONY : src/PlayerSkillBook.cpp.i
+
+src/PlayerSkillBook.s: src/PlayerSkillBook.cpp.s
+.PHONY : src/PlayerSkillBook.s
+
+# target to generate assembly for a file
+src/PlayerSkillBook.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/PlayerSkillBook.cpp.s
+.PHONY : src/PlayerSkillBook.cpp.s
+
 src/ReceiveBuffer.o: src/ReceiveBuffer.cpp.o
 .PHONY : src/ReceiveBuffer.o
 
@@ -299,6 +1924,54 @@ src/ReceiveBuffer.s: src/ReceiveBuffer.cpp.s
 src/ReceiveBuffer.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/ReceiveBuffer.cpp.s
 .PHONY : src/ReceiveBuffer.cpp.s
+
+src/RoomState.o: src/RoomState.cpp.o
+.PHONY : src/RoomState.o
+
+# target to build an object file
+src/RoomState.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/RoomState.cpp.o
+.PHONY : src/RoomState.cpp.o
+
+src/RoomState.i: src/RoomState.cpp.i
+.PHONY : src/RoomState.i
+
+# target to preprocess a source file
+src/RoomState.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/RoomState.cpp.i
+.PHONY : src/RoomState.cpp.i
+
+src/RoomState.s: src/RoomState.cpp.s
+.PHONY : src/RoomState.s
+
+# target to generate assembly for a file
+src/RoomState.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/RoomState.cpp.s
+.PHONY : src/RoomState.cpp.s
+
+src/ScryptPasswordHasher.o: src/ScryptPasswordHasher.cpp.o
+.PHONY : src/ScryptPasswordHasher.o
+
+# target to build an object file
+src/ScryptPasswordHasher.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/ScryptPasswordHasher.cpp.o
+.PHONY : src/ScryptPasswordHasher.cpp.o
+
+src/ScryptPasswordHasher.i: src/ScryptPasswordHasher.cpp.i
+.PHONY : src/ScryptPasswordHasher.i
+
+# target to preprocess a source file
+src/ScryptPasswordHasher.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/ScryptPasswordHasher.cpp.i
+.PHONY : src/ScryptPasswordHasher.cpp.i
+
+src/ScryptPasswordHasher.s: src/ScryptPasswordHasher.cpp.s
+.PHONY : src/ScryptPasswordHasher.s
+
+# target to generate assembly for a file
+src/ScryptPasswordHasher.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/ScryptPasswordHasher.cpp.s
+.PHONY : src/ScryptPasswordHasher.cpp.s
 
 src/ServerApplication.o: src/ServerApplication.cpp.o
 .PHONY : src/ServerApplication.o
@@ -324,6 +1997,30 @@ src/ServerApplication.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/ServerApplication.cpp.s
 .PHONY : src/ServerApplication.cpp.s
 
+src/SessionAuthState.o: src/SessionAuthState.cpp.o
+.PHONY : src/SessionAuthState.o
+
+# target to build an object file
+src/SessionAuthState.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/SessionAuthState.cpp.o
+.PHONY : src/SessionAuthState.cpp.o
+
+src/SessionAuthState.i: src/SessionAuthState.cpp.i
+.PHONY : src/SessionAuthState.i
+
+# target to preprocess a source file
+src/SessionAuthState.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/SessionAuthState.cpp.i
+.PHONY : src/SessionAuthState.cpp.i
+
+src/SessionAuthState.s: src/SessionAuthState.cpp.s
+.PHONY : src/SessionAuthState.s
+
+# target to generate assembly for a file
+src/SessionAuthState.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/SessionAuthState.cpp.s
+.PHONY : src/SessionAuthState.cpp.s
+
 src/SessionManager.o: src/SessionManager.cpp.o
 .PHONY : src/SessionManager.o
 
@@ -348,29 +2045,221 @@ src/SessionManager.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/SessionManager.cpp.s
 .PHONY : src/SessionManager.cpp.s
 
-src/TcpClient.o: src/TcpClient.cpp.o
-.PHONY : src/TcpClient.o
+src/SkillCatalog.o: src/SkillCatalog.cpp.o
+.PHONY : src/SkillCatalog.o
 
 # target to build an object file
-src/TcpClient.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_mock_client.dir/build.make CMakeFiles/dnf_mock_client.dir/src/TcpClient.cpp.o
-.PHONY : src/TcpClient.cpp.o
+src/SkillCatalog.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/SkillCatalog.cpp.o
+.PHONY : src/SkillCatalog.cpp.o
 
-src/TcpClient.i: src/TcpClient.cpp.i
-.PHONY : src/TcpClient.i
+src/SkillCatalog.i: src/SkillCatalog.cpp.i
+.PHONY : src/SkillCatalog.i
 
 # target to preprocess a source file
-src/TcpClient.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_mock_client.dir/build.make CMakeFiles/dnf_mock_client.dir/src/TcpClient.cpp.i
-.PHONY : src/TcpClient.cpp.i
+src/SkillCatalog.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/SkillCatalog.cpp.i
+.PHONY : src/SkillCatalog.cpp.i
 
-src/TcpClient.s: src/TcpClient.cpp.s
-.PHONY : src/TcpClient.s
+src/SkillCatalog.s: src/SkillCatalog.cpp.s
+.PHONY : src/SkillCatalog.s
 
 # target to generate assembly for a file
-src/TcpClient.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_mock_client.dir/build.make CMakeFiles/dnf_mock_client.dir/src/TcpClient.cpp.s
-.PHONY : src/TcpClient.cpp.s
+src/SkillCatalog.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/SkillCatalog.cpp.s
+.PHONY : src/SkillCatalog.cpp.s
+
+src/SqliteAccountPlayerRepository.o: src/SqliteAccountPlayerRepository.cpp.o
+.PHONY : src/SqliteAccountPlayerRepository.o
+
+# target to build an object file
+src/SqliteAccountPlayerRepository.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/SqliteAccountPlayerRepository.cpp.o
+.PHONY : src/SqliteAccountPlayerRepository.cpp.o
+
+src/SqliteAccountPlayerRepository.i: src/SqliteAccountPlayerRepository.cpp.i
+.PHONY : src/SqliteAccountPlayerRepository.i
+
+# target to preprocess a source file
+src/SqliteAccountPlayerRepository.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/SqliteAccountPlayerRepository.cpp.i
+.PHONY : src/SqliteAccountPlayerRepository.cpp.i
+
+src/SqliteAccountPlayerRepository.s: src/SqliteAccountPlayerRepository.cpp.s
+.PHONY : src/SqliteAccountPlayerRepository.s
+
+# target to generate assembly for a file
+src/SqliteAccountPlayerRepository.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/SqliteAccountPlayerRepository.cpp.s
+.PHONY : src/SqliteAccountPlayerRepository.cpp.s
+
+src/SqliteAccountRepository.o: src/SqliteAccountRepository.cpp.o
+.PHONY : src/SqliteAccountRepository.o
+
+# target to build an object file
+src/SqliteAccountRepository.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/SqliteAccountRepository.cpp.o
+.PHONY : src/SqliteAccountRepository.cpp.o
+
+src/SqliteAccountRepository.i: src/SqliteAccountRepository.cpp.i
+.PHONY : src/SqliteAccountRepository.i
+
+# target to preprocess a source file
+src/SqliteAccountRepository.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/SqliteAccountRepository.cpp.i
+.PHONY : src/SqliteAccountRepository.cpp.i
+
+src/SqliteAccountRepository.s: src/SqliteAccountRepository.cpp.s
+.PHONY : src/SqliteAccountRepository.s
+
+# target to generate assembly for a file
+src/SqliteAccountRepository.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/SqliteAccountRepository.cpp.s
+.PHONY : src/SqliteAccountRepository.cpp.s
+
+src/SqliteAuthTicketStore.o: src/SqliteAuthTicketStore.cpp.o
+.PHONY : src/SqliteAuthTicketStore.o
+
+# target to build an object file
+src/SqliteAuthTicketStore.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/SqliteAuthTicketStore.cpp.o
+.PHONY : src/SqliteAuthTicketStore.cpp.o
+
+src/SqliteAuthTicketStore.i: src/SqliteAuthTicketStore.cpp.i
+.PHONY : src/SqliteAuthTicketStore.i
+
+# target to preprocess a source file
+src/SqliteAuthTicketStore.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/SqliteAuthTicketStore.cpp.i
+.PHONY : src/SqliteAuthTicketStore.cpp.i
+
+src/SqliteAuthTicketStore.s: src/SqliteAuthTicketStore.cpp.s
+.PHONY : src/SqliteAuthTicketStore.s
+
+# target to generate assembly for a file
+src/SqliteAuthTicketStore.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/SqliteAuthTicketStore.cpp.s
+.PHONY : src/SqliteAuthTicketStore.cpp.s
+
+src/SqliteAuthTicketVerifier.o: src/SqliteAuthTicketVerifier.cpp.o
+.PHONY : src/SqliteAuthTicketVerifier.o
+
+# target to build an object file
+src/SqliteAuthTicketVerifier.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/SqliteAuthTicketVerifier.cpp.o
+.PHONY : src/SqliteAuthTicketVerifier.cpp.o
+
+src/SqliteAuthTicketVerifier.i: src/SqliteAuthTicketVerifier.cpp.i
+.PHONY : src/SqliteAuthTicketVerifier.i
+
+# target to preprocess a source file
+src/SqliteAuthTicketVerifier.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/SqliteAuthTicketVerifier.cpp.i
+.PHONY : src/SqliteAuthTicketVerifier.cpp.i
+
+src/SqliteAuthTicketVerifier.s: src/SqliteAuthTicketVerifier.cpp.s
+.PHONY : src/SqliteAuthTicketVerifier.s
+
+# target to generate assembly for a file
+src/SqliteAuthTicketVerifier.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/SqliteAuthTicketVerifier.cpp.s
+.PHONY : src/SqliteAuthTicketVerifier.cpp.s
+
+src/SqliteCharacterProvisioner.o: src/SqliteCharacterProvisioner.cpp.o
+.PHONY : src/SqliteCharacterProvisioner.o
+
+# target to build an object file
+src/SqliteCharacterProvisioner.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/SqliteCharacterProvisioner.cpp.o
+.PHONY : src/SqliteCharacterProvisioner.cpp.o
+
+src/SqliteCharacterProvisioner.i: src/SqliteCharacterProvisioner.cpp.i
+.PHONY : src/SqliteCharacterProvisioner.i
+
+# target to preprocess a source file
+src/SqliteCharacterProvisioner.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/SqliteCharacterProvisioner.cpp.i
+.PHONY : src/SqliteCharacterProvisioner.cpp.i
+
+src/SqliteCharacterProvisioner.s: src/SqliteCharacterProvisioner.cpp.s
+.PHONY : src/SqliteCharacterProvisioner.s
+
+# target to generate assembly for a file
+src/SqliteCharacterProvisioner.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/SqliteCharacterProvisioner.cpp.s
+.PHONY : src/SqliteCharacterProvisioner.cpp.s
+
+src/SqliteDatabase.o: src/SqliteDatabase.cpp.o
+.PHONY : src/SqliteDatabase.o
+
+# target to build an object file
+src/SqliteDatabase.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/SqliteDatabase.cpp.o
+.PHONY : src/SqliteDatabase.cpp.o
+
+src/SqliteDatabase.i: src/SqliteDatabase.cpp.i
+.PHONY : src/SqliteDatabase.i
+
+# target to preprocess a source file
+src/SqliteDatabase.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/SqliteDatabase.cpp.i
+.PHONY : src/SqliteDatabase.cpp.i
+
+src/SqliteDatabase.s: src/SqliteDatabase.cpp.s
+.PHONY : src/SqliteDatabase.s
+
+# target to generate assembly for a file
+src/SqliteDatabase.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/SqliteDatabase.cpp.s
+.PHONY : src/SqliteDatabase.cpp.s
+
+src/SqlitePlayerRepository.o: src/SqlitePlayerRepository.cpp.o
+.PHONY : src/SqlitePlayerRepository.o
+
+# target to build an object file
+src/SqlitePlayerRepository.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/SqlitePlayerRepository.cpp.o
+.PHONY : src/SqlitePlayerRepository.cpp.o
+
+src/SqlitePlayerRepository.i: src/SqlitePlayerRepository.cpp.i
+.PHONY : src/SqlitePlayerRepository.i
+
+# target to preprocess a source file
+src/SqlitePlayerRepository.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/SqlitePlayerRepository.cpp.i
+.PHONY : src/SqlitePlayerRepository.cpp.i
+
+src/SqlitePlayerRepository.s: src/SqlitePlayerRepository.cpp.s
+.PHONY : src/SqlitePlayerRepository.s
+
+# target to generate assembly for a file
+src/SqlitePlayerRepository.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/SqlitePlayerRepository.cpp.s
+.PHONY : src/SqlitePlayerRepository.cpp.s
+
+src/TcpFlatBufferCodec.o: src/TcpFlatBufferCodec.cpp.o
+.PHONY : src/TcpFlatBufferCodec.o
+
+# target to build an object file
+src/TcpFlatBufferCodec.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/TcpFlatBufferCodec.cpp.o
+.PHONY : src/TcpFlatBufferCodec.cpp.o
+
+src/TcpFlatBufferCodec.i: src/TcpFlatBufferCodec.cpp.i
+.PHONY : src/TcpFlatBufferCodec.i
+
+# target to preprocess a source file
+src/TcpFlatBufferCodec.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/TcpFlatBufferCodec.cpp.i
+.PHONY : src/TcpFlatBufferCodec.cpp.i
+
+src/TcpFlatBufferCodec.s: src/TcpFlatBufferCodec.cpp.s
+.PHONY : src/TcpFlatBufferCodec.s
+
+# target to generate assembly for a file
+src/TcpFlatBufferCodec.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/TcpFlatBufferCodec.cpp.s
+.PHONY : src/TcpFlatBufferCodec.cpp.s
 
 src/TcpServer.o: src/TcpServer.cpp.o
 .PHONY : src/TcpServer.o
@@ -420,6 +2309,54 @@ src/TcpSession.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/TcpSession.cpp.s
 .PHONY : src/TcpSession.cpp.s
 
+src/admin_main.o: src/admin_main.cpp.o
+.PHONY : src/admin_main.o
+
+# target to build an object file
+src/admin_main.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_admin.dir/build.make CMakeFiles/dnf_admin.dir/src/admin_main.cpp.o
+.PHONY : src/admin_main.cpp.o
+
+src/admin_main.i: src/admin_main.cpp.i
+.PHONY : src/admin_main.i
+
+# target to preprocess a source file
+src/admin_main.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_admin.dir/build.make CMakeFiles/dnf_admin.dir/src/admin_main.cpp.i
+.PHONY : src/admin_main.cpp.i
+
+src/admin_main.s: src/admin_main.cpp.s
+.PHONY : src/admin_main.s
+
+# target to generate assembly for a file
+src/admin_main.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_admin.dir/build.make CMakeFiles/dnf_admin.dir/src/admin_main.cpp.s
+.PHONY : src/admin_main.cpp.s
+
+src/auth_main.o: src/auth_main.cpp.o
+.PHONY : src/auth_main.o
+
+# target to build an object file
+src/auth_main.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_auth_server.dir/build.make CMakeFiles/dnf_auth_server.dir/src/auth_main.cpp.o
+.PHONY : src/auth_main.cpp.o
+
+src/auth_main.i: src/auth_main.cpp.i
+.PHONY : src/auth_main.i
+
+# target to preprocess a source file
+src/auth_main.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_auth_server.dir/build.make CMakeFiles/dnf_auth_server.dir/src/auth_main.cpp.i
+.PHONY : src/auth_main.cpp.i
+
+src/auth_main.s: src/auth_main.cpp.s
+.PHONY : src/auth_main.s
+
+# target to generate assembly for a file
+src/auth_main.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_auth_server.dir/build.make CMakeFiles/dnf_auth_server.dir/src/auth_main.cpp.s
+.PHONY : src/auth_main.cpp.s
+
 src/main.o: src/main.cpp.o
 .PHONY : src/main.o
 
@@ -444,29 +2381,851 @@ src/main.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_mock_server.dir/build.make CMakeFiles/dnf_mock_server.dir/src/main.cpp.s
 .PHONY : src/main.cpp.s
 
-src/mock_client_main.o: src/mock_client_main.cpp.o
-.PHONY : src/mock_client_main.o
+tests/AccountAuthenticationServiceTest.o: tests/AccountAuthenticationServiceTest.cpp.o
+.PHONY : tests/AccountAuthenticationServiceTest.o
 
 # target to build an object file
-src/mock_client_main.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_mock_client.dir/build.make CMakeFiles/dnf_mock_client.dir/src/mock_client_main.cpp.o
-.PHONY : src/mock_client_main.cpp.o
+tests/AccountAuthenticationServiceTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/account_authentication_service_test.dir/build.make CMakeFiles/account_authentication_service_test.dir/tests/AccountAuthenticationServiceTest.cpp.o
+.PHONY : tests/AccountAuthenticationServiceTest.cpp.o
 
-src/mock_client_main.i: src/mock_client_main.cpp.i
-.PHONY : src/mock_client_main.i
+tests/AccountAuthenticationServiceTest.i: tests/AccountAuthenticationServiceTest.cpp.i
+.PHONY : tests/AccountAuthenticationServiceTest.i
 
 # target to preprocess a source file
-src/mock_client_main.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_mock_client.dir/build.make CMakeFiles/dnf_mock_client.dir/src/mock_client_main.cpp.i
-.PHONY : src/mock_client_main.cpp.i
+tests/AccountAuthenticationServiceTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/account_authentication_service_test.dir/build.make CMakeFiles/account_authentication_service_test.dir/tests/AccountAuthenticationServiceTest.cpp.i
+.PHONY : tests/AccountAuthenticationServiceTest.cpp.i
 
-src/mock_client_main.s: src/mock_client_main.cpp.s
-.PHONY : src/mock_client_main.s
+tests/AccountAuthenticationServiceTest.s: tests/AccountAuthenticationServiceTest.cpp.s
+.PHONY : tests/AccountAuthenticationServiceTest.s
 
 # target to generate assembly for a file
-src/mock_client_main.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_mock_client.dir/build.make CMakeFiles/dnf_mock_client.dir/src/mock_client_main.cpp.s
-.PHONY : src/mock_client_main.cpp.s
+tests/AccountAuthenticationServiceTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/account_authentication_service_test.dir/build.make CMakeFiles/account_authentication_service_test.dir/tests/AccountAuthenticationServiceTest.cpp.s
+.PHONY : tests/AccountAuthenticationServiceTest.cpp.s
+
+tests/AccountProvisioningServiceTest.o: tests/AccountProvisioningServiceTest.cpp.o
+.PHONY : tests/AccountProvisioningServiceTest.o
+
+# target to build an object file
+tests/AccountProvisioningServiceTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/account_provisioning_service_test.dir/build.make CMakeFiles/account_provisioning_service_test.dir/tests/AccountProvisioningServiceTest.cpp.o
+.PHONY : tests/AccountProvisioningServiceTest.cpp.o
+
+tests/AccountProvisioningServiceTest.i: tests/AccountProvisioningServiceTest.cpp.i
+.PHONY : tests/AccountProvisioningServiceTest.i
+
+# target to preprocess a source file
+tests/AccountProvisioningServiceTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/account_provisioning_service_test.dir/build.make CMakeFiles/account_provisioning_service_test.dir/tests/AccountProvisioningServiceTest.cpp.i
+.PHONY : tests/AccountProvisioningServiceTest.cpp.i
+
+tests/AccountProvisioningServiceTest.s: tests/AccountProvisioningServiceTest.cpp.s
+.PHONY : tests/AccountProvisioningServiceTest.s
+
+# target to generate assembly for a file
+tests/AccountProvisioningServiceTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/account_provisioning_service_test.dir/build.make CMakeFiles/account_provisioning_service_test.dir/tests/AccountProvisioningServiceTest.cpp.s
+.PHONY : tests/AccountProvisioningServiceTest.cpp.s
+
+tests/AuthFlatBufferCodecTest.o: tests/AuthFlatBufferCodecTest.cpp.o
+.PHONY : tests/AuthFlatBufferCodecTest.o
+
+# target to build an object file
+tests/AuthFlatBufferCodecTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/auth_flatbuffer_codec_test.dir/build.make CMakeFiles/auth_flatbuffer_codec_test.dir/tests/AuthFlatBufferCodecTest.cpp.o
+.PHONY : tests/AuthFlatBufferCodecTest.cpp.o
+
+tests/AuthFlatBufferCodecTest.i: tests/AuthFlatBufferCodecTest.cpp.i
+.PHONY : tests/AuthFlatBufferCodecTest.i
+
+# target to preprocess a source file
+tests/AuthFlatBufferCodecTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/auth_flatbuffer_codec_test.dir/build.make CMakeFiles/auth_flatbuffer_codec_test.dir/tests/AuthFlatBufferCodecTest.cpp.i
+.PHONY : tests/AuthFlatBufferCodecTest.cpp.i
+
+tests/AuthFlatBufferCodecTest.s: tests/AuthFlatBufferCodecTest.cpp.s
+.PHONY : tests/AuthFlatBufferCodecTest.s
+
+# target to generate assembly for a file
+tests/AuthFlatBufferCodecTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/auth_flatbuffer_codec_test.dir/build.make CMakeFiles/auth_flatbuffer_codec_test.dir/tests/AuthFlatBufferCodecTest.cpp.s
+.PHONY : tests/AuthFlatBufferCodecTest.cpp.s
+
+tests/AuthFlatBufferSchemaTest.o: tests/AuthFlatBufferSchemaTest.cpp.o
+.PHONY : tests/AuthFlatBufferSchemaTest.o
+
+# target to build an object file
+tests/AuthFlatBufferSchemaTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/auth_flatbuffer_schema_test.dir/build.make CMakeFiles/auth_flatbuffer_schema_test.dir/tests/AuthFlatBufferSchemaTest.cpp.o
+.PHONY : tests/AuthFlatBufferSchemaTest.cpp.o
+
+tests/AuthFlatBufferSchemaTest.i: tests/AuthFlatBufferSchemaTest.cpp.i
+.PHONY : tests/AuthFlatBufferSchemaTest.i
+
+# target to preprocess a source file
+tests/AuthFlatBufferSchemaTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/auth_flatbuffer_schema_test.dir/build.make CMakeFiles/auth_flatbuffer_schema_test.dir/tests/AuthFlatBufferSchemaTest.cpp.i
+.PHONY : tests/AuthFlatBufferSchemaTest.cpp.i
+
+tests/AuthFlatBufferSchemaTest.s: tests/AuthFlatBufferSchemaTest.cpp.s
+.PHONY : tests/AuthFlatBufferSchemaTest.s
+
+# target to generate assembly for a file
+tests/AuthFlatBufferSchemaTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/auth_flatbuffer_schema_test.dir/build.make CMakeFiles/auth_flatbuffer_schema_test.dir/tests/AuthFlatBufferSchemaTest.cpp.s
+.PHONY : tests/AuthFlatBufferSchemaTest.cpp.s
+
+tests/AuthPacketDispatcherTest.o: tests/AuthPacketDispatcherTest.cpp.o
+.PHONY : tests/AuthPacketDispatcherTest.o
+
+# target to build an object file
+tests/AuthPacketDispatcherTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/auth_packet_dispatcher_test.dir/build.make CMakeFiles/auth_packet_dispatcher_test.dir/tests/AuthPacketDispatcherTest.cpp.o
+.PHONY : tests/AuthPacketDispatcherTest.cpp.o
+
+tests/AuthPacketDispatcherTest.i: tests/AuthPacketDispatcherTest.cpp.i
+.PHONY : tests/AuthPacketDispatcherTest.i
+
+# target to preprocess a source file
+tests/AuthPacketDispatcherTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/auth_packet_dispatcher_test.dir/build.make CMakeFiles/auth_packet_dispatcher_test.dir/tests/AuthPacketDispatcherTest.cpp.i
+.PHONY : tests/AuthPacketDispatcherTest.cpp.i
+
+tests/AuthPacketDispatcherTest.s: tests/AuthPacketDispatcherTest.cpp.s
+.PHONY : tests/AuthPacketDispatcherTest.s
+
+# target to generate assembly for a file
+tests/AuthPacketDispatcherTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/auth_packet_dispatcher_test.dir/build.make CMakeFiles/auth_packet_dispatcher_test.dir/tests/AuthPacketDispatcherTest.cpp.s
+.PHONY : tests/AuthPacketDispatcherTest.cpp.s
+
+tests/AuthServerApplicationTest.o: tests/AuthServerApplicationTest.cpp.o
+.PHONY : tests/AuthServerApplicationTest.o
+
+# target to build an object file
+tests/AuthServerApplicationTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/auth_server_application_test.dir/build.make CMakeFiles/auth_server_application_test.dir/tests/AuthServerApplicationTest.cpp.o
+.PHONY : tests/AuthServerApplicationTest.cpp.o
+
+tests/AuthServerApplicationTest.i: tests/AuthServerApplicationTest.cpp.i
+.PHONY : tests/AuthServerApplicationTest.i
+
+# target to preprocess a source file
+tests/AuthServerApplicationTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/auth_server_application_test.dir/build.make CMakeFiles/auth_server_application_test.dir/tests/AuthServerApplicationTest.cpp.i
+.PHONY : tests/AuthServerApplicationTest.cpp.i
+
+tests/AuthServerApplicationTest.s: tests/AuthServerApplicationTest.cpp.s
+.PHONY : tests/AuthServerApplicationTest.s
+
+# target to generate assembly for a file
+tests/AuthServerApplicationTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/auth_server_application_test.dir/build.make CMakeFiles/auth_server_application_test.dir/tests/AuthServerApplicationTest.cpp.s
+.PHONY : tests/AuthServerApplicationTest.cpp.s
+
+tests/AuthServerSessionStateTest.o: tests/AuthServerSessionStateTest.cpp.o
+.PHONY : tests/AuthServerSessionStateTest.o
+
+# target to build an object file
+tests/AuthServerSessionStateTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/auth_server_session_state_test.dir/build.make CMakeFiles/auth_server_session_state_test.dir/tests/AuthServerSessionStateTest.cpp.o
+.PHONY : tests/AuthServerSessionStateTest.cpp.o
+
+tests/AuthServerSessionStateTest.i: tests/AuthServerSessionStateTest.cpp.i
+.PHONY : tests/AuthServerSessionStateTest.i
+
+# target to preprocess a source file
+tests/AuthServerSessionStateTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/auth_server_session_state_test.dir/build.make CMakeFiles/auth_server_session_state_test.dir/tests/AuthServerSessionStateTest.cpp.i
+.PHONY : tests/AuthServerSessionStateTest.cpp.i
+
+tests/AuthServerSessionStateTest.s: tests/AuthServerSessionStateTest.cpp.s
+.PHONY : tests/AuthServerSessionStateTest.s
+
+# target to generate assembly for a file
+tests/AuthServerSessionStateTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/auth_server_session_state_test.dir/build.make CMakeFiles/auth_server_session_state_test.dir/tests/AuthServerSessionStateTest.cpp.s
+.PHONY : tests/AuthServerSessionStateTest.cpp.s
+
+tests/AuthTicketIssuerTest.o: tests/AuthTicketIssuerTest.cpp.o
+.PHONY : tests/AuthTicketIssuerTest.o
+
+# target to build an object file
+tests/AuthTicketIssuerTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/auth_ticket_issuer_test.dir/build.make CMakeFiles/auth_ticket_issuer_test.dir/tests/AuthTicketIssuerTest.cpp.o
+.PHONY : tests/AuthTicketIssuerTest.cpp.o
+
+tests/AuthTicketIssuerTest.i: tests/AuthTicketIssuerTest.cpp.i
+.PHONY : tests/AuthTicketIssuerTest.i
+
+# target to preprocess a source file
+tests/AuthTicketIssuerTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/auth_ticket_issuer_test.dir/build.make CMakeFiles/auth_ticket_issuer_test.dir/tests/AuthTicketIssuerTest.cpp.i
+.PHONY : tests/AuthTicketIssuerTest.cpp.i
+
+tests/AuthTicketIssuerTest.s: tests/AuthTicketIssuerTest.cpp.s
+.PHONY : tests/AuthTicketIssuerTest.s
+
+# target to generate assembly for a file
+tests/AuthTicketIssuerTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/auth_ticket_issuer_test.dir/build.make CMakeFiles/auth_ticket_issuer_test.dir/tests/AuthTicketIssuerTest.cpp.s
+.PHONY : tests/AuthTicketIssuerTest.cpp.s
+
+tests/AuthTlsServerTest.o: tests/AuthTlsServerTest.cpp.o
+.PHONY : tests/AuthTlsServerTest.o
+
+# target to build an object file
+tests/AuthTlsServerTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/auth_tls_server_test.dir/build.make CMakeFiles/auth_tls_server_test.dir/tests/AuthTlsServerTest.cpp.o
+.PHONY : tests/AuthTlsServerTest.cpp.o
+
+tests/AuthTlsServerTest.i: tests/AuthTlsServerTest.cpp.i
+.PHONY : tests/AuthTlsServerTest.i
+
+# target to preprocess a source file
+tests/AuthTlsServerTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/auth_tls_server_test.dir/build.make CMakeFiles/auth_tls_server_test.dir/tests/AuthTlsServerTest.cpp.i
+.PHONY : tests/AuthTlsServerTest.cpp.i
+
+tests/AuthTlsServerTest.s: tests/AuthTlsServerTest.cpp.s
+.PHONY : tests/AuthTlsServerTest.s
+
+# target to generate assembly for a file
+tests/AuthTlsServerTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/auth_tls_server_test.dir/build.make CMakeFiles/auth_tls_server_test.dir/tests/AuthTlsServerTest.cpp.s
+.PHONY : tests/AuthTlsServerTest.cpp.s
+
+tests/AuthTlsSessionTest.o: tests/AuthTlsSessionTest.cpp.o
+.PHONY : tests/AuthTlsSessionTest.o
+
+# target to build an object file
+tests/AuthTlsSessionTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/auth_tls_session_test.dir/build.make CMakeFiles/auth_tls_session_test.dir/tests/AuthTlsSessionTest.cpp.o
+.PHONY : tests/AuthTlsSessionTest.cpp.o
+
+tests/AuthTlsSessionTest.i: tests/AuthTlsSessionTest.cpp.i
+.PHONY : tests/AuthTlsSessionTest.i
+
+# target to preprocess a source file
+tests/AuthTlsSessionTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/auth_tls_session_test.dir/build.make CMakeFiles/auth_tls_session_test.dir/tests/AuthTlsSessionTest.cpp.i
+.PHONY : tests/AuthTlsSessionTest.cpp.i
+
+tests/AuthTlsSessionTest.s: tests/AuthTlsSessionTest.cpp.s
+.PHONY : tests/AuthTlsSessionTest.s
+
+# target to generate assembly for a file
+tests/AuthTlsSessionTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/auth_tls_session_test.dir/build.make CMakeFiles/auth_tls_session_test.dir/tests/AuthTlsSessionTest.cpp.s
+.PHONY : tests/AuthTlsSessionTest.cpp.s
+
+tests/ChannelManagerTest.o: tests/ChannelManagerTest.cpp.o
+.PHONY : tests/ChannelManagerTest.o
+
+# target to build an object file
+tests/ChannelManagerTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/channel_manager_test.dir/build.make CMakeFiles/channel_manager_test.dir/tests/ChannelManagerTest.cpp.o
+.PHONY : tests/ChannelManagerTest.cpp.o
+
+tests/ChannelManagerTest.i: tests/ChannelManagerTest.cpp.i
+.PHONY : tests/ChannelManagerTest.i
+
+# target to preprocess a source file
+tests/ChannelManagerTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/channel_manager_test.dir/build.make CMakeFiles/channel_manager_test.dir/tests/ChannelManagerTest.cpp.i
+.PHONY : tests/ChannelManagerTest.cpp.i
+
+tests/ChannelManagerTest.s: tests/ChannelManagerTest.cpp.s
+.PHONY : tests/ChannelManagerTest.s
+
+# target to generate assembly for a file
+tests/ChannelManagerTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/channel_manager_test.dir/build.make CMakeFiles/channel_manager_test.dir/tests/ChannelManagerTest.cpp.s
+.PHONY : tests/ChannelManagerTest.cpp.s
+
+tests/CharacterListServiceTest.o: tests/CharacterListServiceTest.cpp.o
+.PHONY : tests/CharacterListServiceTest.o
+
+# target to build an object file
+tests/CharacterListServiceTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/character_list_service_test.dir/build.make CMakeFiles/character_list_service_test.dir/tests/CharacterListServiceTest.cpp.o
+.PHONY : tests/CharacterListServiceTest.cpp.o
+
+tests/CharacterListServiceTest.i: tests/CharacterListServiceTest.cpp.i
+.PHONY : tests/CharacterListServiceTest.i
+
+# target to preprocess a source file
+tests/CharacterListServiceTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/character_list_service_test.dir/build.make CMakeFiles/character_list_service_test.dir/tests/CharacterListServiceTest.cpp.i
+.PHONY : tests/CharacterListServiceTest.cpp.i
+
+tests/CharacterListServiceTest.s: tests/CharacterListServiceTest.cpp.s
+.PHONY : tests/CharacterListServiceTest.s
+
+# target to generate assembly for a file
+tests/CharacterListServiceTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/character_list_service_test.dir/build.make CMakeFiles/character_list_service_test.dir/tests/CharacterListServiceTest.cpp.s
+.PHONY : tests/CharacterListServiceTest.cpp.s
+
+tests/CharacterSelectionServiceTest.o: tests/CharacterSelectionServiceTest.cpp.o
+.PHONY : tests/CharacterSelectionServiceTest.o
+
+# target to build an object file
+tests/CharacterSelectionServiceTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/character_selection_service_test.dir/build.make CMakeFiles/character_selection_service_test.dir/tests/CharacterSelectionServiceTest.cpp.o
+.PHONY : tests/CharacterSelectionServiceTest.cpp.o
+
+tests/CharacterSelectionServiceTest.i: tests/CharacterSelectionServiceTest.cpp.i
+.PHONY : tests/CharacterSelectionServiceTest.i
+
+# target to preprocess a source file
+tests/CharacterSelectionServiceTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/character_selection_service_test.dir/build.make CMakeFiles/character_selection_service_test.dir/tests/CharacterSelectionServiceTest.cpp.i
+.PHONY : tests/CharacterSelectionServiceTest.cpp.i
+
+tests/CharacterSelectionServiceTest.s: tests/CharacterSelectionServiceTest.cpp.s
+.PHONY : tests/CharacterSelectionServiceTest.s
+
+# target to generate assembly for a file
+tests/CharacterSelectionServiceTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/character_selection_service_test.dir/build.make CMakeFiles/character_selection_service_test.dir/tests/CharacterSelectionServiceTest.cpp.s
+.PHONY : tests/CharacterSelectionServiceTest.cpp.s
+
+tests/DatabaseExecutorTest.o: tests/DatabaseExecutorTest.cpp.o
+.PHONY : tests/DatabaseExecutorTest.o
+
+# target to build an object file
+tests/DatabaseExecutorTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/database_executor_test.dir/build.make CMakeFiles/database_executor_test.dir/tests/DatabaseExecutorTest.cpp.o
+.PHONY : tests/DatabaseExecutorTest.cpp.o
+
+tests/DatabaseExecutorTest.i: tests/DatabaseExecutorTest.cpp.i
+.PHONY : tests/DatabaseExecutorTest.i
+
+# target to preprocess a source file
+tests/DatabaseExecutorTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/database_executor_test.dir/build.make CMakeFiles/database_executor_test.dir/tests/DatabaseExecutorTest.cpp.i
+.PHONY : tests/DatabaseExecutorTest.cpp.i
+
+tests/DatabaseExecutorTest.s: tests/DatabaseExecutorTest.cpp.s
+.PHONY : tests/DatabaseExecutorTest.s
+
+# target to generate assembly for a file
+tests/DatabaseExecutorTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/database_executor_test.dir/build.make CMakeFiles/database_executor_test.dir/tests/DatabaseExecutorTest.cpp.s
+.PHONY : tests/DatabaseExecutorTest.cpp.s
+
+tests/DevAuthTicketVerifier.o: tests/DevAuthTicketVerifier.cpp.o
+.PHONY : tests/DevAuthTicketVerifier.o
+
+# target to build an object file
+tests/DevAuthTicketVerifier.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dev_auth_ticket_verifier_test.dir/build.make CMakeFiles/dev_auth_ticket_verifier_test.dir/tests/DevAuthTicketVerifier.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/packet_dispatcher_test.dir/build.make CMakeFiles/packet_dispatcher_test.dir/tests/DevAuthTicketVerifier.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/player_login_service_test.dir/build.make CMakeFiles/player_login_service_test.dir/tests/DevAuthTicketVerifier.cpp.o
+.PHONY : tests/DevAuthTicketVerifier.cpp.o
+
+tests/DevAuthTicketVerifier.i: tests/DevAuthTicketVerifier.cpp.i
+.PHONY : tests/DevAuthTicketVerifier.i
+
+# target to preprocess a source file
+tests/DevAuthTicketVerifier.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dev_auth_ticket_verifier_test.dir/build.make CMakeFiles/dev_auth_ticket_verifier_test.dir/tests/DevAuthTicketVerifier.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/packet_dispatcher_test.dir/build.make CMakeFiles/packet_dispatcher_test.dir/tests/DevAuthTicketVerifier.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/player_login_service_test.dir/build.make CMakeFiles/player_login_service_test.dir/tests/DevAuthTicketVerifier.cpp.i
+.PHONY : tests/DevAuthTicketVerifier.cpp.i
+
+tests/DevAuthTicketVerifier.s: tests/DevAuthTicketVerifier.cpp.s
+.PHONY : tests/DevAuthTicketVerifier.s
+
+# target to generate assembly for a file
+tests/DevAuthTicketVerifier.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dev_auth_ticket_verifier_test.dir/build.make CMakeFiles/dev_auth_ticket_verifier_test.dir/tests/DevAuthTicketVerifier.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/packet_dispatcher_test.dir/build.make CMakeFiles/packet_dispatcher_test.dir/tests/DevAuthTicketVerifier.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/player_login_service_test.dir/build.make CMakeFiles/player_login_service_test.dir/tests/DevAuthTicketVerifier.cpp.s
+.PHONY : tests/DevAuthTicketVerifier.cpp.s
+
+tests/DevAuthTicketVerifierTest.o: tests/DevAuthTicketVerifierTest.cpp.o
+.PHONY : tests/DevAuthTicketVerifierTest.o
+
+# target to build an object file
+tests/DevAuthTicketVerifierTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dev_auth_ticket_verifier_test.dir/build.make CMakeFiles/dev_auth_ticket_verifier_test.dir/tests/DevAuthTicketVerifierTest.cpp.o
+.PHONY : tests/DevAuthTicketVerifierTest.cpp.o
+
+tests/DevAuthTicketVerifierTest.i: tests/DevAuthTicketVerifierTest.cpp.i
+.PHONY : tests/DevAuthTicketVerifierTest.i
+
+# target to preprocess a source file
+tests/DevAuthTicketVerifierTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dev_auth_ticket_verifier_test.dir/build.make CMakeFiles/dev_auth_ticket_verifier_test.dir/tests/DevAuthTicketVerifierTest.cpp.i
+.PHONY : tests/DevAuthTicketVerifierTest.cpp.i
+
+tests/DevAuthTicketVerifierTest.s: tests/DevAuthTicketVerifierTest.cpp.s
+.PHONY : tests/DevAuthTicketVerifierTest.s
+
+# target to generate assembly for a file
+tests/DevAuthTicketVerifierTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dev_auth_ticket_verifier_test.dir/build.make CMakeFiles/dev_auth_ticket_verifier_test.dir/tests/DevAuthTicketVerifierTest.cpp.s
+.PHONY : tests/DevAuthTicketVerifierTest.cpp.s
+
+tests/DungeonAdmissionProtocolTest.o: tests/DungeonAdmissionProtocolTest.cpp.o
+.PHONY : tests/DungeonAdmissionProtocolTest.o
+
+# target to build an object file
+tests/DungeonAdmissionProtocolTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_admission_protocol_test.dir/build.make CMakeFiles/dungeon_admission_protocol_test.dir/tests/DungeonAdmissionProtocolTest.cpp.o
+.PHONY : tests/DungeonAdmissionProtocolTest.cpp.o
+
+tests/DungeonAdmissionProtocolTest.i: tests/DungeonAdmissionProtocolTest.cpp.i
+.PHONY : tests/DungeonAdmissionProtocolTest.i
+
+# target to preprocess a source file
+tests/DungeonAdmissionProtocolTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_admission_protocol_test.dir/build.make CMakeFiles/dungeon_admission_protocol_test.dir/tests/DungeonAdmissionProtocolTest.cpp.i
+.PHONY : tests/DungeonAdmissionProtocolTest.cpp.i
+
+tests/DungeonAdmissionProtocolTest.s: tests/DungeonAdmissionProtocolTest.cpp.s
+.PHONY : tests/DungeonAdmissionProtocolTest.s
+
+# target to generate assembly for a file
+tests/DungeonAdmissionProtocolTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_admission_protocol_test.dir/build.make CMakeFiles/dungeon_admission_protocol_test.dir/tests/DungeonAdmissionProtocolTest.cpp.s
+.PHONY : tests/DungeonAdmissionProtocolTest.cpp.s
+
+tests/DungeonCatalogProtocolTest.o: tests/DungeonCatalogProtocolTest.cpp.o
+.PHONY : tests/DungeonCatalogProtocolTest.o
+
+# target to build an object file
+tests/DungeonCatalogProtocolTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_catalog_protocol_test.dir/build.make CMakeFiles/dungeon_catalog_protocol_test.dir/tests/DungeonCatalogProtocolTest.cpp.o
+.PHONY : tests/DungeonCatalogProtocolTest.cpp.o
+
+tests/DungeonCatalogProtocolTest.i: tests/DungeonCatalogProtocolTest.cpp.i
+.PHONY : tests/DungeonCatalogProtocolTest.i
+
+# target to preprocess a source file
+tests/DungeonCatalogProtocolTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_catalog_protocol_test.dir/build.make CMakeFiles/dungeon_catalog_protocol_test.dir/tests/DungeonCatalogProtocolTest.cpp.i
+.PHONY : tests/DungeonCatalogProtocolTest.cpp.i
+
+tests/DungeonCatalogProtocolTest.s: tests/DungeonCatalogProtocolTest.cpp.s
+.PHONY : tests/DungeonCatalogProtocolTest.s
+
+# target to generate assembly for a file
+tests/DungeonCatalogProtocolTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_catalog_protocol_test.dir/build.make CMakeFiles/dungeon_catalog_protocol_test.dir/tests/DungeonCatalogProtocolTest.cpp.s
+.PHONY : tests/DungeonCatalogProtocolTest.cpp.s
+
+tests/DungeonCatalogTest.o: tests/DungeonCatalogTest.cpp.o
+.PHONY : tests/DungeonCatalogTest.o
+
+# target to build an object file
+tests/DungeonCatalogTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_catalog_test.dir/build.make CMakeFiles/dungeon_catalog_test.dir/tests/DungeonCatalogTest.cpp.o
+.PHONY : tests/DungeonCatalogTest.cpp.o
+
+tests/DungeonCatalogTest.i: tests/DungeonCatalogTest.cpp.i
+.PHONY : tests/DungeonCatalogTest.i
+
+# target to preprocess a source file
+tests/DungeonCatalogTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_catalog_test.dir/build.make CMakeFiles/dungeon_catalog_test.dir/tests/DungeonCatalogTest.cpp.i
+.PHONY : tests/DungeonCatalogTest.cpp.i
+
+tests/DungeonCatalogTest.s: tests/DungeonCatalogTest.cpp.s
+.PHONY : tests/DungeonCatalogTest.s
+
+# target to generate assembly for a file
+tests/DungeonCatalogTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_catalog_test.dir/build.make CMakeFiles/dungeon_catalog_test.dir/tests/DungeonCatalogTest.cpp.s
+.PHONY : tests/DungeonCatalogTest.cpp.s
+
+tests/DungeonCombatProcessorTest.o: tests/DungeonCombatProcessorTest.cpp.o
+.PHONY : tests/DungeonCombatProcessorTest.o
+
+# target to build an object file
+tests/DungeonCombatProcessorTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_combat_processor_test.dir/build.make CMakeFiles/dungeon_combat_processor_test.dir/tests/DungeonCombatProcessorTest.cpp.o
+.PHONY : tests/DungeonCombatProcessorTest.cpp.o
+
+tests/DungeonCombatProcessorTest.i: tests/DungeonCombatProcessorTest.cpp.i
+.PHONY : tests/DungeonCombatProcessorTest.i
+
+# target to preprocess a source file
+tests/DungeonCombatProcessorTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_combat_processor_test.dir/build.make CMakeFiles/dungeon_combat_processor_test.dir/tests/DungeonCombatProcessorTest.cpp.i
+.PHONY : tests/DungeonCombatProcessorTest.cpp.i
+
+tests/DungeonCombatProcessorTest.s: tests/DungeonCombatProcessorTest.cpp.s
+.PHONY : tests/DungeonCombatProcessorTest.s
+
+# target to generate assembly for a file
+tests/DungeonCombatProcessorTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_combat_processor_test.dir/build.make CMakeFiles/dungeon_combat_processor_test.dir/tests/DungeonCombatProcessorTest.cpp.s
+.PHONY : tests/DungeonCombatProcessorTest.cpp.s
+
+tests/DungeonConnectionProtocolTest.o: tests/DungeonConnectionProtocolTest.cpp.o
+.PHONY : tests/DungeonConnectionProtocolTest.o
+
+# target to build an object file
+tests/DungeonConnectionProtocolTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_connection_protocol_test.dir/build.make CMakeFiles/dungeon_connection_protocol_test.dir/tests/DungeonConnectionProtocolTest.cpp.o
+.PHONY : tests/DungeonConnectionProtocolTest.cpp.o
+
+tests/DungeonConnectionProtocolTest.i: tests/DungeonConnectionProtocolTest.cpp.i
+.PHONY : tests/DungeonConnectionProtocolTest.i
+
+# target to preprocess a source file
+tests/DungeonConnectionProtocolTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_connection_protocol_test.dir/build.make CMakeFiles/dungeon_connection_protocol_test.dir/tests/DungeonConnectionProtocolTest.cpp.i
+.PHONY : tests/DungeonConnectionProtocolTest.cpp.i
+
+tests/DungeonConnectionProtocolTest.s: tests/DungeonConnectionProtocolTest.cpp.s
+.PHONY : tests/DungeonConnectionProtocolTest.s
+
+# target to generate assembly for a file
+tests/DungeonConnectionProtocolTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_connection_protocol_test.dir/build.make CMakeFiles/dungeon_connection_protocol_test.dir/tests/DungeonConnectionProtocolTest.cpp.s
+.PHONY : tests/DungeonConnectionProtocolTest.cpp.s
+
+tests/DungeonInstanceTest.o: tests/DungeonInstanceTest.cpp.o
+.PHONY : tests/DungeonInstanceTest.o
+
+# target to build an object file
+tests/DungeonInstanceTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_instance_test.dir/build.make CMakeFiles/dungeon_instance_test.dir/tests/DungeonInstanceTest.cpp.o
+.PHONY : tests/DungeonInstanceTest.cpp.o
+
+tests/DungeonInstanceTest.i: tests/DungeonInstanceTest.cpp.i
+.PHONY : tests/DungeonInstanceTest.i
+
+# target to preprocess a source file
+tests/DungeonInstanceTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_instance_test.dir/build.make CMakeFiles/dungeon_instance_test.dir/tests/DungeonInstanceTest.cpp.i
+.PHONY : tests/DungeonInstanceTest.cpp.i
+
+tests/DungeonInstanceTest.s: tests/DungeonInstanceTest.cpp.s
+.PHONY : tests/DungeonInstanceTest.s
+
+# target to generate assembly for a file
+tests/DungeonInstanceTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_instance_test.dir/build.make CMakeFiles/dungeon_instance_test.dir/tests/DungeonInstanceTest.cpp.s
+.PHONY : tests/DungeonInstanceTest.cpp.s
+
+tests/DungeonLifecycleServiceTest.o: tests/DungeonLifecycleServiceTest.cpp.o
+.PHONY : tests/DungeonLifecycleServiceTest.o
+
+# target to build an object file
+tests/DungeonLifecycleServiceTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_lifecycle_service_test.dir/build.make CMakeFiles/dungeon_lifecycle_service_test.dir/tests/DungeonLifecycleServiceTest.cpp.o
+.PHONY : tests/DungeonLifecycleServiceTest.cpp.o
+
+tests/DungeonLifecycleServiceTest.i: tests/DungeonLifecycleServiceTest.cpp.i
+.PHONY : tests/DungeonLifecycleServiceTest.i
+
+# target to preprocess a source file
+tests/DungeonLifecycleServiceTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_lifecycle_service_test.dir/build.make CMakeFiles/dungeon_lifecycle_service_test.dir/tests/DungeonLifecycleServiceTest.cpp.i
+.PHONY : tests/DungeonLifecycleServiceTest.cpp.i
+
+tests/DungeonLifecycleServiceTest.s: tests/DungeonLifecycleServiceTest.cpp.s
+.PHONY : tests/DungeonLifecycleServiceTest.s
+
+# target to generate assembly for a file
+tests/DungeonLifecycleServiceTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_lifecycle_service_test.dir/build.make CMakeFiles/dungeon_lifecycle_service_test.dir/tests/DungeonLifecycleServiceTest.cpp.s
+.PHONY : tests/DungeonLifecycleServiceTest.cpp.s
+
+tests/DungeonManagerTest.o: tests/DungeonManagerTest.cpp.o
+.PHONY : tests/DungeonManagerTest.o
+
+# target to build an object file
+tests/DungeonManagerTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_manager_test.dir/build.make CMakeFiles/dungeon_manager_test.dir/tests/DungeonManagerTest.cpp.o
+.PHONY : tests/DungeonManagerTest.cpp.o
+
+tests/DungeonManagerTest.i: tests/DungeonManagerTest.cpp.i
+.PHONY : tests/DungeonManagerTest.i
+
+# target to preprocess a source file
+tests/DungeonManagerTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_manager_test.dir/build.make CMakeFiles/dungeon_manager_test.dir/tests/DungeonManagerTest.cpp.i
+.PHONY : tests/DungeonManagerTest.cpp.i
+
+tests/DungeonManagerTest.s: tests/DungeonManagerTest.cpp.s
+.PHONY : tests/DungeonManagerTest.s
+
+# target to generate assembly for a file
+tests/DungeonManagerTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_manager_test.dir/build.make CMakeFiles/dungeon_manager_test.dir/tests/DungeonManagerTest.cpp.s
+.PHONY : tests/DungeonManagerTest.cpp.s
+
+tests/DungeonMovementProcessorTest.o: tests/DungeonMovementProcessorTest.cpp.o
+.PHONY : tests/DungeonMovementProcessorTest.o
+
+# target to build an object file
+tests/DungeonMovementProcessorTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_movement_processor_test.dir/build.make CMakeFiles/dungeon_movement_processor_test.dir/tests/DungeonMovementProcessorTest.cpp.o
+.PHONY : tests/DungeonMovementProcessorTest.cpp.o
+
+tests/DungeonMovementProcessorTest.i: tests/DungeonMovementProcessorTest.cpp.i
+.PHONY : tests/DungeonMovementProcessorTest.i
+
+# target to preprocess a source file
+tests/DungeonMovementProcessorTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_movement_processor_test.dir/build.make CMakeFiles/dungeon_movement_processor_test.dir/tests/DungeonMovementProcessorTest.cpp.i
+.PHONY : tests/DungeonMovementProcessorTest.cpp.i
+
+tests/DungeonMovementProcessorTest.s: tests/DungeonMovementProcessorTest.cpp.s
+.PHONY : tests/DungeonMovementProcessorTest.s
+
+# target to generate assembly for a file
+tests/DungeonMovementProcessorTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_movement_processor_test.dir/build.make CMakeFiles/dungeon_movement_processor_test.dir/tests/DungeonMovementProcessorTest.cpp.s
+.PHONY : tests/DungeonMovementProcessorTest.cpp.s
+
+tests/DungeonPlayerStateTest.o: tests/DungeonPlayerStateTest.cpp.o
+.PHONY : tests/DungeonPlayerStateTest.o
+
+# target to build an object file
+tests/DungeonPlayerStateTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_player_state_test.dir/build.make CMakeFiles/dungeon_player_state_test.dir/tests/DungeonPlayerStateTest.cpp.o
+.PHONY : tests/DungeonPlayerStateTest.cpp.o
+
+tests/DungeonPlayerStateTest.i: tests/DungeonPlayerStateTest.cpp.i
+.PHONY : tests/DungeonPlayerStateTest.i
+
+# target to preprocess a source file
+tests/DungeonPlayerStateTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_player_state_test.dir/build.make CMakeFiles/dungeon_player_state_test.dir/tests/DungeonPlayerStateTest.cpp.i
+.PHONY : tests/DungeonPlayerStateTest.cpp.i
+
+tests/DungeonPlayerStateTest.s: tests/DungeonPlayerStateTest.cpp.s
+.PHONY : tests/DungeonPlayerStateTest.s
+
+# target to generate assembly for a file
+tests/DungeonPlayerStateTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_player_state_test.dir/build.make CMakeFiles/dungeon_player_state_test.dir/tests/DungeonPlayerStateTest.cpp.s
+.PHONY : tests/DungeonPlayerStateTest.cpp.s
+
+tests/DungeonProtocolTest.o: tests/DungeonProtocolTest.cpp.o
+.PHONY : tests/DungeonProtocolTest.o
+
+# target to build an object file
+tests/DungeonProtocolTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_protocol_test.dir/build.make CMakeFiles/dungeon_protocol_test.dir/tests/DungeonProtocolTest.cpp.o
+.PHONY : tests/DungeonProtocolTest.cpp.o
+
+tests/DungeonProtocolTest.i: tests/DungeonProtocolTest.cpp.i
+.PHONY : tests/DungeonProtocolTest.i
+
+# target to preprocess a source file
+tests/DungeonProtocolTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_protocol_test.dir/build.make CMakeFiles/dungeon_protocol_test.dir/tests/DungeonProtocolTest.cpp.i
+.PHONY : tests/DungeonProtocolTest.cpp.i
+
+tests/DungeonProtocolTest.s: tests/DungeonProtocolTest.cpp.s
+.PHONY : tests/DungeonProtocolTest.s
+
+# target to generate assembly for a file
+tests/DungeonProtocolTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_protocol_test.dir/build.make CMakeFiles/dungeon_protocol_test.dir/tests/DungeonProtocolTest.cpp.s
+.PHONY : tests/DungeonProtocolTest.cpp.s
+
+tests/DungeonRoomTest.o: tests/DungeonRoomTest.cpp.o
+.PHONY : tests/DungeonRoomTest.o
+
+# target to build an object file
+tests/DungeonRoomTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_room_test.dir/build.make CMakeFiles/dungeon_room_test.dir/tests/DungeonRoomTest.cpp.o
+.PHONY : tests/DungeonRoomTest.cpp.o
+
+tests/DungeonRoomTest.i: tests/DungeonRoomTest.cpp.i
+.PHONY : tests/DungeonRoomTest.i
+
+# target to preprocess a source file
+tests/DungeonRoomTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_room_test.dir/build.make CMakeFiles/dungeon_room_test.dir/tests/DungeonRoomTest.cpp.i
+.PHONY : tests/DungeonRoomTest.cpp.i
+
+tests/DungeonRoomTest.s: tests/DungeonRoomTest.cpp.s
+.PHONY : tests/DungeonRoomTest.s
+
+# target to generate assembly for a file
+tests/DungeonRoomTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_room_test.dir/build.make CMakeFiles/dungeon_room_test.dir/tests/DungeonRoomTest.cpp.s
+.PHONY : tests/DungeonRoomTest.cpp.s
+
+tests/DungeonStaticDataProtocolTest.o: tests/DungeonStaticDataProtocolTest.cpp.o
+.PHONY : tests/DungeonStaticDataProtocolTest.o
+
+# target to build an object file
+tests/DungeonStaticDataProtocolTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_static_data_protocol_test.dir/build.make CMakeFiles/dungeon_static_data_protocol_test.dir/tests/DungeonStaticDataProtocolTest.cpp.o
+.PHONY : tests/DungeonStaticDataProtocolTest.cpp.o
+
+tests/DungeonStaticDataProtocolTest.i: tests/DungeonStaticDataProtocolTest.cpp.i
+.PHONY : tests/DungeonStaticDataProtocolTest.i
+
+# target to preprocess a source file
+tests/DungeonStaticDataProtocolTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_static_data_protocol_test.dir/build.make CMakeFiles/dungeon_static_data_protocol_test.dir/tests/DungeonStaticDataProtocolTest.cpp.i
+.PHONY : tests/DungeonStaticDataProtocolTest.cpp.i
+
+tests/DungeonStaticDataProtocolTest.s: tests/DungeonStaticDataProtocolTest.cpp.s
+.PHONY : tests/DungeonStaticDataProtocolTest.s
+
+# target to generate assembly for a file
+tests/DungeonStaticDataProtocolTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_static_data_protocol_test.dir/build.make CMakeFiles/dungeon_static_data_protocol_test.dir/tests/DungeonStaticDataProtocolTest.cpp.s
+.PHONY : tests/DungeonStaticDataProtocolTest.cpp.s
+
+tests/DungeonTickServiceTest.o: tests/DungeonTickServiceTest.cpp.o
+.PHONY : tests/DungeonTickServiceTest.o
+
+# target to build an object file
+tests/DungeonTickServiceTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_tick_service_test.dir/build.make CMakeFiles/dungeon_tick_service_test.dir/tests/DungeonTickServiceTest.cpp.o
+.PHONY : tests/DungeonTickServiceTest.cpp.o
+
+tests/DungeonTickServiceTest.i: tests/DungeonTickServiceTest.cpp.i
+.PHONY : tests/DungeonTickServiceTest.i
+
+# target to preprocess a source file
+tests/DungeonTickServiceTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_tick_service_test.dir/build.make CMakeFiles/dungeon_tick_service_test.dir/tests/DungeonTickServiceTest.cpp.i
+.PHONY : tests/DungeonTickServiceTest.cpp.i
+
+tests/DungeonTickServiceTest.s: tests/DungeonTickServiceTest.cpp.s
+.PHONY : tests/DungeonTickServiceTest.s
+
+# target to generate assembly for a file
+tests/DungeonTickServiceTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_tick_service_test.dir/build.make CMakeFiles/dungeon_tick_service_test.dir/tests/DungeonTickServiceTest.cpp.s
+.PHONY : tests/DungeonTickServiceTest.cpp.s
+
+tests/DungeonUdpManagerTest.o: tests/DungeonUdpManagerTest.cpp.o
+.PHONY : tests/DungeonUdpManagerTest.o
+
+# target to build an object file
+tests/DungeonUdpManagerTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_udp_manager_test.dir/build.make CMakeFiles/dungeon_udp_manager_test.dir/tests/DungeonUdpManagerTest.cpp.o
+.PHONY : tests/DungeonUdpManagerTest.cpp.o
+
+tests/DungeonUdpManagerTest.i: tests/DungeonUdpManagerTest.cpp.i
+.PHONY : tests/DungeonUdpManagerTest.i
+
+# target to preprocess a source file
+tests/DungeonUdpManagerTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_udp_manager_test.dir/build.make CMakeFiles/dungeon_udp_manager_test.dir/tests/DungeonUdpManagerTest.cpp.i
+.PHONY : tests/DungeonUdpManagerTest.cpp.i
+
+tests/DungeonUdpManagerTest.s: tests/DungeonUdpManagerTest.cpp.s
+.PHONY : tests/DungeonUdpManagerTest.s
+
+# target to generate assembly for a file
+tests/DungeonUdpManagerTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_udp_manager_test.dir/build.make CMakeFiles/dungeon_udp_manager_test.dir/tests/DungeonUdpManagerTest.cpp.s
+.PHONY : tests/DungeonUdpManagerTest.cpp.s
+
+tests/DungeonUdpSessionTest.o: tests/DungeonUdpSessionTest.cpp.o
+.PHONY : tests/DungeonUdpSessionTest.o
+
+# target to build an object file
+tests/DungeonUdpSessionTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_udp_session_test.dir/build.make CMakeFiles/dungeon_udp_session_test.dir/tests/DungeonUdpSessionTest.cpp.o
+.PHONY : tests/DungeonUdpSessionTest.cpp.o
+
+tests/DungeonUdpSessionTest.i: tests/DungeonUdpSessionTest.cpp.i
+.PHONY : tests/DungeonUdpSessionTest.i
+
+# target to preprocess a source file
+tests/DungeonUdpSessionTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_udp_session_test.dir/build.make CMakeFiles/dungeon_udp_session_test.dir/tests/DungeonUdpSessionTest.cpp.i
+.PHONY : tests/DungeonUdpSessionTest.cpp.i
+
+tests/DungeonUdpSessionTest.s: tests/DungeonUdpSessionTest.cpp.s
+.PHONY : tests/DungeonUdpSessionTest.s
+
+# target to generate assembly for a file
+tests/DungeonUdpSessionTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dungeon_udp_session_test.dir/build.make CMakeFiles/dungeon_udp_session_test.dir/tests/DungeonUdpSessionTest.cpp.s
+.PHONY : tests/DungeonUdpSessionTest.cpp.s
+
+tests/EnemyCatalogTest.o: tests/EnemyCatalogTest.cpp.o
+.PHONY : tests/EnemyCatalogTest.o
+
+# target to build an object file
+tests/EnemyCatalogTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/enemy_catalog_test.dir/build.make CMakeFiles/enemy_catalog_test.dir/tests/EnemyCatalogTest.cpp.o
+.PHONY : tests/EnemyCatalogTest.cpp.o
+
+tests/EnemyCatalogTest.i: tests/EnemyCatalogTest.cpp.i
+.PHONY : tests/EnemyCatalogTest.i
+
+# target to preprocess a source file
+tests/EnemyCatalogTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/enemy_catalog_test.dir/build.make CMakeFiles/enemy_catalog_test.dir/tests/EnemyCatalogTest.cpp.i
+.PHONY : tests/EnemyCatalogTest.cpp.i
+
+tests/EnemyCatalogTest.s: tests/EnemyCatalogTest.cpp.s
+.PHONY : tests/EnemyCatalogTest.s
+
+# target to generate assembly for a file
+tests/EnemyCatalogTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/enemy_catalog_test.dir/build.make CMakeFiles/enemy_catalog_test.dir/tests/EnemyCatalogTest.cpp.s
+.PHONY : tests/EnemyCatalogTest.cpp.s
+
+tests/FlatBufferProtocolTest.o: tests/FlatBufferProtocolTest.cpp.o
+.PHONY : tests/FlatBufferProtocolTest.o
+
+# target to build an object file
+tests/FlatBufferProtocolTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/flatbuffer_protocol_test.dir/build.make CMakeFiles/flatbuffer_protocol_test.dir/tests/FlatBufferProtocolTest.cpp.o
+.PHONY : tests/FlatBufferProtocolTest.cpp.o
+
+tests/FlatBufferProtocolTest.i: tests/FlatBufferProtocolTest.cpp.i
+.PHONY : tests/FlatBufferProtocolTest.i
+
+# target to preprocess a source file
+tests/FlatBufferProtocolTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/flatbuffer_protocol_test.dir/build.make CMakeFiles/flatbuffer_protocol_test.dir/tests/FlatBufferProtocolTest.cpp.i
+.PHONY : tests/FlatBufferProtocolTest.cpp.i
+
+tests/FlatBufferProtocolTest.s: tests/FlatBufferProtocolTest.cpp.s
+.PHONY : tests/FlatBufferProtocolTest.s
+
+# target to generate assembly for a file
+tests/FlatBufferProtocolTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/flatbuffer_protocol_test.dir/build.make CMakeFiles/flatbuffer_protocol_test.dir/tests/FlatBufferProtocolTest.cpp.s
+.PHONY : tests/FlatBufferProtocolTest.cpp.s
+
+tests/LoginProtocolTest.o: tests/LoginProtocolTest.cpp.o
+.PHONY : tests/LoginProtocolTest.o
+
+# target to build an object file
+tests/LoginProtocolTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/login_protocol_test.dir/build.make CMakeFiles/login_protocol_test.dir/tests/LoginProtocolTest.cpp.o
+.PHONY : tests/LoginProtocolTest.cpp.o
+
+tests/LoginProtocolTest.i: tests/LoginProtocolTest.cpp.i
+.PHONY : tests/LoginProtocolTest.i
+
+# target to preprocess a source file
+tests/LoginProtocolTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/login_protocol_test.dir/build.make CMakeFiles/login_protocol_test.dir/tests/LoginProtocolTest.cpp.i
+.PHONY : tests/LoginProtocolTest.cpp.i
+
+tests/LoginProtocolTest.s: tests/LoginProtocolTest.cpp.s
+.PHONY : tests/LoginProtocolTest.s
+
+# target to generate assembly for a file
+tests/LoginProtocolTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/login_protocol_test.dir/build.make CMakeFiles/login_protocol_test.dir/tests/LoginProtocolTest.cpp.s
+.PHONY : tests/LoginProtocolTest.cpp.s
 
 tests/LoginValidatorTest.o: tests/LoginValidatorTest.cpp.o
 .PHONY : tests/LoginValidatorTest.o
@@ -516,6 +3275,126 @@ tests/PacketDispatcherTest.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/packet_dispatcher_test.dir/build.make CMakeFiles/packet_dispatcher_test.dir/tests/PacketDispatcherTest.cpp.s
 .PHONY : tests/PacketDispatcherTest.cpp.s
 
+tests/PartyManagerTest.o: tests/PartyManagerTest.cpp.o
+.PHONY : tests/PartyManagerTest.o
+
+# target to build an object file
+tests/PartyManagerTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/party_manager_test.dir/build.make CMakeFiles/party_manager_test.dir/tests/PartyManagerTest.cpp.o
+.PHONY : tests/PartyManagerTest.cpp.o
+
+tests/PartyManagerTest.i: tests/PartyManagerTest.cpp.i
+.PHONY : tests/PartyManagerTest.i
+
+# target to preprocess a source file
+tests/PartyManagerTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/party_manager_test.dir/build.make CMakeFiles/party_manager_test.dir/tests/PartyManagerTest.cpp.i
+.PHONY : tests/PartyManagerTest.cpp.i
+
+tests/PartyManagerTest.s: tests/PartyManagerTest.cpp.s
+.PHONY : tests/PartyManagerTest.s
+
+# target to generate assembly for a file
+tests/PartyManagerTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/party_manager_test.dir/build.make CMakeFiles/party_manager_test.dir/tests/PartyManagerTest.cpp.s
+.PHONY : tests/PartyManagerTest.cpp.s
+
+tests/PartyProtocolTest.o: tests/PartyProtocolTest.cpp.o
+.PHONY : tests/PartyProtocolTest.o
+
+# target to build an object file
+tests/PartyProtocolTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/party_protocol_test.dir/build.make CMakeFiles/party_protocol_test.dir/tests/PartyProtocolTest.cpp.o
+.PHONY : tests/PartyProtocolTest.cpp.o
+
+tests/PartyProtocolTest.i: tests/PartyProtocolTest.cpp.i
+.PHONY : tests/PartyProtocolTest.i
+
+# target to preprocess a source file
+tests/PartyProtocolTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/party_protocol_test.dir/build.make CMakeFiles/party_protocol_test.dir/tests/PartyProtocolTest.cpp.i
+.PHONY : tests/PartyProtocolTest.cpp.i
+
+tests/PartyProtocolTest.s: tests/PartyProtocolTest.cpp.s
+.PHONY : tests/PartyProtocolTest.s
+
+# target to generate assembly for a file
+tests/PartyProtocolTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/party_protocol_test.dir/build.make CMakeFiles/party_protocol_test.dir/tests/PartyProtocolTest.cpp.s
+.PHONY : tests/PartyProtocolTest.cpp.s
+
+tests/PlayerLoginServiceTest.o: tests/PlayerLoginServiceTest.cpp.o
+.PHONY : tests/PlayerLoginServiceTest.o
+
+# target to build an object file
+tests/PlayerLoginServiceTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/player_login_service_test.dir/build.make CMakeFiles/player_login_service_test.dir/tests/PlayerLoginServiceTest.cpp.o
+.PHONY : tests/PlayerLoginServiceTest.cpp.o
+
+tests/PlayerLoginServiceTest.i: tests/PlayerLoginServiceTest.cpp.i
+.PHONY : tests/PlayerLoginServiceTest.i
+
+# target to preprocess a source file
+tests/PlayerLoginServiceTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/player_login_service_test.dir/build.make CMakeFiles/player_login_service_test.dir/tests/PlayerLoginServiceTest.cpp.i
+.PHONY : tests/PlayerLoginServiceTest.cpp.i
+
+tests/PlayerLoginServiceTest.s: tests/PlayerLoginServiceTest.cpp.s
+.PHONY : tests/PlayerLoginServiceTest.s
+
+# target to generate assembly for a file
+tests/PlayerLoginServiceTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/player_login_service_test.dir/build.make CMakeFiles/player_login_service_test.dir/tests/PlayerLoginServiceTest.cpp.s
+.PHONY : tests/PlayerLoginServiceTest.cpp.s
+
+tests/PlayerProfileTest.o: tests/PlayerProfileTest.cpp.o
+.PHONY : tests/PlayerProfileTest.o
+
+# target to build an object file
+tests/PlayerProfileTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/player_profile_test.dir/build.make CMakeFiles/player_profile_test.dir/tests/PlayerProfileTest.cpp.o
+.PHONY : tests/PlayerProfileTest.cpp.o
+
+tests/PlayerProfileTest.i: tests/PlayerProfileTest.cpp.i
+.PHONY : tests/PlayerProfileTest.i
+
+# target to preprocess a source file
+tests/PlayerProfileTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/player_profile_test.dir/build.make CMakeFiles/player_profile_test.dir/tests/PlayerProfileTest.cpp.i
+.PHONY : tests/PlayerProfileTest.cpp.i
+
+tests/PlayerProfileTest.s: tests/PlayerProfileTest.cpp.s
+.PHONY : tests/PlayerProfileTest.s
+
+# target to generate assembly for a file
+tests/PlayerProfileTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/player_profile_test.dir/build.make CMakeFiles/player_profile_test.dir/tests/PlayerProfileTest.cpp.s
+.PHONY : tests/PlayerProfileTest.cpp.s
+
+tests/PlayerSkillBookTest.o: tests/PlayerSkillBookTest.cpp.o
+.PHONY : tests/PlayerSkillBookTest.o
+
+# target to build an object file
+tests/PlayerSkillBookTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/player_skill_book_test.dir/build.make CMakeFiles/player_skill_book_test.dir/tests/PlayerSkillBookTest.cpp.o
+.PHONY : tests/PlayerSkillBookTest.cpp.o
+
+tests/PlayerSkillBookTest.i: tests/PlayerSkillBookTest.cpp.i
+.PHONY : tests/PlayerSkillBookTest.i
+
+# target to preprocess a source file
+tests/PlayerSkillBookTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/player_skill_book_test.dir/build.make CMakeFiles/player_skill_book_test.dir/tests/PlayerSkillBookTest.cpp.i
+.PHONY : tests/PlayerSkillBookTest.cpp.i
+
+tests/PlayerSkillBookTest.s: tests/PlayerSkillBookTest.cpp.s
+.PHONY : tests/PlayerSkillBookTest.s
+
+# target to generate assembly for a file
+tests/PlayerSkillBookTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/player_skill_book_test.dir/build.make CMakeFiles/player_skill_book_test.dir/tests/PlayerSkillBookTest.cpp.s
+.PHONY : tests/PlayerSkillBookTest.cpp.s
+
 tests/ReceiveBufferTest.o: tests/ReceiveBufferTest.cpp.o
 .PHONY : tests/ReceiveBufferTest.o
 
@@ -540,6 +3419,324 @@ tests/ReceiveBufferTest.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/receive_buffer_test.dir/build.make CMakeFiles/receive_buffer_test.dir/tests/ReceiveBufferTest.cpp.s
 .PHONY : tests/ReceiveBufferTest.cpp.s
 
+tests/RoomStateTest.o: tests/RoomStateTest.cpp.o
+.PHONY : tests/RoomStateTest.o
+
+# target to build an object file
+tests/RoomStateTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/room_state_test.dir/build.make CMakeFiles/room_state_test.dir/tests/RoomStateTest.cpp.o
+.PHONY : tests/RoomStateTest.cpp.o
+
+tests/RoomStateTest.i: tests/RoomStateTest.cpp.i
+.PHONY : tests/RoomStateTest.i
+
+# target to preprocess a source file
+tests/RoomStateTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/room_state_test.dir/build.make CMakeFiles/room_state_test.dir/tests/RoomStateTest.cpp.i
+.PHONY : tests/RoomStateTest.cpp.i
+
+tests/RoomStateTest.s: tests/RoomStateTest.cpp.s
+.PHONY : tests/RoomStateTest.s
+
+# target to generate assembly for a file
+tests/RoomStateTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/room_state_test.dir/build.make CMakeFiles/room_state_test.dir/tests/RoomStateTest.cpp.s
+.PHONY : tests/RoomStateTest.cpp.s
+
+tests/ScryptPasswordHasherTest.o: tests/ScryptPasswordHasherTest.cpp.o
+.PHONY : tests/ScryptPasswordHasherTest.o
+
+# target to build an object file
+tests/ScryptPasswordHasherTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/scrypt_password_hasher_test.dir/build.make CMakeFiles/scrypt_password_hasher_test.dir/tests/ScryptPasswordHasherTest.cpp.o
+.PHONY : tests/ScryptPasswordHasherTest.cpp.o
+
+tests/ScryptPasswordHasherTest.i: tests/ScryptPasswordHasherTest.cpp.i
+.PHONY : tests/ScryptPasswordHasherTest.i
+
+# target to preprocess a source file
+tests/ScryptPasswordHasherTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/scrypt_password_hasher_test.dir/build.make CMakeFiles/scrypt_password_hasher_test.dir/tests/ScryptPasswordHasherTest.cpp.i
+.PHONY : tests/ScryptPasswordHasherTest.cpp.i
+
+tests/ScryptPasswordHasherTest.s: tests/ScryptPasswordHasherTest.cpp.s
+.PHONY : tests/ScryptPasswordHasherTest.s
+
+# target to generate assembly for a file
+tests/ScryptPasswordHasherTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/scrypt_password_hasher_test.dir/build.make CMakeFiles/scrypt_password_hasher_test.dir/tests/ScryptPasswordHasherTest.cpp.s
+.PHONY : tests/ScryptPasswordHasherTest.cpp.s
+
+tests/ServerApplicationTest.o: tests/ServerApplicationTest.cpp.o
+.PHONY : tests/ServerApplicationTest.o
+
+# target to build an object file
+tests/ServerApplicationTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/server_application_test.dir/build.make CMakeFiles/server_application_test.dir/tests/ServerApplicationTest.cpp.o
+.PHONY : tests/ServerApplicationTest.cpp.o
+
+tests/ServerApplicationTest.i: tests/ServerApplicationTest.cpp.i
+.PHONY : tests/ServerApplicationTest.i
+
+# target to preprocess a source file
+tests/ServerApplicationTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/server_application_test.dir/build.make CMakeFiles/server_application_test.dir/tests/ServerApplicationTest.cpp.i
+.PHONY : tests/ServerApplicationTest.cpp.i
+
+tests/ServerApplicationTest.s: tests/ServerApplicationTest.cpp.s
+.PHONY : tests/ServerApplicationTest.s
+
+# target to generate assembly for a file
+tests/ServerApplicationTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/server_application_test.dir/build.make CMakeFiles/server_application_test.dir/tests/ServerApplicationTest.cpp.s
+.PHONY : tests/ServerApplicationTest.cpp.s
+
+tests/SessionAuthStateTest.o: tests/SessionAuthStateTest.cpp.o
+.PHONY : tests/SessionAuthStateTest.o
+
+# target to build an object file
+tests/SessionAuthStateTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/session_auth_state_test.dir/build.make CMakeFiles/session_auth_state_test.dir/tests/SessionAuthStateTest.cpp.o
+.PHONY : tests/SessionAuthStateTest.cpp.o
+
+tests/SessionAuthStateTest.i: tests/SessionAuthStateTest.cpp.i
+.PHONY : tests/SessionAuthStateTest.i
+
+# target to preprocess a source file
+tests/SessionAuthStateTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/session_auth_state_test.dir/build.make CMakeFiles/session_auth_state_test.dir/tests/SessionAuthStateTest.cpp.i
+.PHONY : tests/SessionAuthStateTest.cpp.i
+
+tests/SessionAuthStateTest.s: tests/SessionAuthStateTest.cpp.s
+.PHONY : tests/SessionAuthStateTest.s
+
+# target to generate assembly for a file
+tests/SessionAuthStateTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/session_auth_state_test.dir/build.make CMakeFiles/session_auth_state_test.dir/tests/SessionAuthStateTest.cpp.s
+.PHONY : tests/SessionAuthStateTest.cpp.s
+
+tests/SkillCatalogTest.o: tests/SkillCatalogTest.cpp.o
+.PHONY : tests/SkillCatalogTest.o
+
+# target to build an object file
+tests/SkillCatalogTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/skill_catalog_test.dir/build.make CMakeFiles/skill_catalog_test.dir/tests/SkillCatalogTest.cpp.o
+.PHONY : tests/SkillCatalogTest.cpp.o
+
+tests/SkillCatalogTest.i: tests/SkillCatalogTest.cpp.i
+.PHONY : tests/SkillCatalogTest.i
+
+# target to preprocess a source file
+tests/SkillCatalogTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/skill_catalog_test.dir/build.make CMakeFiles/skill_catalog_test.dir/tests/SkillCatalogTest.cpp.i
+.PHONY : tests/SkillCatalogTest.cpp.i
+
+tests/SkillCatalogTest.s: tests/SkillCatalogTest.cpp.s
+.PHONY : tests/SkillCatalogTest.s
+
+# target to generate assembly for a file
+tests/SkillCatalogTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/skill_catalog_test.dir/build.make CMakeFiles/skill_catalog_test.dir/tests/SkillCatalogTest.cpp.s
+.PHONY : tests/SkillCatalogTest.cpp.s
+
+tests/SqliteAccountPlayerRepositoryTest.o: tests/SqliteAccountPlayerRepositoryTest.cpp.o
+.PHONY : tests/SqliteAccountPlayerRepositoryTest.o
+
+# target to build an object file
+tests/SqliteAccountPlayerRepositoryTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sqlite_account_player_repository_test.dir/build.make CMakeFiles/sqlite_account_player_repository_test.dir/tests/SqliteAccountPlayerRepositoryTest.cpp.o
+.PHONY : tests/SqliteAccountPlayerRepositoryTest.cpp.o
+
+tests/SqliteAccountPlayerRepositoryTest.i: tests/SqliteAccountPlayerRepositoryTest.cpp.i
+.PHONY : tests/SqliteAccountPlayerRepositoryTest.i
+
+# target to preprocess a source file
+tests/SqliteAccountPlayerRepositoryTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sqlite_account_player_repository_test.dir/build.make CMakeFiles/sqlite_account_player_repository_test.dir/tests/SqliteAccountPlayerRepositoryTest.cpp.i
+.PHONY : tests/SqliteAccountPlayerRepositoryTest.cpp.i
+
+tests/SqliteAccountPlayerRepositoryTest.s: tests/SqliteAccountPlayerRepositoryTest.cpp.s
+.PHONY : tests/SqliteAccountPlayerRepositoryTest.s
+
+# target to generate assembly for a file
+tests/SqliteAccountPlayerRepositoryTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sqlite_account_player_repository_test.dir/build.make CMakeFiles/sqlite_account_player_repository_test.dir/tests/SqliteAccountPlayerRepositoryTest.cpp.s
+.PHONY : tests/SqliteAccountPlayerRepositoryTest.cpp.s
+
+tests/SqliteAccountRepositoryTest.o: tests/SqliteAccountRepositoryTest.cpp.o
+.PHONY : tests/SqliteAccountRepositoryTest.o
+
+# target to build an object file
+tests/SqliteAccountRepositoryTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sqlite_account_repository_test.dir/build.make CMakeFiles/sqlite_account_repository_test.dir/tests/SqliteAccountRepositoryTest.cpp.o
+.PHONY : tests/SqliteAccountRepositoryTest.cpp.o
+
+tests/SqliteAccountRepositoryTest.i: tests/SqliteAccountRepositoryTest.cpp.i
+.PHONY : tests/SqliteAccountRepositoryTest.i
+
+# target to preprocess a source file
+tests/SqliteAccountRepositoryTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sqlite_account_repository_test.dir/build.make CMakeFiles/sqlite_account_repository_test.dir/tests/SqliteAccountRepositoryTest.cpp.i
+.PHONY : tests/SqliteAccountRepositoryTest.cpp.i
+
+tests/SqliteAccountRepositoryTest.s: tests/SqliteAccountRepositoryTest.cpp.s
+.PHONY : tests/SqliteAccountRepositoryTest.s
+
+# target to generate assembly for a file
+tests/SqliteAccountRepositoryTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sqlite_account_repository_test.dir/build.make CMakeFiles/sqlite_account_repository_test.dir/tests/SqliteAccountRepositoryTest.cpp.s
+.PHONY : tests/SqliteAccountRepositoryTest.cpp.s
+
+tests/SqliteAuthTicketVerifierTest.o: tests/SqliteAuthTicketVerifierTest.cpp.o
+.PHONY : tests/SqliteAuthTicketVerifierTest.o
+
+# target to build an object file
+tests/SqliteAuthTicketVerifierTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sqlite_auth_ticket_verifier_test.dir/build.make CMakeFiles/sqlite_auth_ticket_verifier_test.dir/tests/SqliteAuthTicketVerifierTest.cpp.o
+.PHONY : tests/SqliteAuthTicketVerifierTest.cpp.o
+
+tests/SqliteAuthTicketVerifierTest.i: tests/SqliteAuthTicketVerifierTest.cpp.i
+.PHONY : tests/SqliteAuthTicketVerifierTest.i
+
+# target to preprocess a source file
+tests/SqliteAuthTicketVerifierTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sqlite_auth_ticket_verifier_test.dir/build.make CMakeFiles/sqlite_auth_ticket_verifier_test.dir/tests/SqliteAuthTicketVerifierTest.cpp.i
+.PHONY : tests/SqliteAuthTicketVerifierTest.cpp.i
+
+tests/SqliteAuthTicketVerifierTest.s: tests/SqliteAuthTicketVerifierTest.cpp.s
+.PHONY : tests/SqliteAuthTicketVerifierTest.s
+
+# target to generate assembly for a file
+tests/SqliteAuthTicketVerifierTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sqlite_auth_ticket_verifier_test.dir/build.make CMakeFiles/sqlite_auth_ticket_verifier_test.dir/tests/SqliteAuthTicketVerifierTest.cpp.s
+.PHONY : tests/SqliteAuthTicketVerifierTest.cpp.s
+
+tests/SqliteCharacterProvisionerTest.o: tests/SqliteCharacterProvisionerTest.cpp.o
+.PHONY : tests/SqliteCharacterProvisionerTest.o
+
+# target to build an object file
+tests/SqliteCharacterProvisionerTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sqlite_character_provisioner_test.dir/build.make CMakeFiles/sqlite_character_provisioner_test.dir/tests/SqliteCharacterProvisionerTest.cpp.o
+.PHONY : tests/SqliteCharacterProvisionerTest.cpp.o
+
+tests/SqliteCharacterProvisionerTest.i: tests/SqliteCharacterProvisionerTest.cpp.i
+.PHONY : tests/SqliteCharacterProvisionerTest.i
+
+# target to preprocess a source file
+tests/SqliteCharacterProvisionerTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sqlite_character_provisioner_test.dir/build.make CMakeFiles/sqlite_character_provisioner_test.dir/tests/SqliteCharacterProvisionerTest.cpp.i
+.PHONY : tests/SqliteCharacterProvisionerTest.cpp.i
+
+tests/SqliteCharacterProvisionerTest.s: tests/SqliteCharacterProvisionerTest.cpp.s
+.PHONY : tests/SqliteCharacterProvisionerTest.s
+
+# target to generate assembly for a file
+tests/SqliteCharacterProvisionerTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sqlite_character_provisioner_test.dir/build.make CMakeFiles/sqlite_character_provisioner_test.dir/tests/SqliteCharacterProvisionerTest.cpp.s
+.PHONY : tests/SqliteCharacterProvisionerTest.cpp.s
+
+tests/SqliteDatabaseTest.o: tests/SqliteDatabaseTest.cpp.o
+.PHONY : tests/SqliteDatabaseTest.o
+
+# target to build an object file
+tests/SqliteDatabaseTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sqlite_database_test.dir/build.make CMakeFiles/sqlite_database_test.dir/tests/SqliteDatabaseTest.cpp.o
+.PHONY : tests/SqliteDatabaseTest.cpp.o
+
+tests/SqliteDatabaseTest.i: tests/SqliteDatabaseTest.cpp.i
+.PHONY : tests/SqliteDatabaseTest.i
+
+# target to preprocess a source file
+tests/SqliteDatabaseTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sqlite_database_test.dir/build.make CMakeFiles/sqlite_database_test.dir/tests/SqliteDatabaseTest.cpp.i
+.PHONY : tests/SqliteDatabaseTest.cpp.i
+
+tests/SqliteDatabaseTest.s: tests/SqliteDatabaseTest.cpp.s
+.PHONY : tests/SqliteDatabaseTest.s
+
+# target to generate assembly for a file
+tests/SqliteDatabaseTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sqlite_database_test.dir/build.make CMakeFiles/sqlite_database_test.dir/tests/SqliteDatabaseTest.cpp.s
+.PHONY : tests/SqliteDatabaseTest.cpp.s
+
+tests/SqlitePlayerRepositoryTest.o: tests/SqlitePlayerRepositoryTest.cpp.o
+.PHONY : tests/SqlitePlayerRepositoryTest.o
+
+# target to build an object file
+tests/SqlitePlayerRepositoryTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sqlite_player_repository_test.dir/build.make CMakeFiles/sqlite_player_repository_test.dir/tests/SqlitePlayerRepositoryTest.cpp.o
+.PHONY : tests/SqlitePlayerRepositoryTest.cpp.o
+
+tests/SqlitePlayerRepositoryTest.i: tests/SqlitePlayerRepositoryTest.cpp.i
+.PHONY : tests/SqlitePlayerRepositoryTest.i
+
+# target to preprocess a source file
+tests/SqlitePlayerRepositoryTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sqlite_player_repository_test.dir/build.make CMakeFiles/sqlite_player_repository_test.dir/tests/SqlitePlayerRepositoryTest.cpp.i
+.PHONY : tests/SqlitePlayerRepositoryTest.cpp.i
+
+tests/SqlitePlayerRepositoryTest.s: tests/SqlitePlayerRepositoryTest.cpp.s
+.PHONY : tests/SqlitePlayerRepositoryTest.s
+
+# target to generate assembly for a file
+tests/SqlitePlayerRepositoryTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sqlite_player_repository_test.dir/build.make CMakeFiles/sqlite_player_repository_test.dir/tests/SqlitePlayerRepositoryTest.cpp.s
+.PHONY : tests/SqlitePlayerRepositoryTest.cpp.s
+
+tests/TcpFlatBufferSchemaTest.o: tests/TcpFlatBufferSchemaTest.cpp.o
+.PHONY : tests/TcpFlatBufferSchemaTest.o
+
+# target to build an object file
+tests/TcpFlatBufferSchemaTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tcp_flatbuffer_schema_test.dir/build.make CMakeFiles/tcp_flatbuffer_schema_test.dir/tests/TcpFlatBufferSchemaTest.cpp.o
+.PHONY : tests/TcpFlatBufferSchemaTest.cpp.o
+
+tests/TcpFlatBufferSchemaTest.i: tests/TcpFlatBufferSchemaTest.cpp.i
+.PHONY : tests/TcpFlatBufferSchemaTest.i
+
+# target to preprocess a source file
+tests/TcpFlatBufferSchemaTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tcp_flatbuffer_schema_test.dir/build.make CMakeFiles/tcp_flatbuffer_schema_test.dir/tests/TcpFlatBufferSchemaTest.cpp.i
+.PHONY : tests/TcpFlatBufferSchemaTest.cpp.i
+
+tests/TcpFlatBufferSchemaTest.s: tests/TcpFlatBufferSchemaTest.cpp.s
+.PHONY : tests/TcpFlatBufferSchemaTest.s
+
+# target to generate assembly for a file
+tests/TcpFlatBufferSchemaTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tcp_flatbuffer_schema_test.dir/build.make CMakeFiles/tcp_flatbuffer_schema_test.dir/tests/TcpFlatBufferSchemaTest.cpp.s
+.PHONY : tests/TcpFlatBufferSchemaTest.cpp.s
+
+tests/TestTlsCertificate.o: tests/TestTlsCertificate.cpp.o
+.PHONY : tests/TestTlsCertificate.o
+
+# target to build an object file
+tests/TestTlsCertificate.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/auth_tls_session_test.dir/build.make CMakeFiles/auth_tls_session_test.dir/tests/TestTlsCertificate.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/auth_tls_server_test.dir/build.make CMakeFiles/auth_tls_server_test.dir/tests/TestTlsCertificate.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/auth_server_application_test.dir/build.make CMakeFiles/auth_server_application_test.dir/tests/TestTlsCertificate.cpp.o
+.PHONY : tests/TestTlsCertificate.cpp.o
+
+tests/TestTlsCertificate.i: tests/TestTlsCertificate.cpp.i
+.PHONY : tests/TestTlsCertificate.i
+
+# target to preprocess a source file
+tests/TestTlsCertificate.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/auth_tls_session_test.dir/build.make CMakeFiles/auth_tls_session_test.dir/tests/TestTlsCertificate.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/auth_tls_server_test.dir/build.make CMakeFiles/auth_tls_server_test.dir/tests/TestTlsCertificate.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/auth_server_application_test.dir/build.make CMakeFiles/auth_server_application_test.dir/tests/TestTlsCertificate.cpp.i
+.PHONY : tests/TestTlsCertificate.cpp.i
+
+tests/TestTlsCertificate.s: tests/TestTlsCertificate.cpp.s
+.PHONY : tests/TestTlsCertificate.s
+
+# target to generate assembly for a file
+tests/TestTlsCertificate.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/auth_tls_session_test.dir/build.make CMakeFiles/auth_tls_session_test.dir/tests/TestTlsCertificate.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/auth_tls_server_test.dir/build.make CMakeFiles/auth_tls_server_test.dir/tests/TestTlsCertificate.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/auth_server_application_test.dir/build.make CMakeFiles/auth_server_application_test.dir/tests/TestTlsCertificate.cpp.s
+.PHONY : tests/TestTlsCertificate.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -549,12 +3746,167 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... test"
+	@echo "... GENERATE_dnf_protocol_generated"
+	@echo "... account_authentication_service_test"
+	@echo "... account_provisioning_service_test"
+	@echo "... auth_flatbuffer_codec_test"
+	@echo "... auth_flatbuffer_schema_test"
+	@echo "... auth_packet_dispatcher_test"
+	@echo "... auth_server_application_test"
+	@echo "... auth_server_session_state_test"
+	@echo "... auth_ticket_issuer_test"
+	@echo "... auth_tls_server_test"
+	@echo "... auth_tls_session_test"
+	@echo "... channel_manager_test"
+	@echo "... character_list_service_test"
+	@echo "... character_selection_service_test"
+	@echo "... database_executor_test"
+	@echo "... dev_auth_ticket_verifier_test"
+	@echo "... dnf_admin"
+	@echo "... dnf_auth_server"
 	@echo "... dnf_core"
-	@echo "... dnf_mock_client"
 	@echo "... dnf_mock_server"
+	@echo "... dungeon_admission_protocol_test"
+	@echo "... dungeon_catalog_protocol_test"
+	@echo "... dungeon_catalog_test"
+	@echo "... dungeon_combat_processor_test"
+	@echo "... dungeon_connection_protocol_test"
+	@echo "... dungeon_instance_test"
+	@echo "... dungeon_lifecycle_service_test"
+	@echo "... dungeon_manager_test"
+	@echo "... dungeon_movement_processor_test"
+	@echo "... dungeon_player_state_test"
+	@echo "... dungeon_protocol_test"
+	@echo "... dungeon_room_test"
+	@echo "... dungeon_static_data_protocol_test"
+	@echo "... dungeon_tick_service_test"
+	@echo "... dungeon_udp_manager_test"
+	@echo "... dungeon_udp_session_test"
+	@echo "... enemy_catalog_test"
+	@echo "... flatbuffer_protocol_test"
+	@echo "... login_protocol_test"
 	@echo "... login_validator_test"
 	@echo "... packet_dispatcher_test"
+	@echo "... party_manager_test"
+	@echo "... party_protocol_test"
+	@echo "... player_login_service_test"
+	@echo "... player_profile_test"
+	@echo "... player_skill_book_test"
 	@echo "... receive_buffer_test"
+	@echo "... room_state_test"
+	@echo "... scrypt_password_hasher_test"
+	@echo "... server_application_test"
+	@echo "... session_auth_state_test"
+	@echo "... skill_catalog_test"
+	@echo "... sqlite_account_player_repository_test"
+	@echo "... sqlite_account_repository_test"
+	@echo "... sqlite_auth_ticket_verifier_test"
+	@echo "... sqlite_character_provisioner_test"
+	@echo "... sqlite_database_test"
+	@echo "... sqlite_player_repository_test"
+	@echo "... tcp_flatbuffer_schema_test"
+	@echo "... src/Account.o"
+	@echo "... src/Account.i"
+	@echo "... src/Account.s"
+	@echo "... src/AccountAuthenticationService.o"
+	@echo "... src/AccountAuthenticationService.i"
+	@echo "... src/AccountAuthenticationService.s"
+	@echo "... src/AccountProvisioningService.o"
+	@echo "... src/AccountProvisioningService.i"
+	@echo "... src/AccountProvisioningService.s"
+	@echo "... src/AuthFlatBufferCodec.o"
+	@echo "... src/AuthFlatBufferCodec.i"
+	@echo "... src/AuthFlatBufferCodec.s"
+	@echo "... src/AuthPacketDispatcher.o"
+	@echo "... src/AuthPacketDispatcher.i"
+	@echo "... src/AuthPacketDispatcher.s"
+	@echo "... src/AuthServerApplication.o"
+	@echo "... src/AuthServerApplication.i"
+	@echo "... src/AuthServerApplication.s"
+	@echo "... src/AuthServerSessionState.o"
+	@echo "... src/AuthServerSessionState.i"
+	@echo "... src/AuthServerSessionState.s"
+	@echo "... src/AuthTicketIssuer.o"
+	@echo "... src/AuthTicketIssuer.i"
+	@echo "... src/AuthTicketIssuer.s"
+	@echo "... src/AuthTicketVerifier.o"
+	@echo "... src/AuthTicketVerifier.i"
+	@echo "... src/AuthTicketVerifier.s"
+	@echo "... src/AuthTlsServer.o"
+	@echo "... src/AuthTlsServer.i"
+	@echo "... src/AuthTlsServer.s"
+	@echo "... src/AuthTlsSession.o"
+	@echo "... src/AuthTlsSession.i"
+	@echo "... src/AuthTlsSession.s"
+	@echo "... src/ChannelManager.o"
+	@echo "... src/ChannelManager.i"
+	@echo "... src/ChannelManager.s"
+	@echo "... src/ChannelProtocol.o"
+	@echo "... src/ChannelProtocol.i"
+	@echo "... src/ChannelProtocol.s"
+	@echo "... src/CharacterListService.o"
+	@echo "... src/CharacterListService.i"
+	@echo "... src/CharacterListService.s"
+	@echo "... src/CharacterSelectionService.o"
+	@echo "... src/CharacterSelectionService.i"
+	@echo "... src/CharacterSelectionService.s"
+	@echo "... src/DatabaseExecutor.o"
+	@echo "... src/DatabaseExecutor.i"
+	@echo "... src/DatabaseExecutor.s"
+	@echo "... src/DungeonAdmissionProtocol.o"
+	@echo "... src/DungeonAdmissionProtocol.i"
+	@echo "... src/DungeonAdmissionProtocol.s"
+	@echo "... src/DungeonCatalog.o"
+	@echo "... src/DungeonCatalog.i"
+	@echo "... src/DungeonCatalog.s"
+	@echo "... src/DungeonCatalogProtocol.o"
+	@echo "... src/DungeonCatalogProtocol.i"
+	@echo "... src/DungeonCatalogProtocol.s"
+	@echo "... src/DungeonCombatProcessor.o"
+	@echo "... src/DungeonCombatProcessor.i"
+	@echo "... src/DungeonCombatProcessor.s"
+	@echo "... src/DungeonConnectionProtocol.o"
+	@echo "... src/DungeonConnectionProtocol.i"
+	@echo "... src/DungeonConnectionProtocol.s"
+	@echo "... src/DungeonInstance.o"
+	@echo "... src/DungeonInstance.i"
+	@echo "... src/DungeonInstance.s"
+	@echo "... src/DungeonLifecycleService.o"
+	@echo "... src/DungeonLifecycleService.i"
+	@echo "... src/DungeonLifecycleService.s"
+	@echo "... src/DungeonManager.o"
+	@echo "... src/DungeonManager.i"
+	@echo "... src/DungeonManager.s"
+	@echo "... src/DungeonMovementProcessor.o"
+	@echo "... src/DungeonMovementProcessor.i"
+	@echo "... src/DungeonMovementProcessor.s"
+	@echo "... src/DungeonPlayerState.o"
+	@echo "... src/DungeonPlayerState.i"
+	@echo "... src/DungeonPlayerState.s"
+	@echo "... src/DungeonProtocol.o"
+	@echo "... src/DungeonProtocol.i"
+	@echo "... src/DungeonProtocol.s"
+	@echo "... src/DungeonRoom.o"
+	@echo "... src/DungeonRoom.i"
+	@echo "... src/DungeonRoom.s"
+	@echo "... src/DungeonStaticDataProtocol.o"
+	@echo "... src/DungeonStaticDataProtocol.i"
+	@echo "... src/DungeonStaticDataProtocol.s"
+	@echo "... src/DungeonTickService.o"
+	@echo "... src/DungeonTickService.i"
+	@echo "... src/DungeonTickService.s"
+	@echo "... src/DungeonUdpManager.o"
+	@echo "... src/DungeonUdpManager.i"
+	@echo "... src/DungeonUdpManager.s"
+	@echo "... src/DungeonUdpSession.o"
+	@echo "... src/DungeonUdpSession.i"
+	@echo "... src/DungeonUdpSession.s"
+	@echo "... src/EnemyCatalog.o"
+	@echo "... src/EnemyCatalog.i"
+	@echo "... src/EnemyCatalog.s"
+	@echo "... src/LoginProtocol.o"
+	@echo "... src/LoginProtocol.i"
+	@echo "... src/LoginProtocol.s"
 	@echo "... src/LoginValidator.o"
 	@echo "... src/LoginValidator.i"
 	@echo "... src/LoginValidator.s"
@@ -564,39 +3916,249 @@ help:
 	@echo "... src/PacketDispatcher.o"
 	@echo "... src/PacketDispatcher.i"
 	@echo "... src/PacketDispatcher.s"
+	@echo "... src/PartyManager.o"
+	@echo "... src/PartyManager.i"
+	@echo "... src/PartyManager.s"
+	@echo "... src/PartyProtocol.o"
+	@echo "... src/PartyProtocol.i"
+	@echo "... src/PartyProtocol.s"
+	@echo "... src/PlayerLoginService.o"
+	@echo "... src/PlayerLoginService.i"
+	@echo "... src/PlayerLoginService.s"
+	@echo "... src/PlayerProfile.o"
+	@echo "... src/PlayerProfile.i"
+	@echo "... src/PlayerProfile.s"
+	@echo "... src/PlayerSkillBook.o"
+	@echo "... src/PlayerSkillBook.i"
+	@echo "... src/PlayerSkillBook.s"
 	@echo "... src/ReceiveBuffer.o"
 	@echo "... src/ReceiveBuffer.i"
 	@echo "... src/ReceiveBuffer.s"
+	@echo "... src/RoomState.o"
+	@echo "... src/RoomState.i"
+	@echo "... src/RoomState.s"
+	@echo "... src/ScryptPasswordHasher.o"
+	@echo "... src/ScryptPasswordHasher.i"
+	@echo "... src/ScryptPasswordHasher.s"
 	@echo "... src/ServerApplication.o"
 	@echo "... src/ServerApplication.i"
 	@echo "... src/ServerApplication.s"
+	@echo "... src/SessionAuthState.o"
+	@echo "... src/SessionAuthState.i"
+	@echo "... src/SessionAuthState.s"
 	@echo "... src/SessionManager.o"
 	@echo "... src/SessionManager.i"
 	@echo "... src/SessionManager.s"
-	@echo "... src/TcpClient.o"
-	@echo "... src/TcpClient.i"
-	@echo "... src/TcpClient.s"
+	@echo "... src/SkillCatalog.o"
+	@echo "... src/SkillCatalog.i"
+	@echo "... src/SkillCatalog.s"
+	@echo "... src/SqliteAccountPlayerRepository.o"
+	@echo "... src/SqliteAccountPlayerRepository.i"
+	@echo "... src/SqliteAccountPlayerRepository.s"
+	@echo "... src/SqliteAccountRepository.o"
+	@echo "... src/SqliteAccountRepository.i"
+	@echo "... src/SqliteAccountRepository.s"
+	@echo "... src/SqliteAuthTicketStore.o"
+	@echo "... src/SqliteAuthTicketStore.i"
+	@echo "... src/SqliteAuthTicketStore.s"
+	@echo "... src/SqliteAuthTicketVerifier.o"
+	@echo "... src/SqliteAuthTicketVerifier.i"
+	@echo "... src/SqliteAuthTicketVerifier.s"
+	@echo "... src/SqliteCharacterProvisioner.o"
+	@echo "... src/SqliteCharacterProvisioner.i"
+	@echo "... src/SqliteCharacterProvisioner.s"
+	@echo "... src/SqliteDatabase.o"
+	@echo "... src/SqliteDatabase.i"
+	@echo "... src/SqliteDatabase.s"
+	@echo "... src/SqlitePlayerRepository.o"
+	@echo "... src/SqlitePlayerRepository.i"
+	@echo "... src/SqlitePlayerRepository.s"
+	@echo "... src/TcpFlatBufferCodec.o"
+	@echo "... src/TcpFlatBufferCodec.i"
+	@echo "... src/TcpFlatBufferCodec.s"
 	@echo "... src/TcpServer.o"
 	@echo "... src/TcpServer.i"
 	@echo "... src/TcpServer.s"
 	@echo "... src/TcpSession.o"
 	@echo "... src/TcpSession.i"
 	@echo "... src/TcpSession.s"
+	@echo "... src/admin_main.o"
+	@echo "... src/admin_main.i"
+	@echo "... src/admin_main.s"
+	@echo "... src/auth_main.o"
+	@echo "... src/auth_main.i"
+	@echo "... src/auth_main.s"
 	@echo "... src/main.o"
 	@echo "... src/main.i"
 	@echo "... src/main.s"
-	@echo "... src/mock_client_main.o"
-	@echo "... src/mock_client_main.i"
-	@echo "... src/mock_client_main.s"
+	@echo "... tests/AccountAuthenticationServiceTest.o"
+	@echo "... tests/AccountAuthenticationServiceTest.i"
+	@echo "... tests/AccountAuthenticationServiceTest.s"
+	@echo "... tests/AccountProvisioningServiceTest.o"
+	@echo "... tests/AccountProvisioningServiceTest.i"
+	@echo "... tests/AccountProvisioningServiceTest.s"
+	@echo "... tests/AuthFlatBufferCodecTest.o"
+	@echo "... tests/AuthFlatBufferCodecTest.i"
+	@echo "... tests/AuthFlatBufferCodecTest.s"
+	@echo "... tests/AuthFlatBufferSchemaTest.o"
+	@echo "... tests/AuthFlatBufferSchemaTest.i"
+	@echo "... tests/AuthFlatBufferSchemaTest.s"
+	@echo "... tests/AuthPacketDispatcherTest.o"
+	@echo "... tests/AuthPacketDispatcherTest.i"
+	@echo "... tests/AuthPacketDispatcherTest.s"
+	@echo "... tests/AuthServerApplicationTest.o"
+	@echo "... tests/AuthServerApplicationTest.i"
+	@echo "... tests/AuthServerApplicationTest.s"
+	@echo "... tests/AuthServerSessionStateTest.o"
+	@echo "... tests/AuthServerSessionStateTest.i"
+	@echo "... tests/AuthServerSessionStateTest.s"
+	@echo "... tests/AuthTicketIssuerTest.o"
+	@echo "... tests/AuthTicketIssuerTest.i"
+	@echo "... tests/AuthTicketIssuerTest.s"
+	@echo "... tests/AuthTlsServerTest.o"
+	@echo "... tests/AuthTlsServerTest.i"
+	@echo "... tests/AuthTlsServerTest.s"
+	@echo "... tests/AuthTlsSessionTest.o"
+	@echo "... tests/AuthTlsSessionTest.i"
+	@echo "... tests/AuthTlsSessionTest.s"
+	@echo "... tests/ChannelManagerTest.o"
+	@echo "... tests/ChannelManagerTest.i"
+	@echo "... tests/ChannelManagerTest.s"
+	@echo "... tests/CharacterListServiceTest.o"
+	@echo "... tests/CharacterListServiceTest.i"
+	@echo "... tests/CharacterListServiceTest.s"
+	@echo "... tests/CharacterSelectionServiceTest.o"
+	@echo "... tests/CharacterSelectionServiceTest.i"
+	@echo "... tests/CharacterSelectionServiceTest.s"
+	@echo "... tests/DatabaseExecutorTest.o"
+	@echo "... tests/DatabaseExecutorTest.i"
+	@echo "... tests/DatabaseExecutorTest.s"
+	@echo "... tests/DevAuthTicketVerifier.o"
+	@echo "... tests/DevAuthTicketVerifier.i"
+	@echo "... tests/DevAuthTicketVerifier.s"
+	@echo "... tests/DevAuthTicketVerifierTest.o"
+	@echo "... tests/DevAuthTicketVerifierTest.i"
+	@echo "... tests/DevAuthTicketVerifierTest.s"
+	@echo "... tests/DungeonAdmissionProtocolTest.o"
+	@echo "... tests/DungeonAdmissionProtocolTest.i"
+	@echo "... tests/DungeonAdmissionProtocolTest.s"
+	@echo "... tests/DungeonCatalogProtocolTest.o"
+	@echo "... tests/DungeonCatalogProtocolTest.i"
+	@echo "... tests/DungeonCatalogProtocolTest.s"
+	@echo "... tests/DungeonCatalogTest.o"
+	@echo "... tests/DungeonCatalogTest.i"
+	@echo "... tests/DungeonCatalogTest.s"
+	@echo "... tests/DungeonCombatProcessorTest.o"
+	@echo "... tests/DungeonCombatProcessorTest.i"
+	@echo "... tests/DungeonCombatProcessorTest.s"
+	@echo "... tests/DungeonConnectionProtocolTest.o"
+	@echo "... tests/DungeonConnectionProtocolTest.i"
+	@echo "... tests/DungeonConnectionProtocolTest.s"
+	@echo "... tests/DungeonInstanceTest.o"
+	@echo "... tests/DungeonInstanceTest.i"
+	@echo "... tests/DungeonInstanceTest.s"
+	@echo "... tests/DungeonLifecycleServiceTest.o"
+	@echo "... tests/DungeonLifecycleServiceTest.i"
+	@echo "... tests/DungeonLifecycleServiceTest.s"
+	@echo "... tests/DungeonManagerTest.o"
+	@echo "... tests/DungeonManagerTest.i"
+	@echo "... tests/DungeonManagerTest.s"
+	@echo "... tests/DungeonMovementProcessorTest.o"
+	@echo "... tests/DungeonMovementProcessorTest.i"
+	@echo "... tests/DungeonMovementProcessorTest.s"
+	@echo "... tests/DungeonPlayerStateTest.o"
+	@echo "... tests/DungeonPlayerStateTest.i"
+	@echo "... tests/DungeonPlayerStateTest.s"
+	@echo "... tests/DungeonProtocolTest.o"
+	@echo "... tests/DungeonProtocolTest.i"
+	@echo "... tests/DungeonProtocolTest.s"
+	@echo "... tests/DungeonRoomTest.o"
+	@echo "... tests/DungeonRoomTest.i"
+	@echo "... tests/DungeonRoomTest.s"
+	@echo "... tests/DungeonStaticDataProtocolTest.o"
+	@echo "... tests/DungeonStaticDataProtocolTest.i"
+	@echo "... tests/DungeonStaticDataProtocolTest.s"
+	@echo "... tests/DungeonTickServiceTest.o"
+	@echo "... tests/DungeonTickServiceTest.i"
+	@echo "... tests/DungeonTickServiceTest.s"
+	@echo "... tests/DungeonUdpManagerTest.o"
+	@echo "... tests/DungeonUdpManagerTest.i"
+	@echo "... tests/DungeonUdpManagerTest.s"
+	@echo "... tests/DungeonUdpSessionTest.o"
+	@echo "... tests/DungeonUdpSessionTest.i"
+	@echo "... tests/DungeonUdpSessionTest.s"
+	@echo "... tests/EnemyCatalogTest.o"
+	@echo "... tests/EnemyCatalogTest.i"
+	@echo "... tests/EnemyCatalogTest.s"
+	@echo "... tests/FlatBufferProtocolTest.o"
+	@echo "... tests/FlatBufferProtocolTest.i"
+	@echo "... tests/FlatBufferProtocolTest.s"
+	@echo "... tests/LoginProtocolTest.o"
+	@echo "... tests/LoginProtocolTest.i"
+	@echo "... tests/LoginProtocolTest.s"
 	@echo "... tests/LoginValidatorTest.o"
 	@echo "... tests/LoginValidatorTest.i"
 	@echo "... tests/LoginValidatorTest.s"
 	@echo "... tests/PacketDispatcherTest.o"
 	@echo "... tests/PacketDispatcherTest.i"
 	@echo "... tests/PacketDispatcherTest.s"
+	@echo "... tests/PartyManagerTest.o"
+	@echo "... tests/PartyManagerTest.i"
+	@echo "... tests/PartyManagerTest.s"
+	@echo "... tests/PartyProtocolTest.o"
+	@echo "... tests/PartyProtocolTest.i"
+	@echo "... tests/PartyProtocolTest.s"
+	@echo "... tests/PlayerLoginServiceTest.o"
+	@echo "... tests/PlayerLoginServiceTest.i"
+	@echo "... tests/PlayerLoginServiceTest.s"
+	@echo "... tests/PlayerProfileTest.o"
+	@echo "... tests/PlayerProfileTest.i"
+	@echo "... tests/PlayerProfileTest.s"
+	@echo "... tests/PlayerSkillBookTest.o"
+	@echo "... tests/PlayerSkillBookTest.i"
+	@echo "... tests/PlayerSkillBookTest.s"
 	@echo "... tests/ReceiveBufferTest.o"
 	@echo "... tests/ReceiveBufferTest.i"
 	@echo "... tests/ReceiveBufferTest.s"
+	@echo "... tests/RoomStateTest.o"
+	@echo "... tests/RoomStateTest.i"
+	@echo "... tests/RoomStateTest.s"
+	@echo "... tests/ScryptPasswordHasherTest.o"
+	@echo "... tests/ScryptPasswordHasherTest.i"
+	@echo "... tests/ScryptPasswordHasherTest.s"
+	@echo "... tests/ServerApplicationTest.o"
+	@echo "... tests/ServerApplicationTest.i"
+	@echo "... tests/ServerApplicationTest.s"
+	@echo "... tests/SessionAuthStateTest.o"
+	@echo "... tests/SessionAuthStateTest.i"
+	@echo "... tests/SessionAuthStateTest.s"
+	@echo "... tests/SkillCatalogTest.o"
+	@echo "... tests/SkillCatalogTest.i"
+	@echo "... tests/SkillCatalogTest.s"
+	@echo "... tests/SqliteAccountPlayerRepositoryTest.o"
+	@echo "... tests/SqliteAccountPlayerRepositoryTest.i"
+	@echo "... tests/SqliteAccountPlayerRepositoryTest.s"
+	@echo "... tests/SqliteAccountRepositoryTest.o"
+	@echo "... tests/SqliteAccountRepositoryTest.i"
+	@echo "... tests/SqliteAccountRepositoryTest.s"
+	@echo "... tests/SqliteAuthTicketVerifierTest.o"
+	@echo "... tests/SqliteAuthTicketVerifierTest.i"
+	@echo "... tests/SqliteAuthTicketVerifierTest.s"
+	@echo "... tests/SqliteCharacterProvisionerTest.o"
+	@echo "... tests/SqliteCharacterProvisionerTest.i"
+	@echo "... tests/SqliteCharacterProvisionerTest.s"
+	@echo "... tests/SqliteDatabaseTest.o"
+	@echo "... tests/SqliteDatabaseTest.i"
+	@echo "... tests/SqliteDatabaseTest.s"
+	@echo "... tests/SqlitePlayerRepositoryTest.o"
+	@echo "... tests/SqlitePlayerRepositoryTest.i"
+	@echo "... tests/SqlitePlayerRepositoryTest.s"
+	@echo "... tests/TcpFlatBufferSchemaTest.o"
+	@echo "... tests/TcpFlatBufferSchemaTest.i"
+	@echo "... tests/TcpFlatBufferSchemaTest.s"
+	@echo "... tests/TestTlsCertificate.o"
+	@echo "... tests/TestTlsCertificate.i"
+	@echo "... tests/TestTlsCertificate.s"
 .PHONY : help
 
 

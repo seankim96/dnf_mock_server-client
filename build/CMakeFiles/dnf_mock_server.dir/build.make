@@ -96,6 +96,10 @@ dnf_mock_server_EXTERNAL_OBJECTS =
 dnf_mock_server: CMakeFiles/dnf_mock_server.dir/src/main.cpp.o
 dnf_mock_server: CMakeFiles/dnf_mock_server.dir/build.make
 dnf_mock_server: libdnf_core.a
+dnf_mock_server: /opt/homebrew/Cellar/openssl@3/3.6.2/lib/libssl.dylib
+dnf_mock_server: /opt/homebrew/Cellar/openssl@3/3.6.2/lib/libcrypto.dylib
+dnf_mock_server: /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib/libsqlite3.tbd
+dnf_mock_server: /opt/homebrew/lib/libflatbuffers.a
 dnf_mock_server: CMakeFiles/dnf_mock_server.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/sean/Documents/ChatGPT/DNF_Mock_Server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable dnf_mock_server"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/dnf_mock_server.dir/link.txt --verbose=$(VERBOSE)

@@ -14,6 +14,9 @@
 # EXTERNAL cache entries
 ########################
 
+//The directory containing a CMake configuration file for Boost.
+Boost_DIR:PATH=/opt/homebrew/lib/cmake/Boost-1.92.0
+
 //Path to a program.
 CMAKE_ADDR2LINE:FILEPATH=CMAKE_ADDR2LINE-NOTFOUND
 
@@ -210,6 +213,45 @@ DNFMockServer_IS_TOP_LEVEL:STATIC=ON
 //Value Computed by CMake
 DNFMockServer_SOURCE_DIR:STATIC=/Users/sean/Documents/ChatGPT/DNF_Mock_Server
 
+//Path to a library.
+OPENSSL_CRYPTO_LIBRARY:FILEPATH=/opt/homebrew/Cellar/openssl@3/3.6.2/lib/libcrypto.dylib
+
+//Path to a file.
+OPENSSL_INCLUDE_DIR:PATH=/opt/homebrew/Cellar/openssl@3/3.6.2/include
+
+//Path to a library.
+OPENSSL_SSL_LIBRARY:FILEPATH=/opt/homebrew/Cellar/openssl@3/3.6.2/lib/libssl.dylib
+
+//Arguments to supply to pkg-config
+PKG_CONFIG_ARGN:STRING=
+
+//pkg-config executable
+PKG_CONFIG_EXECUTABLE:FILEPATH=/opt/homebrew/bin/pkg-config
+
+//Path to a file.
+SQLite3_INCLUDE_DIR:PATH=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include
+
+//Path to a library.
+SQLite3_LIBRARY:FILEPATH=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib/libsqlite3.tbd
+
+//The directory containing a CMake configuration file for boost_headers.
+boost_headers_DIR:PATH=/opt/homebrew/lib/cmake/boost_headers-1.92.0
+
+//The directory containing a CMake configuration file for boost_system.
+boost_system_DIR:PATH=/opt/homebrew/lib/cmake/boost_system-1.92.0
+
+//The directory containing a CMake configuration file for flatbuffers.
+flatbuffers_DIR:PATH=/opt/homebrew/lib/cmake/flatbuffers
+
+//Path to a library.
+pkgcfg_lib_PC_SQLite3_sqlite3:FILEPATH=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib/libsqlite3.tbd
+
+//Path to a library.
+pkgcfg_lib__OPENSSL_crypto:FILEPATH=/opt/homebrew/Cellar/openssl@3/3.6.2/lib/libcrypto.dylib
+
+//Path to a library.
+pkgcfg_lib__OPENSSL_ssl:FILEPATH=/opt/homebrew/Cellar/openssl@3/3.6.2/lib/libssl.dylib
+
 
 ########################
 # INTERNAL cache entries
@@ -353,6 +395,109 @@ CMAKE_UNAME:INTERNAL=/usr/bin/uname
 CMAKE_VERBOSE_MAKEFILE-ADVANCED:INTERNAL=1
 //Deprecated.  Use -W[no-]deprecated instead.
 CMAKE_WARN_DEPRECATED:INTERNAL=ON
+//Details about finding OpenSSL
+FIND_PACKAGE_MESSAGE_DETAILS_OpenSSL:INTERNAL=[/opt/homebrew/Cellar/openssl@3/3.6.2/lib/libcrypto.dylib][/opt/homebrew/Cellar/openssl@3/3.6.2/include][ ][v3.6.2()]
+//Details about finding SQLite3
+FIND_PACKAGE_MESSAGE_DETAILS_SQLite3:INTERNAL=[/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib/libsqlite3.tbd][/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include][v3.51.0()]
 //Details about finding Threads
 FIND_PACKAGE_MESSAGE_DETAILS_Threads:INTERNAL=[TRUE][v()]
+//ADVANCED property for variable: OPENSSL_CRYPTO_LIBRARY
+OPENSSL_CRYPTO_LIBRARY-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: OPENSSL_INCLUDE_DIR
+OPENSSL_INCLUDE_DIR-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: OPENSSL_SSL_LIBRARY
+OPENSSL_SSL_LIBRARY-ADVANCED:INTERNAL=1
+PC_SQLite3_CFLAGS:INTERNAL=
+PC_SQLite3_CFLAGS_I:INTERNAL=
+PC_SQLite3_CFLAGS_OTHER:INTERNAL=
+PC_SQLite3_FOUND:INTERNAL=1
+PC_SQLite3_INCLUDEDIR:INTERNAL=/Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr/include
+PC_SQLite3_INCLUDE_DIRS:INTERNAL=
+PC_SQLite3_LDFLAGS:INTERNAL=-L/usr/lib;-lsqlite3
+PC_SQLite3_LDFLAGS_OTHER:INTERNAL=
+PC_SQLite3_LIBDIR:INTERNAL=/usr/lib
+PC_SQLite3_LIBRARIES:INTERNAL=sqlite3
+PC_SQLite3_LIBRARY_DIRS:INTERNAL=/usr/lib
+PC_SQLite3_LIBS:INTERNAL=
+PC_SQLite3_LIBS_L:INTERNAL=
+PC_SQLite3_LIBS_OTHER:INTERNAL=
+PC_SQLite3_LIBS_PATHS:INTERNAL=
+PC_SQLite3_MODULE_NAME:INTERNAL=sqlite3
+PC_SQLite3_PREFIX:INTERNAL=/Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk/usr
+PC_SQLite3_STATIC_CFLAGS:INTERNAL=
+PC_SQLite3_STATIC_CFLAGS_I:INTERNAL=
+PC_SQLite3_STATIC_CFLAGS_OTHER:INTERNAL=
+PC_SQLite3_STATIC_INCLUDE_DIRS:INTERNAL=
+PC_SQLite3_STATIC_LDFLAGS:INTERNAL=-L/usr/lib;-lsqlite3
+PC_SQLite3_STATIC_LDFLAGS_OTHER:INTERNAL=
+PC_SQLite3_STATIC_LIBDIR:INTERNAL=
+PC_SQLite3_STATIC_LIBRARIES:INTERNAL=sqlite3
+PC_SQLite3_STATIC_LIBRARY_DIRS:INTERNAL=/usr/lib
+PC_SQLite3_STATIC_LIBS:INTERNAL=
+PC_SQLite3_STATIC_LIBS_L:INTERNAL=
+PC_SQLite3_STATIC_LIBS_OTHER:INTERNAL=
+PC_SQLite3_STATIC_LIBS_PATHS:INTERNAL=
+PC_SQLite3_VERSION:INTERNAL=3.51.0
+PC_SQLite3_sqlite3_INCLUDEDIR:INTERNAL=
+PC_SQLite3_sqlite3_LIBDIR:INTERNAL=
+PC_SQLite3_sqlite3_PREFIX:INTERNAL=
+PC_SQLite3_sqlite3_VERSION:INTERNAL=
+//ADVANCED property for variable: PKG_CONFIG_ARGN
+PKG_CONFIG_ARGN-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: PKG_CONFIG_EXECUTABLE
+PKG_CONFIG_EXECUTABLE-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: SQLite3_INCLUDE_DIR
+SQLite3_INCLUDE_DIR-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: SQLite3_LIBRARY
+SQLite3_LIBRARY-ADVANCED:INTERNAL=1
+_OPENSSL_CFLAGS:INTERNAL=-I/opt/homebrew/Cellar/openssl@3/3.6.2/include
+_OPENSSL_CFLAGS_I:INTERNAL=
+_OPENSSL_CFLAGS_OTHER:INTERNAL=
+_OPENSSL_FOUND:INTERNAL=1
+_OPENSSL_INCLUDEDIR:INTERNAL=/opt/homebrew/Cellar/openssl@3/3.6.2/include
+_OPENSSL_INCLUDE_DIRS:INTERNAL=/opt/homebrew/Cellar/openssl@3/3.6.2/include
+_OPENSSL_LDFLAGS:INTERNAL=-L/opt/homebrew/Cellar/openssl@3/3.6.2/lib;-lssl;-lcrypto
+_OPENSSL_LDFLAGS_OTHER:INTERNAL=
+_OPENSSL_LIBDIR:INTERNAL=/opt/homebrew/Cellar/openssl@3/3.6.2/lib
+_OPENSSL_LIBRARIES:INTERNAL=ssl;crypto
+_OPENSSL_LIBRARY_DIRS:INTERNAL=/opt/homebrew/Cellar/openssl@3/3.6.2/lib
+_OPENSSL_LIBS:INTERNAL=
+_OPENSSL_LIBS_L:INTERNAL=
+_OPENSSL_LIBS_OTHER:INTERNAL=
+_OPENSSL_LIBS_PATHS:INTERNAL=
+_OPENSSL_MODULE_NAME:INTERNAL=openssl
+_OPENSSL_PREFIX:INTERNAL=/opt/homebrew/Cellar/openssl@3/3.6.2
+_OPENSSL_STATIC_CFLAGS:INTERNAL=-I/opt/homebrew/Cellar/openssl@3/3.6.2/include
+_OPENSSL_STATIC_CFLAGS_I:INTERNAL=
+_OPENSSL_STATIC_CFLAGS_OTHER:INTERNAL=
+_OPENSSL_STATIC_INCLUDE_DIRS:INTERNAL=/opt/homebrew/Cellar/openssl@3/3.6.2/include
+_OPENSSL_STATIC_LDFLAGS:INTERNAL=-L/opt/homebrew/Cellar/openssl@3/3.6.2/lib;-lssl;-lcrypto
+_OPENSSL_STATIC_LDFLAGS_OTHER:INTERNAL=
+_OPENSSL_STATIC_LIBDIR:INTERNAL=
+_OPENSSL_STATIC_LIBRARIES:INTERNAL=ssl;crypto
+_OPENSSL_STATIC_LIBRARY_DIRS:INTERNAL=/opt/homebrew/Cellar/openssl@3/3.6.2/lib
+_OPENSSL_STATIC_LIBS:INTERNAL=
+_OPENSSL_STATIC_LIBS_L:INTERNAL=
+_OPENSSL_STATIC_LIBS_OTHER:INTERNAL=
+_OPENSSL_STATIC_LIBS_PATHS:INTERNAL=
+_OPENSSL_VERSION:INTERNAL=3.6.2
+_OPENSSL_openssl_INCLUDEDIR:INTERNAL=
+_OPENSSL_openssl_LIBDIR:INTERNAL=
+_OPENSSL_openssl_PREFIX:INTERNAL=
+_OPENSSL_openssl_VERSION:INTERNAL=
+__pkg_config_arguments_PC_SQLite3:INTERNAL=QUIET;sqlite3
+__pkg_config_arguments__OPENSSL:INTERNAL=QUIET;openssl
+__pkg_config_checked_PC_SQLite3:INTERNAL=1
+__pkg_config_checked__OPENSSL:INTERNAL=1
+//ADVANCED property for variable: boost_headers_DIR
+boost_headers_DIR-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: boost_system_DIR
+boost_system_DIR-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: pkgcfg_lib_PC_SQLite3_sqlite3
+pkgcfg_lib_PC_SQLite3_sqlite3-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: pkgcfg_lib__OPENSSL_crypto
+pkgcfg_lib__OPENSSL_crypto-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: pkgcfg_lib__OPENSSL_ssl
+pkgcfg_lib__OPENSSL_ssl-ADVANCED:INTERNAL=1
+prefix_result:INTERNAL=/usr/lib
 

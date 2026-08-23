@@ -1,0 +1,1 @@
+/usr/bin/c++  -arch arm64 -Wl,-search_paths_first -Wl,-headerpad_max_install_names CMakeFiles/skill_catalog_protocol_test.dir/tests/SkillCatalogProtocolTest.cpp.o -o skill_catalog_protocol_test  libdnf_core.a /opt/homebrew/lib/libflatbuffers.a

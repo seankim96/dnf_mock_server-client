@@ -1,1 +1,1 @@
-/usr/bin/c++  -arch arm64 -Wl,-search_paths_first -Wl,-headerpad_max_install_names CMakeFiles/dnf_mock_client.dir/src/mock_client_main.cpp.o CMakeFiles/dnf_mock_client.dir/src/TcpClient.cpp.o -o dnf_mock_client  libdnf_core.a
+/usr/bin/c++  -arch arm64 -Wl,-search_paths_first -Wl,-headerpad_max_install_names CMakeFiles/dnf_mock_client.dir/src/mock_client_main.cpp.o CMakeFiles/dnf_mock_client.dir/src/TcpClient.cpp.o -o dnf_mock_client  libdnf_core.a /opt/homebrew/lib/libflatbuffers.a

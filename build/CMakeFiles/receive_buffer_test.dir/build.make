@@ -96,6 +96,10 @@ receive_buffer_test_EXTERNAL_OBJECTS =
 receive_buffer_test: CMakeFiles/receive_buffer_test.dir/tests/ReceiveBufferTest.cpp.o
 receive_buffer_test: CMakeFiles/receive_buffer_test.dir/build.make
 receive_buffer_test: libdnf_core.a
+receive_buffer_test: /opt/homebrew/Cellar/openssl@3/3.6.2/lib/libssl.dylib
+receive_buffer_test: /opt/homebrew/Cellar/openssl@3/3.6.2/lib/libcrypto.dylib
+receive_buffer_test: /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib/libsqlite3.tbd
+receive_buffer_test: /opt/homebrew/lib/libflatbuffers.a
 receive_buffer_test: CMakeFiles/receive_buffer_test.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/sean/Documents/ChatGPT/DNF_Mock_Server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable receive_buffer_test"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/receive_buffer_test.dir/link.txt --verbose=$(VERBOSE)

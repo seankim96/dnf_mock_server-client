@@ -112,6 +112,7 @@ dnf_mock_client: CMakeFiles/dnf_mock_client.dir/src/mock_client_main.cpp.o
 dnf_mock_client: CMakeFiles/dnf_mock_client.dir/src/TcpClient.cpp.o
 dnf_mock_client: CMakeFiles/dnf_mock_client.dir/build.make
 dnf_mock_client: libdnf_core.a
+dnf_mock_client: /opt/homebrew/lib/libflatbuffers.a
 dnf_mock_client: CMakeFiles/dnf_mock_client.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/sean/Documents/ChatGPT/DNF_Mock_Server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Linking CXX executable dnf_mock_client"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/dnf_mock_client.dir/link.txt --verbose=$(VERBOSE)
