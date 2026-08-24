@@ -11,6 +11,9 @@ namespace DnfMockClient.Networking;
 public sealed class DungeonUdpService : IDisposable
 {
     private const int MaxDatagramSize = 1200;
+    private const int AttackSendAttempts = 3;
+    private static readonly TimeSpan AttackRetryDelay =
+        TimeSpan.FromMilliseconds(25);
 
     private readonly SemaphoreSlim _sendLock = new(1, 1);
     private readonly ServerTickTracker _snapshotTickTracker = new();
@@ -125,7 +128,28 @@ public sealed class DungeonUdpService : IDisposable
             skillId,
             directionX,
             directionY);
-        await SendBytesAsync(client, bytes, cancellationToken);
+
+        CancellationToken sessionToken =
+            _sessionCancellation?.Token ?? CancellationToken.None;
+        using var linkedCancellation =
+            CancellationTokenSource.CreateLinkedTokenSource(
+                cancellationToken,
+                sessionToken);
+
+        for (int attempt = 1; attempt <= AttackSendAttempts; ++attempt)
+        {
+            await SendBytesAsync(
+                client,
+                bytes,
+                linkedCancellation.Token);
+
+            if (attempt < AttackSendAttempts)
+            {
+                await Task.Delay(
+                    AttackRetryDelay,
+                    linkedCancellation.Token);
+            }
+        }
     }
 
     public void Disconnect()

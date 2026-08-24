@@ -181,7 +181,7 @@ static void TestGamePayloads()
         "Failed login with a non-zero session ID was accepted.");
     AssertThrows<InvalidDataException>(
         () => GamePayloadCodec.DecodeLoginResponse(
-            LoginResponseBytes((TcpSchema.LoginResult)4, 0)),
+            LoginResponseBytes((TcpSchema.LoginResult)byte.MaxValue, 0)),
         "Unknown login result was accepted.");
     AssertThrows<InvalidDataException>(
         () => GamePayloadCodec.DecodeLoginResponse(loginPayload),
@@ -1261,6 +1261,26 @@ static async Task TestUdpSessionAsync()
     Assert(movementMessage.PayloadType == DungeonPayload.PlayerMovement &&
         movementMessage.PayloadAsPlayerMovement().Sequence == 1,
         "UDP service movement sequence is incorrect.");
+
+    await client.SendAttackAsync(1001, 1.0f, 0.0f, timeout.Token);
+    uint? retriedAttackSequence = null;
+    for (int attempt = 0; attempt < 3; ++attempt)
+    {
+        UdpReceiveResult attackResult = await server.ReceiveAsync(timeout.Token);
+        var attackBuffer = new ByteBuffer(attackResult.Buffer);
+        DungeonMessage attackMessage =
+            DungeonMessage.GetRootAsDungeonMessage(attackBuffer);
+        Assert(attackMessage.PayloadType == DungeonPayload.PlayerAttack,
+            "UDP attack retry emitted an unexpected payload type.");
+
+        uint sequence = attackMessage.PayloadAsPlayerAttack().Sequence;
+        retriedAttackSequence ??= sequence;
+        Assert(sequence == retriedAttackSequence.Value,
+            "UDP attack retries must reuse one sequence number.");
+    }
+
+    Assert(retriedAttackSequence == 1,
+        "UDP service attack sequence is incorrect.");
 
     client.Disconnect();
     Assert(!client.IsRunning && !client.IsAuthenticated,
