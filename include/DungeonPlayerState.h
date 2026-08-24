@@ -76,6 +76,7 @@ public:
         std::uint32_t maxHp = 100);
 
     SessionId Session() const;
+    bool RebindSession(SessionId sessionId);
     RoomId CurrentRoom() const;
     Position CurrentPosition() const;
     DungeonPlayerSnapshot Snapshot() const;

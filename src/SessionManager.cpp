@@ -1,6 +1,7 @@
 #include "SessionManager.h"
 
 #include "ChannelManager.h"
+#include "DungeonLifecycleService.h"
 #include "DungeonManager.h"
 #include "DungeonUdpManager.h"
 #include "PartyManager.h"
@@ -76,6 +77,43 @@ SessionId SessionManager::StartSession(boost::asio::ip::tcp::socket socket)
     return sessionId;
 }
 
+bool SessionManager::RegisterAuthenticatedPlayer(
+    SessionId sessionId,
+    PlayerId playerId)
+{
+    DungeonLifecycleService lifecycleService(
+        dungeonManager_,
+        dungeonUdpManager_);
+    const DungeonSessionRegistration registration =
+        lifecycleService.RegisterPlayerSession(sessionId, playerId);
+
+    if (registration.status ==
+        RegisterDungeonSessionStatus::InvalidIdentity)
+    {
+        return false;
+    }
+
+    if (registration.status ==
+        RegisterDungeonSessionStatus::Reconnected)
+    {
+        if (!registration.freshUdpToken.has_value())
+        {
+            std::cerr << "Dungeon reconnect UDP rotation failed"
+                      << " sessionId=" << sessionId
+                      << " dungeonId=" << registration.dungeonId
+                      << '\n';
+            return false;
+        }
+
+        std::cout << "Dungeon player reconnected"
+                  << " sessionId=" << sessionId
+                  << " dungeonId=" << registration.dungeonId
+                  << '\n';
+    }
+
+    return true;
+}
+
 void SessionManager::Stop()
 {
     std::vector<std::shared_ptr<TcpSession>> sessions;
@@ -104,6 +142,11 @@ void SessionManager::Stop()
 
 void SessionManager::RemoveSession(SessionId sessionId)
 {
+    DungeonLifecycleService lifecycleService(
+        dungeonManager_,
+        dungeonUdpManager_);
+    lifecycleService.DisconnectPlayerSession(sessionId);
+
     channelManager_.LeaveChannel(sessionId);
     partyManager_.LeaveParty(sessionId);
 

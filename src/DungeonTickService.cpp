@@ -27,19 +27,25 @@ DungeonTickService::DungeonTickService(
     DungeonUdpManager& udpManager,
     const SkillCatalog& skillCatalog,
     std::chrono::milliseconds readyTimeout,
-    std::chrono::milliseconds udpIdleTimeout)
+    std::chrono::milliseconds udpIdleTimeout,
+    std::chrono::milliseconds reconnectGrace,
+    std::chrono::milliseconds maxDungeonLifetime)
     : strand_(boost::asio::make_strand(ioContext)),
       timer_(strand_),
       dungeonManager_(dungeonManager),
       udpManager_(udpManager),
       movementProcessor_(dungeonManager, udpManager),
       combatProcessor_(dungeonManager, udpManager, skillCatalog),
-      lifecycleService_(dungeonManager, udpManager),
+      lifecycleService_(dungeonManager, udpManager, reconnectGrace),
       readyTimeout_(readyTimeout),
-      udpIdleTimeout_(udpIdleTimeout)
+      udpIdleTimeout_(udpIdleTimeout),
+      reconnectGrace_(reconnectGrace),
+      maxDungeonLifetime_(maxDungeonLifetime)
 {
     if (readyTimeout_ <= std::chrono::milliseconds::zero() ||
-        udpIdleTimeout_ <= std::chrono::milliseconds::zero())
+        udpIdleTimeout_ <= std::chrono::milliseconds::zero() ||
+        reconnectGrace_ <= std::chrono::milliseconds::zero() ||
+        maxDungeonLifetime_ <= std::chrono::milliseconds::zero())
     {
         throw std::invalid_argument("Dungeon timeouts must be positive");
     }
@@ -176,6 +182,18 @@ void DungeonTickService::HandleTick(
         static_cast<std::uint32_t>(tickCount));
 
     const auto now = std::chrono::steady_clock::now();
+    const DungeonAbandonmentSweep abandonmentSweep =
+        lifecycleService_.SweepAbandonedParticipants(
+            now,
+            reconnectGrace_,
+            maxDungeonLifetime_);
+    for (DungeonId releasedDungeonId :
+         abandonmentSweep.releasedDungeons)
+    {
+        waitingSince_.erase(releasedDungeonId);
+        finishedSince_.erase(releasedDungeonId);
+    }
+
     const std::vector<DungeonId> waitingDungeonIds =
         dungeonManager_.WaitingDungeonIds();
     const std::unordered_set<DungeonId> waitingDungeonSet(
@@ -184,6 +202,16 @@ void DungeonTickService::HandleTick(
 
     for (DungeonId dungeonId : waitingDungeonIds)
     {
+        const auto waitingDungeon =
+            dungeonManager_.FindDungeon(dungeonId);
+        if (waitingDungeon != nullptr &&
+            waitingDungeon->HasDisconnectedParticipants())
+        {
+            // 재접속 유예 중에는 준비 타임아웃을 진행하지 않는다.
+            waitingSince_.erase(dungeonId);
+            continue;
+        }
+
         if (udpManager_.AllParticipantsAuthenticated(dungeonId))
         {
             if (dungeonManager_.StartDungeon(dungeonId))

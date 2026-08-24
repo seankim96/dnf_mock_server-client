@@ -46,7 +46,20 @@ DungeonPlayerState::DungeonPlayerState(
 
 SessionId DungeonPlayerState::Session() const
 {
+    std::lock_guard lock(mutex_);
     return sessionId_;
+}
+
+bool DungeonPlayerState::RebindSession(SessionId sessionId)
+{
+    if (sessionId == 0)
+    {
+        return false;
+    }
+
+    std::lock_guard lock(mutex_);
+    sessionId_ = sessionId;
+    return true;
 }
 
 RoomId DungeonPlayerState::CurrentRoom() const

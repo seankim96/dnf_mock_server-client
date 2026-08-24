@@ -71,6 +71,7 @@ private:
     std::deque<std::vector<std::uint8_t>> writeQueue_;
     std::size_t pendingWriteBytes_ = 0;
     bool requestInProgress_ = false;
+    bool authenticationRegistered_ = false;
     bool closed_ = false;
 };
 } // namespace dnf

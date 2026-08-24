@@ -69,6 +69,12 @@ public:
     std::optional<DungeonUdpToken> FindToken(SessionId sessionId) const;
     std::optional<boost::asio::ip::udp::endpoint> FindEndpoint(
         SessionId sessionId) const;
+    bool DisconnectParticipant(SessionId sessionId);
+    bool ReplaceParticipant(
+        SessionId oldSessionId,
+        SessionId newSessionId,
+        DungeonUdpToken newToken);
+    bool RemoveParticipant(SessionId sessionId);
     bool AllParticipantsAuthenticated() const;
     void RefreshAllActivity();
     std::vector<SessionId> RemoveInactiveEndpoints(
@@ -95,6 +101,7 @@ private:
     void PumpSnapshotOnStrand();
     void SendSnapshotToNextEndpoint();
     void FinishSnapshotOnStrand();
+    void RemoveParticipantRuntimeStateLocked(SessionId sessionId);
 
     DungeonId dungeonId_;
     std::shared_ptr<const std::atomic<std::uint32_t>> serverTick_;

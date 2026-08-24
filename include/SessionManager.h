@@ -1,6 +1,7 @@
 #pragma once
 
 #include "NetworkSessionOptions.h"
+#include "PlayerId.h"
 #include "SessionId.h"
 
 #include <boost/asio/ip/tcp.hpp>
@@ -32,6 +33,9 @@ public:
         NetworkSessionOptions sessionOptions = {});
 
     SessionId StartSession(boost::asio::ip::tcp::socket socket);
+    bool RegisterAuthenticatedPlayer(
+        SessionId sessionId,
+        PlayerId playerId);
     void RemoveSession(SessionId sessionId);
     void Stop();
 

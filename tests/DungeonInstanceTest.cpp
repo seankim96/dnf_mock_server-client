@@ -176,6 +176,73 @@ void TestPortalRequiresRoomClear()
     assert(dungeon.TryUsePortal(100) ==
            dnf::UsePortalResult::DungeonNotRunning);
 }
+
+void TestReconnectPreservesPlayerState()
+{
+    dnf::EnemyCatalog enemyCatalog;
+    dnf::DungeonInstance dungeon(
+        10, MakeDungeonTemplate(), 20, {100}, enemyCatalog);
+
+    assert(dungeon.BindParticipantPlayer(100, 5001));
+    const auto originalPlayer = dungeon.FindPlayer(100);
+    assert(originalPlayer != nullptr);
+    assert(originalPlayer->ApplyDamage(25));
+
+    const auto disconnectedAt = std::chrono::steady_clock::now();
+    assert(dungeon.DisconnectParticipant(100, disconnectedAt));
+    assert(dungeon.IsParticipantDisconnected(100));
+    assert(dungeon.ConnectedParticipantCount() == 0);
+
+    const auto replacedSession =
+        dungeon.ReconnectParticipant(
+            5001,
+            300,
+            disconnectedAt + std::chrono::seconds(10),
+            std::chrono::seconds(30));
+    assert(replacedSession.has_value());
+    assert(replacedSession->replacedSessionId == 100);
+    assert(!dungeon.HasParticipant(100));
+    assert(dungeon.HasParticipant(300));
+    assert(!dungeon.IsParticipantDisconnected(300));
+    assert(dungeon.ConnectedParticipantCount() == 1);
+    assert(dungeon.Participants() ==
+           std::vector<dnf::SessionId>({300}));
+
+    const auto reconnectedPlayer = dungeon.FindPlayer(300);
+    assert(reconnectedPlayer == originalPlayer);
+    assert(reconnectedPlayer->Session() == 300);
+    assert(reconnectedPlayer->CurrentHp() == 75);
+}
+
+void TestDisconnectedParticipantExpiresAfterGracePeriod()
+{
+    dnf::EnemyCatalog enemyCatalog;
+    dnf::DungeonInstance dungeon(
+        10, MakeDungeonTemplate(), 20, {100, 200}, enemyCatalog);
+    assert(dungeon.BindParticipantPlayer(100, 5001));
+    assert(dungeon.BindParticipantPlayer(200, 5002));
+
+    const auto disconnectedAt = std::chrono::steady_clock::now();
+    assert(dungeon.DisconnectParticipant(100, disconnectedAt));
+
+    assert(dungeon.RemoveExpiredDisconnectedParticipants(
+               disconnectedAt + std::chrono::seconds(29),
+               std::chrono::seconds(30))
+               .empty());
+    assert(!dungeon.ReconnectParticipant(
+        5001,
+        300,
+        disconnectedAt + std::chrono::seconds(30),
+        std::chrono::seconds(30)).has_value());
+    const auto removed = dungeon.RemoveExpiredDisconnectedParticipants(
+        disconnectedAt + std::chrono::seconds(30),
+        std::chrono::seconds(30));
+
+    assert(removed == std::vector<dnf::SessionId>({100}));
+    assert(!dungeon.HasParticipant(100));
+    assert(dungeon.HasParticipant(200));
+    assert(dungeon.FindPlayer(100) == nullptr);
+}
 } // namespace
 
 int main()
@@ -184,6 +251,8 @@ int main()
     TestDungeonState();
     TestInvalidParticipantCount();
     TestPortalRequiresRoomClear();
+    TestReconnectPreservesPlayerState();
+    TestDisconnectedParticipantExpiresAfterGracePeriod();
 
     std::cout << "All dungeon instance tests passed.\n";
     return 0;

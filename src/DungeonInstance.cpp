@@ -82,8 +82,9 @@ PartyId DungeonInstance::Party() const
     return partyId_;
 }
 
-const std::vector<SessionId>& DungeonInstance::Participants() const
+std::vector<SessionId> DungeonInstance::Participants() const
 {
+    std::lock_guard lock(participantMutex_);
     return participants_;
 }
 
@@ -95,10 +96,248 @@ DungeonState DungeonInstance::State() const
 
 bool DungeonInstance::HasParticipant(SessionId sessionId) const
 {
-    return std::find(
-               participants_.begin(),
-               participants_.end(),
-               sessionId) != participants_.end();
+    std::lock_guard lock(participantMutex_);
+    return players_.contains(sessionId);
+}
+
+bool DungeonInstance::BindParticipantPlayer(
+    SessionId sessionId,
+    PlayerId playerId)
+{
+    if (sessionId == 0 || playerId == 0)
+    {
+        return false;
+    }
+
+    std::lock_guard lock(participantMutex_);
+    if (!players_.contains(sessionId))
+    {
+        return false;
+    }
+
+    const auto existingPlayerIt = participantPlayerIds_.find(sessionId);
+    if (existingPlayerIt != participantPlayerIds_.end())
+    {
+        return existingPlayerIt->second == playerId;
+    }
+
+    const auto existingSessionIt = playerSessions_.find(playerId);
+    if (existingSessionIt != playerSessions_.end())
+    {
+        return existingSessionIt->second == sessionId;
+    }
+
+    participantPlayerIds_.emplace(sessionId, playerId);
+    playerSessions_.emplace(playerId, sessionId);
+    return true;
+}
+
+bool DungeonInstance::DisconnectParticipant(
+    SessionId sessionId,
+    std::chrono::steady_clock::time_point disconnectedAt)
+{
+    std::lock_guard lock(participantMutex_);
+    if (!players_.contains(sessionId))
+    {
+        return false;
+    }
+
+    disconnectedSince_.try_emplace(sessionId, disconnectedAt);
+    return true;
+}
+
+std::optional<DungeonParticipantReconnect>
+DungeonInstance::ReconnectParticipant(
+    PlayerId playerId,
+    SessionId newSessionId,
+    std::chrono::steady_clock::time_point now,
+    std::chrono::milliseconds reconnectGrace)
+{
+    if (playerId == 0 || newSessionId == 0 ||
+        reconnectGrace <= std::chrono::milliseconds::zero())
+    {
+        return std::nullopt;
+    }
+
+    std::lock_guard lock(participantMutex_);
+
+    const auto sessionIt = playerSessions_.find(playerId);
+    if (sessionIt == playerSessions_.end())
+    {
+        return std::nullopt;
+    }
+
+    const SessionId oldSessionId = sessionIt->second;
+    const auto disconnectedIt = disconnectedSince_.find(oldSessionId);
+    if (disconnectedIt == disconnectedSince_.end() ||
+        players_.contains(newSessionId) ||
+        now < disconnectedIt->second ||
+        now - disconnectedIt->second >= reconnectGrace)
+    {
+        return std::nullopt;
+    }
+    const auto disconnectedAt = disconnectedIt->second;
+
+    auto playerNode = players_.extract(oldSessionId);
+    if (playerNode.empty() ||
+        !playerNode.mapped()->RebindSession(newSessionId))
+    {
+        return std::nullopt;
+    }
+
+    playerNode.key() = newSessionId;
+    players_.insert(std::move(playerNode));
+
+    participantPlayerIds_.erase(oldSessionId);
+    participantPlayerIds_.emplace(newSessionId, playerId);
+    sessionIt->second = newSessionId;
+    disconnectedSince_.erase(oldSessionId);
+
+    const auto participantIt = std::find(
+        participants_.begin(),
+        participants_.end(),
+        oldSessionId);
+    if (participantIt != participants_.end())
+    {
+        *participantIt = newSessionId;
+    }
+
+    return DungeonParticipantReconnect{
+        oldSessionId,
+        disconnectedAt};
+}
+
+bool DungeonInstance::RollbackParticipantReconnect(
+    PlayerId playerId,
+    SessionId newSessionId,
+    const DungeonParticipantReconnect& reconnect)
+{
+    if (playerId == 0 || newSessionId == 0 ||
+        reconnect.replacedSessionId == 0)
+    {
+        return false;
+    }
+
+    std::lock_guard lock(participantMutex_);
+    const auto sessionIt = playerSessions_.find(playerId);
+    if (sessionIt == playerSessions_.end() ||
+        sessionIt->second != newSessionId ||
+        !players_.contains(newSessionId) ||
+        players_.contains(reconnect.replacedSessionId))
+    {
+        return false;
+    }
+
+    auto playerNode = players_.extract(newSessionId);
+    if (playerNode.empty() ||
+        !playerNode.mapped()->RebindSession(
+            reconnect.replacedSessionId))
+    {
+        return false;
+    }
+
+    playerNode.key() = reconnect.replacedSessionId;
+    players_.insert(std::move(playerNode));
+
+    participantPlayerIds_.erase(newSessionId);
+    participantPlayerIds_.emplace(
+        reconnect.replacedSessionId,
+        playerId);
+    sessionIt->second = reconnect.replacedSessionId;
+    disconnectedSince_.emplace(
+        reconnect.replacedSessionId,
+        reconnect.disconnectedAt);
+
+    const auto participantIt = std::find(
+        participants_.begin(),
+        participants_.end(),
+        newSessionId);
+    if (participantIt != participants_.end())
+    {
+        *participantIt = reconnect.replacedSessionId;
+    }
+
+    return true;
+}
+
+std::vector<SessionId>
+DungeonInstance::RemoveExpiredDisconnectedParticipants(
+    std::chrono::steady_clock::time_point now,
+    std::chrono::milliseconds reconnectGrace)
+{
+    std::vector<SessionId> removedSessions;
+    if (reconnectGrace <= std::chrono::milliseconds::zero())
+    {
+        return removedSessions;
+    }
+
+    std::lock_guard lock(participantMutex_);
+
+    for (auto disconnectedIt = disconnectedSince_.begin();
+         disconnectedIt != disconnectedSince_.end();)
+    {
+        if (now < disconnectedIt->second ||
+            now - disconnectedIt->second < reconnectGrace)
+        {
+            ++disconnectedIt;
+            continue;
+        }
+
+        const SessionId sessionId = disconnectedIt->first;
+        const auto playerIdIt = participantPlayerIds_.find(sessionId);
+        if (playerIdIt != participantPlayerIds_.end())
+        {
+            playerSessions_.erase(playerIdIt->second);
+            participantPlayerIds_.erase(playerIdIt);
+        }
+
+        players_.erase(sessionId);
+        participants_.erase(
+            std::remove(
+                participants_.begin(),
+                participants_.end(),
+                sessionId),
+            participants_.end());
+        removedSessions.push_back(sessionId);
+        disconnectedIt = disconnectedSince_.erase(disconnectedIt);
+    }
+
+    return removedSessions;
+}
+
+std::vector<SessionId> DungeonInstance::RemoveAllParticipants()
+{
+    std::lock_guard lock(participantMutex_);
+    std::vector<SessionId> removedSessions = participants_;
+    participants_.clear();
+    players_.clear();
+    participantPlayerIds_.clear();
+    playerSessions_.clear();
+    disconnectedSince_.clear();
+    return removedSessions;
+}
+
+bool DungeonInstance::IsParticipantDisconnected(SessionId sessionId) const
+{
+    std::lock_guard lock(participantMutex_);
+    return disconnectedSince_.contains(sessionId);
+}
+
+bool DungeonInstance::HasDisconnectedParticipants() const
+{
+    std::lock_guard lock(participantMutex_);
+    return !disconnectedSince_.empty();
+}
+
+std::size_t DungeonInstance::ConnectedParticipantCount() const
+{
+    std::lock_guard lock(participantMutex_);
+    return players_.size() - disconnectedSince_.size();
+}
+
+std::chrono::steady_clock::time_point DungeonInstance::CreatedAt() const
+{
+    return createdAt_;
 }
 
 std::shared_ptr<RoomState> DungeonInstance::FindRoom(RoomId roomId) const
@@ -115,6 +354,7 @@ std::shared_ptr<RoomState> DungeonInstance::FindRoom(RoomId roomId) const
 std::shared_ptr<DungeonPlayerState> DungeonInstance::FindPlayer(
     SessionId sessionId) const
 {
+    std::lock_guard lock(participantMutex_);
     auto playerIt = players_.find(sessionId);
     if (playerIt == players_.end())
     {
@@ -152,10 +392,23 @@ std::size_t DungeonInstance::AdvanceRoomWaves()
         return 0;
     }
 
-    std::unordered_set<RoomId> occupiedRoomIds;
-    for (const auto& entry : players_)
+    std::vector<std::shared_ptr<DungeonPlayerState>> players;
     {
-        occupiedRoomIds.insert(entry.second->CurrentRoom());
+        std::lock_guard lock(participantMutex_);
+        players.reserve(players_.size());
+        for (const auto& entry : players_)
+        {
+            if (!disconnectedSince_.contains(entry.first))
+            {
+                players.push_back(entry.second);
+            }
+        }
+    }
+
+    std::unordered_set<RoomId> occupiedRoomIds;
+    for (const auto& player : players)
+    {
+        occupiedRoomIds.insert(player->CurrentRoom());
     }
 
     std::size_t startedWaveCount = 0;
@@ -249,9 +502,23 @@ bool DungeonInstance::TryFinishIfCleared()
 
     const RoomId finalRoomId = dungeonTemplate_.rooms.back().id;
 
-    for (const auto& [sessionId, player] : players_)
+    std::vector<std::shared_ptr<DungeonPlayerState>> players;
     {
-        (void)sessionId;
+        std::lock_guard lock(participantMutex_);
+        players.reserve(players_.size());
+        for (const auto& entry : players_)
+        {
+            players.push_back(entry.second);
+        }
+    }
+
+    if (players.empty())
+    {
+        return false;
+    }
+
+    for (const auto& player : players)
+    {
         if (player->CurrentRoom() != finalRoomId)
         {
             return false;

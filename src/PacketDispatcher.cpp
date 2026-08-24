@@ -298,36 +298,46 @@ PacketDispatcher::HandleDungeonConnectionInfoRequest(
     DungeonUdpToken udpToken = 0;
 
     const auto partyId = partyManager_.GetJoinedParty(sessionId_);
+    std::shared_ptr<DungeonInstance> dungeon;
+
     if (partyId.has_value())
     {
-        const auto dungeon =
-            dungeonManager_.FindDungeonByParty(partyId.value());
+        dungeon = dungeonManager_.FindDungeonByParty(partyId.value());
+    }
 
-        if (dungeon == nullptr)
+    // 재접속 세션은 파티에서 이미 제거됐어도 던전 참가자 상태를 유지한다.
+    if (dungeon == nullptr)
+    {
+        dungeon = dungeonManager_.FindDungeonByParticipant(sessionId_);
+    }
+
+    if (dungeon == nullptr)
+    {
+        if (partyId.has_value())
         {
             result = DungeonConnectionInfoResult::DungeonNotFound;
         }
-        else if (!dungeon->HasParticipant(sessionId_))
+    }
+    else if (!dungeon->HasParticipant(sessionId_))
+    {
+        result = DungeonConnectionInfoResult::NotDungeonParticipant;
+    }
+    else
+    {
+        const auto port = dungeonUdpManager_.FindPort(dungeon->Id());
+        const auto token =
+            dungeonUdpManager_.FindToken(dungeon->Id(), sessionId_);
+
+        if (port.has_value() && token.has_value())
         {
-            result = DungeonConnectionInfoResult::NotDungeonParticipant;
+            result = DungeonConnectionInfoResult::Success;
+            dungeonId = dungeon->Id();
+            udpPort = port.value();
+            udpToken = token.value();
         }
         else
         {
-            const auto port = dungeonUdpManager_.FindPort(dungeon->Id());
-            const auto token =
-                dungeonUdpManager_.FindToken(dungeon->Id(), sessionId_);
-
-            if (port.has_value() && token.has_value())
-            {
-                result = DungeonConnectionInfoResult::Success;
-                dungeonId = dungeon->Id();
-                udpPort = port.value();
-                udpToken = token.value();
-            }
-            else
-            {
-                result = DungeonConnectionInfoResult::UdpNotReady;
-            }
+            result = DungeonConnectionInfoResult::UdpNotReady;
         }
     }
 
@@ -340,4 +350,5 @@ PacketDispatcher::HandleDungeonConnectionInfoRequest(
             udpPort,
             udpToken));
 }
+
 } // namespace dnf

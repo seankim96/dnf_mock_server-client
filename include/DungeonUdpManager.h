@@ -34,6 +34,16 @@ public:
     std::optional<boost::asio::ip::udp::endpoint> FindEndpoint(
         DungeonId dungeonId,
         SessionId sessionId) const;
+    bool DisconnectParticipant(
+        DungeonId dungeonId,
+        SessionId sessionId);
+    std::optional<DungeonUdpToken> ReplaceParticipant(
+        DungeonId dungeonId,
+        SessionId oldSessionId,
+        SessionId newSessionId);
+    bool RemoveParticipant(
+        DungeonId dungeonId,
+        SessionId sessionId);
     bool AllParticipantsAuthenticated(DungeonId dungeonId) const;
     void SetServerTick(std::uint32_t serverTick);
     void RefreshAllActivity(DungeonId dungeonId);
@@ -58,6 +68,8 @@ public:
     std::size_t AllocationCount() const;
 
 private:
+    DungeonUdpToken GenerateToken();
+
     boost::asio::io_context& ioContext_;
     std::random_device randomDevice_;
     std::shared_ptr<std::atomic<std::uint32_t>> serverTick_ =

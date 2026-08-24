@@ -196,9 +196,23 @@ void TcpSession::HandleResponse(std::vector<std::uint8_t> response)
 
     requestInProgress_ = false;
 
-    if (dispatcher_.AuthSnapshot().has_value())
+    const auto authSnapshot = dispatcher_.AuthSnapshot();
+    if (authSnapshot.has_value())
     {
         authenticationDeadline_.Cancel();
+
+        if (!authenticationRegistered_)
+        {
+            if (!sessionManager_.RegisterAuthenticatedPlayer(
+                    sessionId_,
+                    authSnapshot->profile.playerId))
+            {
+                CloseOnStrand();
+                return;
+            }
+
+            authenticationRegistered_ = true;
+        }
     }
 
     if (!QueueWrite(std::move(response)))

@@ -4,6 +4,7 @@
 #include "DungeonAdmissionProtocol.h"
 #include "DungeonCatalogProtocol.h"
 #include "DungeonConnectionProtocol.h"
+#include "DungeonLifecycleService.h"
 #include "DungeonManager.h"
 #include "DungeonStaticDataProtocol.h"
 #include "DungeonUdpManager.h"
@@ -958,6 +959,40 @@ void TestPartyMemberGetsConnectionInfo()
     assert(memberInfo.udpToken != leaderInfo.udpToken);
 }
 
+void TestReconnectedPlayerGetsConnectionInfoWithoutParty()
+{
+    TestContext context;
+    dnf::DungeonLifecycleService lifecycleService(
+        context.dungeonManager,
+        context.dungeonUdpManager);
+
+    assert(lifecycleService.RegisterPlayerSession(700, 5001).status ==
+           dnf::RegisterDungeonSessionStatus::Registered);
+    context.partyManager.CreateParty(700);
+
+    const auto entry = SendEnterDungeonRequest(context, 700, 1001);
+    assert(entry.result == dnf::EnterDungeonResult::Success);
+
+    assert(lifecycleService.DisconnectPlayerSession(700));
+    assert(context.partyManager.LeaveParty(700));
+
+    const auto reconnect =
+        lifecycleService.RegisterPlayerSession(701, 5001);
+    assert(reconnect.status ==
+           dnf::RegisterDungeonSessionStatus::Reconnected);
+    assert(reconnect.dungeonId == entry.dungeonId);
+    assert(reconnect.freshUdpToken.has_value());
+    assert(reconnect.freshUdpToken.value() != entry.udpToken);
+
+    const auto connectionInfo =
+        SendConnectionInfoRequest(context, 701);
+    assert(connectionInfo.result ==
+           dnf::DungeonConnectionInfoResult::Success);
+    assert(connectionInfo.dungeonId == entry.dungeonId);
+    assert(connectionInfo.udpPort == entry.udpPort);
+    assert(connectionInfo.udpToken == reconnect.freshUdpToken.value());
+}
+
 void TestConnectionInfoFailures()
 {
     TestContext context;
@@ -1176,6 +1211,7 @@ int main()
     TestDungeonEntryFailures();
     TestUdpAllocationRollback();
     TestPartyMemberGetsConnectionInfo();
+    TestReconnectedPlayerGetsConnectionInfoWithoutParty();
     TestConnectionInfoFailures();
     TestMissingHandler();
     TestGameSessionSerializesPipelinedLogin();

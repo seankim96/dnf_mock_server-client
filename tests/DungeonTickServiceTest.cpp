@@ -250,6 +250,73 @@ void TestWaitingDungeonTimesOut()
     const auto retry = dungeonManager.CreateDungeon(partyId, 1001);
     assert(retry.status == dnf::CreateDungeonStatus::Success);
 }
+
+void TestReconnectGracePausesWaitingTimeout()
+{
+    boost::asio::io_context ioContext;
+    dnf::DungeonUdpManager udpManager(ioContext);
+    dnf::PartyManager partyManager;
+    const dnf::PartyId partyId = partyManager.CreateParty(100).value();
+    dnf::EnemyCatalog enemyCatalog;
+    dnf::SkillCatalog skillCatalog;
+    dnf::DungeonCatalog dungeonCatalog(enemyCatalog);
+    const dnf::RoomTemplate room{
+        1, 1200.0f, 500.0f, {100.0f, 250.0f, 0.0f}};
+    assert(dungeonCatalog.AddDungeon(1001, "Forest", {room}));
+
+    dnf::DungeonManager dungeonManager(
+        partyManager,
+        dungeonCatalog,
+        enemyCatalog);
+    constexpr auto reconnectGrace = std::chrono::milliseconds(180);
+    dnf::DungeonLifecycleService lifecycleService(
+        dungeonManager,
+        udpManager,
+        reconnectGrace);
+    lifecycleService.RegisterPlayerSession(100, 5001);
+
+    const auto created = dungeonManager.CreateDungeon(partyId, 1001);
+    const dnf::DungeonId dungeonId = created.dungeon->Id();
+    assert(udpManager.Allocate(dungeonId, {100}).has_value());
+    assert(lifecycleService.DisconnectPlayerSession(100));
+
+    dnf::DungeonTickService tickService(
+        ioContext,
+        dungeonManager,
+        udpManager,
+        skillCatalog,
+        std::chrono::milliseconds(40),
+        std::chrono::milliseconds(20),
+        reconnectGrace,
+        std::chrono::hours(2));
+    tickService.Start();
+
+    bool survivedReadyTimeout = false;
+    boost::asio::steady_timer graceCheckTimer(
+        ioContext,
+        std::chrono::milliseconds(100));
+    graceCheckTimer.async_wait(
+        [&](const boost::system::error_code&)
+        {
+            survivedReadyTimeout =
+                dungeonManager.FindDungeon(dungeonId) != nullptr;
+        });
+
+    boost::asio::steady_timer stopTimer(
+        ioContext,
+        std::chrono::milliseconds(280));
+    stopTimer.async_wait(
+        [&](const boost::system::error_code&)
+        {
+            tickService.Stop();
+        });
+
+    ioContext.run();
+
+    assert(survivedReadyTimeout);
+    assert(dungeonManager.FindDungeon(dungeonId) == nullptr);
+    assert(udpManager.AllocationCount() == 0);
+}
 } // namespace
 
 int main()
@@ -258,6 +325,7 @@ int main()
     TestLongIoStallLimitsCatchUpTicks();
     TestDungeonStartsAfterAllUdpHelloMessages();
     TestWaitingDungeonTimesOut();
+    TestReconnectGracePausesWaitingTimeout();
 
     std::cout << "All dungeon tick service tests passed.\n";
     return 0;

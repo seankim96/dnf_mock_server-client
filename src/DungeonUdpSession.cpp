@@ -113,6 +113,64 @@ std::optional<udp::endpoint> DungeonUdpSession::FindEndpoint(
     return endpointIt->second;
 }
 
+bool DungeonUdpSession::DisconnectParticipant(SessionId sessionId)
+{
+    std::lock_guard lock(stateMutex_);
+    if (!tokens_.contains(sessionId))
+    {
+        return false;
+    }
+
+    RemoveParticipantRuntimeStateLocked(sessionId);
+    return true;
+}
+
+bool DungeonUdpSession::ReplaceParticipant(
+    SessionId oldSessionId,
+    SessionId newSessionId,
+    DungeonUdpToken newToken)
+{
+    if (oldSessionId == 0 || newSessionId == 0 || newToken == 0 ||
+        oldSessionId == newSessionId)
+    {
+        return false;
+    }
+
+    std::lock_guard lock(stateMutex_);
+    if (!tokens_.contains(oldSessionId) ||
+        tokens_.contains(newSessionId))
+    {
+        return false;
+    }
+
+    for (const auto& [sessionId, token] : tokens_)
+    {
+        (void)sessionId;
+        if (token == newToken)
+        {
+            return false;
+        }
+    }
+
+    RemoveParticipantRuntimeStateLocked(oldSessionId);
+    tokens_.erase(oldSessionId);
+    tokens_.emplace(newSessionId, newToken);
+    return true;
+}
+
+bool DungeonUdpSession::RemoveParticipant(SessionId sessionId)
+{
+    std::lock_guard lock(stateMutex_);
+    if (!tokens_.contains(sessionId))
+    {
+        return false;
+    }
+
+    RemoveParticipantRuntimeStateLocked(sessionId);
+    tokens_.erase(sessionId);
+    return true;
+}
+
 bool DungeonUdpSession::AllParticipantsAuthenticated() const
 {
     std::lock_guard lock(stateMutex_);
@@ -152,30 +210,9 @@ std::vector<SessionId> DungeonUdpSession::RemoveInactiveEndpoints(
         }
 
         const SessionId sessionId = activityIt->first;
-        endpoints_.erase(sessionId);
-        lastMovementSequences_.erase(sessionId);
-        lastAttackSequences_.erase(sessionId);
-        pendingMovements_.erase(
-            std::remove_if(
-                pendingMovements_.begin(),
-                pendingMovements_.end(),
-                [sessionId](const AuthenticatedPlayerMovement& movement)
-                {
-                    return movement.sessionId == sessionId;
-                }),
-            pendingMovements_.end());
-        pendingAttacks_.erase(
-            std::remove_if(
-                pendingAttacks_.begin(),
-                pendingAttacks_.end(),
-                [sessionId](const AuthenticatedPlayerAttack& attack)
-                {
-                    return attack.sessionId == sessionId;
-                }),
-            pendingAttacks_.end());
-
         removedSessions.push_back(sessionId);
-        activityIt = lastActivity_.erase(activityIt);
+        ++activityIt;
+        RemoveParticipantRuntimeStateLocked(sessionId);
     }
 
     return removedSessions;
@@ -289,6 +326,33 @@ DungeonUdpSessionStats DungeonUdpSession::Stats() const
 {
     std::lock_guard lock(snapshotMutex_);
     return snapshotStats_;
+}
+
+void DungeonUdpSession::RemoveParticipantRuntimeStateLocked(
+    SessionId sessionId)
+{
+    endpoints_.erase(sessionId);
+    lastActivity_.erase(sessionId);
+    lastMovementSequences_.erase(sessionId);
+    lastAttackSequences_.erase(sessionId);
+    pendingMovements_.erase(
+        std::remove_if(
+            pendingMovements_.begin(),
+            pendingMovements_.end(),
+            [sessionId](const AuthenticatedPlayerMovement& movement)
+            {
+                return movement.sessionId == sessionId;
+            }),
+        pendingMovements_.end());
+    pendingAttacks_.erase(
+        std::remove_if(
+            pendingAttacks_.begin(),
+            pendingAttacks_.end(),
+            [sessionId](const AuthenticatedPlayerAttack& attack)
+            {
+                return attack.sessionId == sessionId;
+            }),
+        pendingAttacks_.end());
 }
 
 void DungeonUdpSession::StartReceive()

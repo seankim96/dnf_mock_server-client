@@ -15,6 +15,20 @@ DungeonUdpManager::DungeonUdpManager(boost::asio::io_context& ioContext)
 {
 }
 
+DungeonUdpToken DungeonUdpManager::GenerateToken()
+{
+    DungeonUdpToken token = 0;
+    for (std::size_t index = 0;
+         index < sizeof(DungeonUdpToken);
+         ++index)
+    {
+        token = (token << 8) |
+                static_cast<std::uint8_t>(randomDevice_());
+    }
+
+    return token;
+}
+
 std::optional<std::uint16_t> DungeonUdpManager::Allocate(
     DungeonId dungeonId,
     const std::vector<SessionId>& participants)
@@ -65,14 +79,7 @@ std::optional<std::uint16_t> DungeonUdpManager::Allocate(
         DungeonUdpToken token = 0;
         do
         {
-            token = 0;
-            for (std::size_t index = 0;
-                 index < sizeof(DungeonUdpToken);
-                 ++index)
-            {
-                token = (token << 8) |
-                        static_cast<std::uint8_t>(randomDevice_());
-            }
+            token = GenerateToken();
         } while (token == 0 || usedTokens.contains(token));
 
         usedTokens.insert(token);
@@ -131,6 +138,67 @@ std::optional<udp::endpoint> DungeonUdpManager::FindEndpoint(
     }
 
     return sessionIt->second->FindEndpoint(sessionId);
+}
+
+bool DungeonUdpManager::DisconnectParticipant(
+    DungeonId dungeonId,
+    SessionId sessionId)
+{
+    std::lock_guard lock(mutex_);
+
+    const auto sessionIt = sessions_.find(dungeonId);
+    if (sessionIt == sessions_.end())
+    {
+        return false;
+    }
+
+    return sessionIt->second->DisconnectParticipant(sessionId);
+}
+
+std::optional<DungeonUdpToken> DungeonUdpManager::ReplaceParticipant(
+    DungeonId dungeonId,
+    SessionId oldSessionId,
+    SessionId newSessionId)
+{
+    std::lock_guard lock(mutex_);
+
+    const auto sessionIt = sessions_.find(dungeonId);
+    if (sessionIt == sessions_.end() ||
+        !sessionIt->second->FindToken(oldSessionId).has_value() ||
+        sessionIt->second->FindToken(newSessionId).has_value())
+    {
+        return std::nullopt;
+    }
+
+    constexpr std::size_t MAX_TOKEN_ATTEMPTS = 16;
+    for (std::size_t attempt = 0; attempt < MAX_TOKEN_ATTEMPTS; ++attempt)
+    {
+        const DungeonUdpToken token = GenerateToken();
+        if (token != 0 && sessionIt->second->ReplaceParticipant(
+                              oldSessionId,
+                              newSessionId,
+                              token))
+        {
+            return token;
+        }
+    }
+
+    return std::nullopt;
+}
+
+bool DungeonUdpManager::RemoveParticipant(
+    DungeonId dungeonId,
+    SessionId sessionId)
+{
+    std::lock_guard lock(mutex_);
+
+    const auto sessionIt = sessions_.find(dungeonId);
+    if (sessionIt == sessions_.end())
+    {
+        return false;
+    }
+
+    return sessionIt->second->RemoveParticipant(sessionId);
 }
 
 bool DungeonUdpManager::AllParticipantsAuthenticated(
