@@ -1,7 +1,8 @@
 #pragma once
 
+#include "DatabaseError.h"
+
 #include <mutex>
-#include <stdexcept>
 #include <string>
 
 struct sqlite3;
@@ -9,12 +10,6 @@ struct sqlite3;
 namespace dnf
 {
 constexpr int SQLITE_DATABASE_SCHEMA_VERSION = 4;
-
-class DatabaseError : public std::runtime_error
-{
-public:
-    using std::runtime_error::runtime_error;
-};
 
 class SqliteDatabase
 {

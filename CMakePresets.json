@@ -44,6 +44,24 @@
         "DNF_WARNINGS_AS_ERRORS": "OFF",
         "DNF_ENABLE_COVERAGE": "ON"
       }
+    },
+    {
+      "name": "mysql",
+      "displayName": "Optional Boost.MySQL backend",
+      "inherits": "debug",
+      "binaryDir": "${sourceDir}/build/mysql",
+      "cacheVariables": {
+        "DNF_ENABLE_MYSQL": "ON"
+      }
+    },
+    {
+      "name": "mysql-integration",
+      "displayName": "Boost.MySQL integration tests",
+      "inherits": "mysql",
+      "binaryDir": "${sourceDir}/build/mysql-integration",
+      "cacheVariables": {
+        "DNF_ENABLE_MYSQL_INTEGRATION_TESTS": "ON"
+      }
     }
   ],
   "buildPresets": [
@@ -62,6 +80,14 @@
     {
       "name": "coverage",
       "configurePreset": "coverage"
+    },
+    {
+      "name": "mysql",
+      "configurePreset": "mysql"
+    },
+    {
+      "name": "mysql-integration",
+      "configurePreset": "mysql-integration"
     }
   ],
   "testPresets": [
@@ -82,6 +108,20 @@
     {
       "name": "tsan",
       "configurePreset": "tsan",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "mysql",
+      "configurePreset": "mysql",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "mysql-integration",
+      "configurePreset": "mysql-integration",
       "output": {
         "outputOnFailure": true
       }

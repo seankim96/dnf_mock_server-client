@@ -9,7 +9,30 @@ project(DNFMockServer LANGUAGES CXX)
 include(cmake/ProjectOptions.cmake)
 dnf_configure_project_options()
 
-find_package(Boost 1.82 REQUIRED COMPONENTS system)
+option(
+    DNF_ENABLE_MYSQL
+    "Build the optional Boost.MySQL player repository"
+    OFF
+)
+option(
+    DNF_ENABLE_MYSQL_INTEGRATION_TESTS
+    "Build tests that connect to an externally configured MySQL server"
+    OFF
+)
+
+if(DNF_ENABLE_MYSQL_INTEGRATION_TESTS AND NOT DNF_ENABLE_MYSQL)
+    message(FATAL_ERROR
+        "DNF_ENABLE_MYSQL_INTEGRATION_TESTS requires DNF_ENABLE_MYSQL"
+    )
+endif()
+
+if(DNF_ENABLE_MYSQL)
+    # The optional backend uses the Boost 1.92 connection_pool, with_params,
+    # and Asio coroutine timeout signatures. SQLite-only builds keep 1.82.
+    find_package(Boost 1.92 REQUIRED COMPONENTS system mysql charconv)
+else()
+    find_package(Boost 1.82 REQUIRED COMPONENTS system)
+endif()
 find_package(flatbuffers CONFIG REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(SQLite3 REQUIRED)
@@ -113,6 +136,19 @@ if(WIN32)
     target_link_libraries(dnf_core PUBLIC ws2_32 mswsock)
 endif()
 
+if(DNF_ENABLE_MYSQL)
+    add_library(dnf_mysql
+        src/MySqlConnectionPool.cpp
+        src/MySqlPlayerRepository.cpp
+    )
+    target_include_directories(dnf_mysql PUBLIC include)
+    target_link_libraries(dnf_mysql PUBLIC
+        dnf_core
+        Boost::mysql
+        Boost::charconv
+    )
+endif()
+
 add_executable(dnf_mock_server src/main.cpp)
 target_link_libraries(dnf_mock_server PRIVATE dnf_core)
 
@@ -131,6 +167,40 @@ if(MSVC)
     add_compile_options(/UNDEBUG)
 else()
     add_compile_options(-UNDEBUG)
+endif()
+
+if(DNF_ENABLE_MYSQL)
+    add_executable(
+        mysql_connection_pool_config_test
+        tests/MySqlConnectionPoolConfigTest.cpp
+    )
+    target_link_libraries(
+        mysql_connection_pool_config_test
+        PRIVATE dnf_mysql
+    )
+    add_test(
+        NAME mysql_connection_pool_config_test
+        COMMAND mysql_connection_pool_config_test
+    )
+
+    if(DNF_ENABLE_MYSQL_INTEGRATION_TESTS)
+        add_executable(
+            mysql_player_repository_integration_test
+            tests/MySqlPlayerRepositoryIntegrationTest.cpp
+        )
+        target_link_libraries(
+            mysql_player_repository_integration_test
+            PRIVATE dnf_mysql
+        )
+        add_test(
+            NAME mysql_player_repository_integration_test
+            COMMAND mysql_player_repository_integration_test
+        )
+        set_tests_properties(
+            mysql_player_repository_integration_test
+            PROPERTIES SKIP_RETURN_CODE 77
+        )
+    endif()
 endif()
 
 add_executable(test_assertions_enabled_test tests/TestAssertionsEnabledTest.cpp)
