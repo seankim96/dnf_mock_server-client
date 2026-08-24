@@ -9,24 +9,39 @@
 #include "DungeonUdpManager.h"
 #include "EnemyCatalog.h"
 #include "LoginProtocol.h"
+#include "NetworkSessionOptions.h"
 #include "PacketDispatcher.h"
 #include "PartyManager.h"
 #include "PartyProtocol.h"
 #include "PlayerLoginService.h"
 #include "ReceiveBuffer.h"
+#include "SessionManager.h"
 #include "SqliteDatabase.h"
 #include "SqlitePlayerRepository.h"
 
+#include <boost/asio/buffer.hpp>
 #include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/io_context.hpp>
+#include <boost/asio/ip/address_v4.hpp>
+#include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/read.hpp>
+#include <boost/asio/steady_timer.hpp>
+#include <boost/asio/write.hpp>
+#include <boost/system/error_code.hpp>
 
+#include <array>
 #include <cassert>
+#include <chrono>
 #include <cstdint>
 #include <iostream>
+#include <optional>
 #include <stdexcept>
 #include <string>
+#include <thread>
 #include <utility>
 #include <vector>
+
+using boost::asio::ip::tcp;
 
 namespace
 {
@@ -100,6 +115,116 @@ struct TestContext
     dnf::DungeonCatalog dungeonCatalog;
     dnf::DungeonManager dungeonManager;
 };
+
+class GameSessionHarness
+{
+public:
+    GameSessionHarness(
+        TestContext& context,
+        dnf::NetworkSessionOptions options)
+        : context_(context),
+          sessionManager_(
+              context.channelManager,
+              context.partyManager,
+              context.dungeonManager,
+              context.dungeonUdpManager,
+              context.playerLoginService,
+              std::move(options)),
+          acceptor_(
+              context.ioContext,
+              tcp::endpoint(tcp::v4(), 0))
+    {
+        acceptor_.async_accept(
+            [this](
+                const boost::system::error_code& error,
+                tcp::socket socket)
+            {
+                if (!error)
+                {
+                    sessionManager_.StartSession(std::move(socket));
+                }
+            });
+
+        serverThread_ = std::thread(
+            [this]
+            {
+                context_.ioContext.run();
+            });
+    }
+
+    ~GameSessionHarness()
+    {
+        boost::system::error_code ignoredError;
+        acceptor_.close(ignoredError);
+        context_.ioContext.stop();
+
+        if (serverThread_.joinable())
+        {
+            serverThread_.join();
+        }
+    }
+
+    std::uint16_t Port() const
+    {
+        return acceptor_.local_endpoint().port();
+    }
+
+private:
+    TestContext& context_;
+    dnf::SessionManager sessionManager_;
+    tcp::acceptor acceptor_;
+    std::thread serverThread_;
+};
+
+dnf::Packet ReadTcpPacket(tcp::socket& socket)
+{
+    std::array<std::uint8_t, dnf::PACKET_HEADER_SIZE> headerBytes{};
+    boost::asio::read(socket, boost::asio::buffer(headerBytes));
+
+    dnf::Packet packet;
+    packet.header = dnf::DecodeHeader(headerBytes);
+    packet.payload.resize(
+        packet.header.packetSize - dnf::PACKET_HEADER_SIZE);
+
+    if (!packet.payload.empty())
+    {
+        boost::asio::read(socket, boost::asio::buffer(packet.payload));
+    }
+
+    return packet;
+}
+
+boost::system::error_code WaitForTcpClose(
+    boost::asio::io_context& ioContext,
+    tcp::socket& socket)
+{
+    std::array<std::uint8_t, 1> byte{};
+    std::optional<boost::system::error_code> readError;
+    boost::asio::steady_timer testTimeout(
+        ioContext,
+        std::chrono::seconds(2));
+
+    socket.async_read_some(
+        boost::asio::buffer(byte),
+        [&](const boost::system::error_code& error, std::size_t)
+        {
+            readError = error;
+            testTimeout.cancel();
+        });
+    testTimeout.async_wait(
+        [&](const boost::system::error_code& error)
+        {
+            if (!error)
+            {
+                socket.cancel();
+            }
+        });
+
+    ioContext.restart();
+    ioContext.run();
+    return readError.value_or(
+        boost::asio::error::operation_aborted);
+}
 
 dnf::LoginResponseData SendLoginRequest(
     TestContext& context,
@@ -868,6 +993,165 @@ void TestConnectionInfoFailures()
     assert(udpNotReady.result ==
            dnf::DungeonConnectionInfoResult::UdpNotReady);
 }
+
+void TestGameSessionSerializesPipelinedLogin()
+{
+    TestContext context;
+    context.channelManager.AddChannel(1, "Channel 1", 100);
+
+    const dnf::PlayerProfile profile =
+        context.playerRepository.CreatePlayer("PipelinePlayer").value();
+    assert(context.authTicketVerifier.RegisterTicket(
+        "pipeline-ticket",
+        {10, profile.playerId}));
+
+    dnf::NetworkSessionOptions options;
+    options.authenticationTimeout = std::chrono::seconds(2);
+    options.readTimeout = std::chrono::seconds(2);
+    options.writeTimeout = std::chrono::seconds(2);
+    GameSessionHarness server(context, options);
+
+    boost::asio::io_context clientIoContext;
+    tcp::socket client(clientIoContext);
+    client.connect(tcp::endpoint(
+        boost::asio::ip::address_v4::loopback(),
+        server.Port()));
+
+    std::vector<std::uint8_t> sentBytes = dnf::EncodePacket(
+        dnf::LoginRequest,
+        1,
+        dnf::EncodeLoginRequestPayload("pipeline-ticket"));
+    const std::vector<std::uint8_t> channelRequest =
+        dnf::EncodePacket(
+            dnf::ChannelListRequest,
+            2,
+            dnf::EncodeChannelListRequestPayload());
+    sentBytes.insert(
+        sentBytes.end(),
+        channelRequest.begin(),
+        channelRequest.end());
+    boost::asio::write(client, boost::asio::buffer(sentBytes));
+
+    const dnf::Packet loginResponse = ReadTcpPacket(client);
+    assert(loginResponse.header.type == dnf::LoginResponse);
+    assert(loginResponse.header.requestId == 1);
+    const dnf::LoginResponseData login =
+        dnf::DecodeLoginResponsePayload(loginResponse.payload);
+    assert(login.result == dnf::LoginSuccess);
+    assert(login.sessionId != 0);
+
+    const dnf::Packet channelResponse = ReadTcpPacket(client);
+    assert(channelResponse.header.type == dnf::ChannelListResponse);
+    assert(channelResponse.header.requestId == 2);
+    const auto channels =
+        dnf::DecodeChannelListResponsePayload(channelResponse.payload);
+    assert(channels.size() == 1);
+    assert(channels[0].id == 1);
+
+    boost::system::error_code ignoredError;
+    client.shutdown(tcp::socket::shutdown_both, ignoredError);
+    client.close(ignoredError);
+}
+
+void TestGameSessionAuthenticationTimeout()
+{
+    TestContext context;
+    dnf::NetworkSessionOptions options;
+    options.authenticationTimeout = std::chrono::milliseconds(50);
+    options.readTimeout = std::chrono::seconds(1);
+    GameSessionHarness server(context, options);
+
+    boost::asio::io_context clientIoContext;
+    tcp::socket client(clientIoContext);
+    client.connect(tcp::endpoint(
+        boost::asio::ip::address_v4::loopback(),
+        server.Port()));
+
+    const boost::system::error_code closeError =
+        WaitForTcpClose(clientIoContext, client);
+    assert(closeError != boost::asio::error::operation_aborted);
+}
+
+void TestGameSessionReadTimeoutAfterLogin()
+{
+    TestContext context;
+    const dnf::PlayerProfile profile =
+        context.playerRepository.CreatePlayer("IdlePlayer").value();
+    assert(context.authTicketVerifier.RegisterTicket(
+        "idle-ticket",
+        {10, profile.playerId}));
+
+    dnf::NetworkSessionOptions options;
+    options.authenticationTimeout = std::chrono::seconds(1);
+    options.readTimeout = std::chrono::milliseconds(50);
+    GameSessionHarness server(context, options);
+
+    boost::asio::io_context clientIoContext;
+    tcp::socket client(clientIoContext);
+    client.connect(tcp::endpoint(
+        boost::asio::ip::address_v4::loopback(),
+        server.Port()));
+
+    const std::vector<std::uint8_t> loginRequest = dnf::EncodePacket(
+        dnf::LoginRequest,
+        1,
+        dnf::EncodeLoginRequestPayload("idle-ticket"));
+    boost::asio::write(client, boost::asio::buffer(loginRequest));
+
+    const dnf::Packet loginResponse = ReadTcpPacket(client);
+    assert(loginResponse.header.type == dnf::LoginResponse);
+    assert(dnf::DecodeLoginResponsePayload(loginResponse.payload).result ==
+           dnf::LoginSuccess);
+
+    const boost::system::error_code closeError =
+        WaitForTcpClose(clientIoContext, client);
+    assert(closeError != boost::asio::error::operation_aborted);
+}
+
+void TestGameSessionRejectsOversizedPendingWrite()
+{
+    TestContext context;
+    const dnf::PlayerProfile profile =
+        context.playerRepository.CreatePlayer("QueuePlayer").value();
+    assert(context.authTicketVerifier.RegisterTicket(
+        "backpressure-ticket",
+        {10, profile.playerId}));
+
+    dnf::NetworkSessionOptions options;
+    options.authenticationTimeout = std::chrono::seconds(1);
+    options.readTimeout = std::chrono::seconds(1);
+    options.maxPendingWriteBytes = dnf::PACKET_HEADER_SIZE;
+    GameSessionHarness server(context, options);
+
+    boost::asio::io_context clientIoContext;
+    tcp::socket client(clientIoContext);
+    client.connect(tcp::endpoint(
+        boost::asio::ip::address_v4::loopback(),
+        server.Port()));
+
+    const std::vector<std::uint8_t> loginRequest = dnf::EncodePacket(
+        dnf::LoginRequest,
+        1,
+        dnf::EncodeLoginRequestPayload("backpressure-ticket"));
+    boost::asio::write(client, boost::asio::buffer(loginRequest));
+
+    const boost::system::error_code closeError =
+        WaitForTcpClose(clientIoContext, client);
+    assert(closeError != boost::asio::error::operation_aborted);
+}
+
+void TestNetworkSessionOptionsValidation()
+{
+    dnf::NetworkSessionOptions options;
+    assert(options.IsValid());
+
+    options.maxPendingWriteMessages = 0;
+    assert(!options.IsValid());
+
+    options = {};
+    options.writeTimeout = std::chrono::milliseconds(0);
+    assert(!options.IsValid());
+}
 } // namespace
 
 int main()
@@ -894,6 +1178,11 @@ int main()
     TestPartyMemberGetsConnectionInfo();
     TestConnectionInfoFailures();
     TestMissingHandler();
+    TestGameSessionSerializesPipelinedLogin();
+    TestGameSessionAuthenticationTimeout();
+    TestGameSessionReadTimeoutAfterLogin();
+    TestGameSessionRejectsOversizedPendingWrite();
+    TestNetworkSessionOptionsValidation();
 
     std::cout << "All packet dispatcher tests passed.\n";
     return 0;

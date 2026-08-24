@@ -1,6 +1,7 @@
 #pragma once
 
 #include "AuthPacketDispatcher.h"
+#include "NetworkSessionOptions.h"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
@@ -26,7 +27,8 @@ public:
         AccountAuthenticationService& authenticationService,
         CharacterListService& characterListService,
         CharacterSelectionService& characterSelectionService,
-        GameServerAddress gameServerAddress);
+        GameServerAddress gameServerAddress,
+        NetworkSessionOptions sessionOptions = {});
 
     void Start();
     void Stop();
@@ -45,5 +47,6 @@ private:
     CharacterListService& characterListService_;
     CharacterSelectionService& characterSelectionService_;
     GameServerAddress gameServerAddress_;
+    NetworkSessionOptions sessionOptions_;
 };
 } // namespace dnf

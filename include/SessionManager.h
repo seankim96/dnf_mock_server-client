@@ -1,5 +1,6 @@
 #pragma once
 
+#include "NetworkSessionOptions.h"
 #include "SessionId.h"
 
 #include <boost/asio/ip/tcp.hpp>
@@ -27,7 +28,8 @@ public:
         PartyManager& partyManager,
         DungeonManager& dungeonManager,
         DungeonUdpManager& dungeonUdpManager,
-        PlayerLoginService& playerLoginService);
+        PlayerLoginService& playerLoginService,
+        NetworkSessionOptions sessionOptions = {});
 
     SessionId StartSession(boost::asio::ip::tcp::socket socket);
     void RemoveSession(SessionId sessionId);
@@ -40,6 +42,7 @@ private:
     DungeonManager& dungeonManager_;
     DungeonUdpManager& dungeonUdpManager_;
     PlayerLoginService& playerLoginService_;
+    NetworkSessionOptions sessionOptions_;
     std::atomic<SessionId> nextSessionId_{1};
 
     mutable std::mutex mutex_;

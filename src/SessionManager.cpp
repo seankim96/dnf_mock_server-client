@@ -8,6 +8,7 @@
 #include "TcpSession.h"
 
 #include <iostream>
+#include <stdexcept>
 #include <utility>
 
 namespace dnf
@@ -17,13 +18,20 @@ SessionManager::SessionManager(
     PartyManager& partyManager,
     DungeonManager& dungeonManager,
     DungeonUdpManager& dungeonUdpManager,
-    PlayerLoginService& playerLoginService)
+    PlayerLoginService& playerLoginService,
+    NetworkSessionOptions sessionOptions)
     : channelManager_(channelManager),
       partyManager_(partyManager),
       dungeonManager_(dungeonManager),
       dungeonUdpManager_(dungeonUdpManager),
-      playerLoginService_(playerLoginService)
+      playerLoginService_(playerLoginService),
+      sessionOptions_(std::move(sessionOptions))
 {
+    if (!sessionOptions_.IsValid())
+    {
+        throw std::invalid_argument(
+            "TCP session options are invalid");
+    }
 }
 
 SessionId SessionManager::StartSession(boost::asio::ip::tcp::socket socket)
@@ -37,7 +45,8 @@ SessionId SessionManager::StartSession(boost::asio::ip::tcp::socket socket)
         partyManager_,
         dungeonManager_,
         dungeonUdpManager_,
-        playerLoginService_);
+        playerLoginService_,
+        sessionOptions_);
 
     std::size_t activeSessionCount = 0;
 

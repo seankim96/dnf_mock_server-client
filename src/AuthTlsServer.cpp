@@ -24,18 +24,26 @@ AuthTlsServer::AuthTlsServer(
     AccountAuthenticationService& authenticationService,
     CharacterListService& characterListService,
     CharacterSelectionService& characterSelectionService,
-    GameServerAddress gameServerAddress)
+    GameServerAddress gameServerAddress,
+    NetworkSessionOptions sessionOptions)
     : configuredPort_(port),
       acceptor_(ioContext),
       tlsContext_(boost::asio::ssl::context::tls_server),
       authenticationService_(authenticationService),
       characterListService_(characterListService),
       characterSelectionService_(characterSelectionService),
-      gameServerAddress_(std::move(gameServerAddress))
+      gameServerAddress_(std::move(gameServerAddress)),
+      sessionOptions_(std::move(sessionOptions))
 {
     if (gameServerAddress_.host.empty() || gameServerAddress_.port == 0)
     {
         throw std::invalid_argument("Game server address is invalid");
+    }
+
+    if (!sessionOptions_.IsValid())
+    {
+        throw std::invalid_argument(
+            "Auth TLS session options are invalid");
     }
 
     ConfigureTls(certificateChainPath, privateKeyPath);
@@ -116,7 +124,8 @@ void AuthTlsServer::StartAccept()
                         authenticationService_,
                         characterListService_,
                         characterSelectionService_,
-                        gameServerAddress_)
+                        gameServerAddress_,
+                        sessionOptions_)
                         ->Start();
                 }
                 catch (const std::exception& exception)
