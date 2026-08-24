@@ -127,15 +127,6 @@ layout_mode = 2
 secret = true
 placeholder_text = "비밀번호"
 
-[node name="FingerprintLabel" type="Label" parent="Margin/RootVBox/Content/LeftScroll/Steps/AuthenticationPanel/Margin/VBox/Fields"]
-layout_mode = 2
-text = "인증서 SHA-256"
-
-[node name="AuthFingerprintInput" type="LineEdit" parent="Margin/RootVBox/Content/LeftScroll/Steps/AuthenticationPanel/Margin/VBox/Fields"]
-unique_name_in_owner = true
-layout_mode = 2
-placeholder_text = "선택: 자체 서명 인증서 지문"
-
 [node name="AuthLoginButton" type="Button" parent="Margin/RootVBox/Content/LeftScroll/Steps/AuthenticationPanel/Margin/VBox"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 38)

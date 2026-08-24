@@ -20,7 +20,6 @@ public partial class AuthenticationPanel : PanelContainer
     private LineEdit _portInput = null!;
     private LineEdit _loginIdInput = null!;
     private LineEdit _passwordInput = null!;
-    private LineEdit _fingerprintInput = null!;
     private Button _loginButton = null!;
     private Label _statusLabel = null!;
     private OptionButton _characterSelect = null!;
@@ -38,7 +37,6 @@ public partial class AuthenticationPanel : PanelContainer
         _portInput = GetNode<LineEdit>("%AuthPortInput");
         _loginIdInput = GetNode<LineEdit>("%AuthLoginIdInput");
         _passwordInput = GetNode<LineEdit>("%AuthPasswordInput");
-        _fingerprintInput = GetNode<LineEdit>("%AuthFingerprintInput");
         _loginButton = GetNode<Button>("%AuthLoginButton");
         _statusLabel = GetNode<Label>("%AuthStatusLabel");
         _characterSelect = GetNode<OptionButton>("%AuthCharacterSelect");
@@ -57,9 +55,6 @@ public partial class AuthenticationPanel : PanelContainer
         SetEnvironmentDefault(_portInput, "DNF_AUTH_PORT");
         SetEnvironmentDefault(_loginIdInput, "DNF_AUTH_LOGIN_ID");
         SetEnvironmentDefault(_passwordInput, "DNF_AUTH_PASSWORD");
-        SetEnvironmentDefault(
-            _fingerprintInput,
-            "DNF_AUTH_CERT_FINGERPRINT");
     }
 
     private static void SetEnvironmentDefault(
@@ -146,7 +141,7 @@ public partial class AuthenticationPanel : PanelContainer
             _authenticationClient.Disconnect();
             RemoteCertificateValidationCallback? certificateValidation =
                 CertificateFingerprint.CreateValidation(
-                    _fingerprintInput.Text);
+                    OS.GetEnvironment("DNF_AUTH_CERT_FINGERPRINT"));
             await _authenticationClient.ConnectAsync(
                 host,
                 port,
@@ -238,7 +233,6 @@ public partial class AuthenticationPanel : PanelContainer
         _portInput.Editable = !_busy;
         _loginIdInput.Editable = !_busy;
         _passwordInput.Editable = !_busy;
-        _fingerprintInput.Editable = !_busy;
         _loginButton.Disabled = _busy;
         bool canSelectCharacter =
             !_busy && !_selectionIssued && _characters.Count != 0;
