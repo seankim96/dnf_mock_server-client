@@ -19,7 +19,10 @@
 #include "TcpServer.h"
 
 #include <boost/asio/io_context.hpp>
+#include <boost/asio/signal_set.hpp>
+#include <boost/asio/strand.hpp>
 
+#include <atomic>
 #include <cstdint>
 #include <string>
 
@@ -34,6 +37,8 @@ public:
         const std::string& dataDirectory = "data");
 
     void Run();
+    void Stop();
+    std::uint16_t Port() const;
 
     const SkillCatalog& Skills() const;
     const EnemyCatalog& Enemies() const;
@@ -43,8 +48,14 @@ public:
 
 private:
     void LoadGameData(const std::string& dataDirectory);
+    void WaitForShutdownSignal();
+    void RequestStopOnIoContext();
+    void StopOnIoContext();
 
     boost::asio::io_context ioContext_;
+    boost::asio::strand<boost::asio::io_context::executor_type>
+        lifecycleStrand_;
+    boost::asio::signal_set shutdownSignals_;
     SqliteDatabase database_;
     SqlitePlayerRepository playerRepository_;
     SqliteAuthTicketStore authTicketStore_;
@@ -62,5 +73,8 @@ private:
     DungeonTickService dungeonTickService_;
     SessionManager sessionManager_;
     TcpServer tcpServer_;
+    std::atomic<bool> runStarted_{false};
+    std::atomic<bool> stopRequested_{false};
+    std::atomic<bool> shutdownStarted_{false};
 };
 } // namespace dnf

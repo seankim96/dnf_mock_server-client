@@ -41,6 +41,7 @@ public:
         NetworkSessionOptions options = {});
 
     void Start();
+    void Stop();
     SessionId Id() const;
 
 private:
@@ -53,7 +54,7 @@ private:
     void StartAuthenticationTimeout();
     void StartReadTimeout();
     void StartWriteTimeout();
-    void Close();
+    void CloseOnStrand();
 
     SessionId sessionId_;
     boost::asio::ip::tcp::socket socket_;

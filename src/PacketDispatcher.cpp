@@ -278,6 +278,9 @@ std::vector<std::uint8_t> PacketDispatcher::HandleEnterDungeonRequest(
     case CreateDungeonStatus::PartyAlreadyInDungeon:
         result = EnterDungeonResult::PartyAlreadyInDungeon;
         break;
+    case CreateDungeonStatus::ServerStopping:
+        result = EnterDungeonResult::UdpAllocationFailed;
+        break;
     }
 
     if (result == EnterDungeonResult::Success)

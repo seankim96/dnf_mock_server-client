@@ -54,6 +54,7 @@ public:
     std::optional<DungeonUdpSessionStats> FindStats(
         DungeonId dungeonId) const;
     bool Release(DungeonId dungeonId);
+    void Stop();
     std::size_t AllocationCount() const;
 
 private:
@@ -64,5 +65,6 @@ private:
 
     mutable std::mutex mutex_;
     std::unordered_map<DungeonId, std::shared_ptr<DungeonUdpSession>> sessions_;
+    bool stopping_ = false;
 };
 } // namespace dnf

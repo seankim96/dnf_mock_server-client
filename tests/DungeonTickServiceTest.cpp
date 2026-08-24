@@ -45,6 +45,7 @@ void TestTickTimerRunsAndStops()
         [&tickService](const boost::system::error_code&)
         {
             tickService.Stop();
+            tickService.Stop();
         });
 
     ioContext.run();

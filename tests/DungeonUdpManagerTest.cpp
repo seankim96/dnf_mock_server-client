@@ -85,12 +85,32 @@ void TestLatestPendingSnapshotAndOversizeStats()
     ioContext.restart();
     ioContext.poll();
 }
+
+void TestStopClosesAllSessionsAndRejectsNewAllocations()
+{
+    boost::asio::io_context ioContext;
+    dnf::DungeonUdpManager manager(ioContext);
+
+    assert(manager.Allocate(400, {50}).has_value());
+    assert(manager.Allocate(500, {60}).has_value());
+    assert(manager.AllocationCount() == 2);
+
+    manager.Stop();
+    manager.Stop();
+
+    assert(manager.AllocationCount() == 0);
+    assert(!manager.FindPort(400).has_value());
+    assert(!manager.Allocate(600, {70}).has_value());
+
+    ioContext.run();
+}
 } // namespace
 
 int main()
 {
     TestAllocateAndReleasePorts();
     TestLatestPendingSnapshotAndOversizeStats();
+    TestStopClosesAllSessionsAndRejectsNewAllocations();
 
     std::cout << "All dungeon UDP manager tests passed.\n";
     return 0;

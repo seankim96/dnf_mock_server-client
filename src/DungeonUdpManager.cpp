@@ -21,7 +21,7 @@ std::optional<std::uint16_t> DungeonUdpManager::Allocate(
 {
     std::lock_guard lock(mutex_);
 
-    if (dungeonId == 0 || participants.empty() ||
+    if (stopping_ || dungeonId == 0 || participants.empty() ||
         sessions_.contains(dungeonId))
     {
         return std::nullopt;
@@ -290,6 +290,33 @@ bool DungeonUdpManager::Release(DungeonId dungeonId)
 
     session->Stop();
     return true;
+}
+
+void DungeonUdpManager::Stop()
+{
+    std::vector<std::shared_ptr<DungeonUdpSession>> sessions;
+
+    {
+        std::lock_guard lock(mutex_);
+        if (stopping_)
+        {
+            return;
+        }
+
+        stopping_ = true;
+        sessions.reserve(sessions_.size());
+        for (auto& [dungeonId, session] : sessions_)
+        {
+            (void)dungeonId;
+            sessions.push_back(std::move(session));
+        }
+        sessions_.clear();
+    }
+
+    for (const auto& session : sessions)
+    {
+        session->Stop();
+    }
 }
 
 std::size_t DungeonUdpManager::AllocationCount() const

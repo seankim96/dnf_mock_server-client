@@ -150,6 +150,29 @@ void TestCancelWaitingDungeon()
     assert(dungeonManager.ActiveDungeonCount() == 0);
     assert(!dungeonManager.CancelDungeon(created.dungeon->Id()));
 }
+
+void TestStopClearsDungeonsAndRejectsNewCreation()
+{
+    dnf::PartyManager partyManager;
+    const dnf::PartyId partyId = partyManager.CreateParty(100).value();
+
+    dnf::EnemyCatalog enemyCatalog;
+    dnf::DungeonCatalog dungeonCatalog(enemyCatalog);
+    AddTestDungeon(dungeonCatalog);
+    dnf::DungeonManager dungeonManager(
+        partyManager, dungeonCatalog, enemyCatalog);
+
+    const auto created = dungeonManager.CreateDungeon(partyId, 1001);
+    assert(created.status == dnf::CreateDungeonStatus::Success);
+
+    dungeonManager.Stop();
+    dungeonManager.Stop();
+
+    assert(dungeonManager.ActiveDungeonCount() == 0);
+    const auto afterStop = dungeonManager.CreateDungeon(partyId, 1001);
+    assert(afterStop.status == dnf::CreateDungeonStatus::ServerStopping);
+    assert(afterStop.dungeon == nullptr);
+}
 } // namespace
 
 int main()
@@ -160,6 +183,7 @@ int main()
     TestDungeonLifecycle();
     TestParticipantSnapshot();
     TestCancelWaitingDungeon();
+    TestStopClearsDungeonsAndRejectsNewCreation();
 
     std::cout << "All dungeon manager tests passed.\n";
     return 0;

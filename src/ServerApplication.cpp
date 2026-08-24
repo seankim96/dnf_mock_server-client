@@ -1,7 +1,13 @@
 #include "ServerApplication.h"
 
+#include <boost/asio/error.hpp>
+#include <boost/asio/post.hpp>
+#include <boost/system/error_code.hpp>
+
+#include <csignal>
 #include <exception>
 #include <iostream>
+#include <mutex>
 #include <stdexcept>
 #include <thread>
 #include <vector>
@@ -18,7 +24,9 @@ ServerApplication::ServerApplication(
     std::uint16_t port,
     const std::string& databasePath,
     const std::string& dataDirectory)
-    : database_(databasePath),
+    : lifecycleStrand_(boost::asio::make_strand(ioContext_)),
+      shutdownSignals_(lifecycleStrand_, SIGINT, SIGTERM),
+      database_(databasePath),
       playerRepository_(database_),
       authTicketStore_(database_),
       authTicketVerifier_(authTicketStore_),
@@ -59,10 +67,36 @@ void ServerApplication::LoadGameData(const std::string& dataDirectory)
 
 void ServerApplication::Run()
 {
-    dungeonTickService_.Start();
-    tcpServer_.Start();
+    bool expected = false;
+    if (!runStarted_.compare_exchange_strong(expected, true))
+    {
+        throw std::logic_error(
+            "Server application can only run once");
+    }
+
+    if (stopRequested_.load())
+    {
+        databaseExecutor_.DrainAndStop();
+        return;
+    }
+
+    try
+    {
+        WaitForShutdownSignal();
+        dungeonTickService_.Start();
+        tcpServer_.Start();
+    }
+    catch (...)
+    {
+        stopRequested_.store(true);
+        StopOnIoContext();
+        ioContext_.run();
+        databaseExecutor_.DrainAndStop();
+        throw;
+    }
 
     std::cout << "Boost.Asio TCP server started"
+              << " port=" << tcpServer_.Port()
               << " ioThreads=" << IO_THREAD_COUNT
               << " databaseThreads=" << DATABASE_THREAD_COUNT << '\n';
 
@@ -83,11 +117,13 @@ void ServerApplication::Run()
 
     std::vector<std::thread> ioThreads;
     ioThreads.reserve(IO_THREAD_COUNT);
+    std::exception_ptr workerException;
+    std::mutex workerExceptionMutex;
 
     for (std::size_t index = 0; index < IO_THREAD_COUNT; ++index)
     {
         ioThreads.emplace_back(
-            [this]
+            [this, &workerException, &workerExceptionMutex]
             {
                 try
                 {
@@ -97,6 +133,16 @@ void ServerApplication::Run()
                 {
                     std::cerr << "I/O worker error: "
                               << exception.what() << '\n';
+                    {
+                        std::lock_guard lock(workerExceptionMutex);
+                        if (!workerException)
+                        {
+                            workerException = std::current_exception();
+                        }
+                    }
+
+                    stopRequested_.store(true);
+                    RequestStopOnIoContext();
                 }
             });
     }
@@ -105,6 +151,82 @@ void ServerApplication::Run()
     {
         thread.join();
     }
+
+    databaseExecutor_.DrainAndStop();
+
+    if (workerException)
+    {
+        std::rethrow_exception(workerException);
+    }
+}
+
+void ServerApplication::WaitForShutdownSignal()
+{
+    shutdownSignals_.async_wait(
+        [this](
+            const boost::system::error_code& error,
+            int signalNumber)
+        {
+            if (error == boost::asio::error::operation_aborted)
+            {
+                return;
+            }
+
+            if (error)
+            {
+                std::cerr << "Shutdown signal error: "
+                          << error.message() << '\n';
+            }
+            else
+            {
+                std::cout << "Game server stopping"
+                          << " signal=" << signalNumber << '\n';
+            }
+
+            stopRequested_.store(true);
+            StopOnIoContext();
+        });
+}
+
+void ServerApplication::Stop()
+{
+    if (stopRequested_.exchange(true) || !runStarted_.load())
+    {
+        return;
+    }
+
+    RequestStopOnIoContext();
+}
+
+void ServerApplication::RequestStopOnIoContext()
+{
+    boost::asio::post(
+        lifecycleStrand_,
+        [this]
+        {
+            StopOnIoContext();
+        });
+}
+
+void ServerApplication::StopOnIoContext()
+{
+    if (shutdownStarted_.exchange(true))
+    {
+        return;
+    }
+
+    boost::system::error_code ignoredError;
+    shutdownSignals_.cancel(ignoredError);
+    tcpServer_.Stop();
+    dungeonTickService_.Stop();
+    dungeonManager_.Stop();
+    dungeonUdpManager_.Stop();
+    sessionManager_.Stop();
+}
+
+std::uint16_t ServerApplication::Port() const
+{
+    return tcpServer_.Port();
 }
 
 const SkillCatalog& ServerApplication::Skills() const

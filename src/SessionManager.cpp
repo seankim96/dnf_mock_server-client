@@ -7,9 +7,12 @@
 #include "PlayerLoginService.h"
 #include "TcpSession.h"
 
+#include <boost/system/error_code.hpp>
+
 #include <iostream>
 #include <stdexcept>
 #include <utility>
+#include <vector>
 
 namespace dnf
 {
@@ -36,22 +39,32 @@ SessionManager::SessionManager(
 
 SessionId SessionManager::StartSession(boost::asio::ip::tcp::socket socket)
 {
-    const SessionId sessionId = nextSessionId_.fetch_add(1);
-    auto session = std::make_shared<TcpSession>(
-        sessionId,
-        std::move(socket),
-        *this,
-        channelManager_,
-        partyManager_,
-        dungeonManager_,
-        dungeonUdpManager_,
-        playerLoginService_,
-        sessionOptions_);
-
+    SessionId sessionId = 0;
+    std::shared_ptr<TcpSession> session;
     std::size_t activeSessionCount = 0;
 
     {
         std::lock_guard lock(mutex_);
+
+        if (stopping_)
+        {
+            boost::system::error_code ignoredError;
+            socket.close(ignoredError);
+            throw std::runtime_error(
+                "Session manager is stopping");
+        }
+
+        sessionId = nextSessionId_.fetch_add(1);
+        session = std::make_shared<TcpSession>(
+            sessionId,
+            std::move(socket),
+            *this,
+            channelManager_,
+            partyManager_,
+            dungeonManager_,
+            dungeonUdpManager_,
+            playerLoginService_,
+            sessionOptions_);
         sessions_.emplace(sessionId, session);
         activeSessionCount = sessions_.size();
     }
@@ -61,6 +74,32 @@ SessionId SessionManager::StartSession(boost::asio::ip::tcp::socket socket)
 
     session->Start();
     return sessionId;
+}
+
+void SessionManager::Stop()
+{
+    std::vector<std::shared_ptr<TcpSession>> sessions;
+
+    {
+        std::lock_guard lock(mutex_);
+        if (stopping_)
+        {
+            return;
+        }
+
+        stopping_ = true;
+        sessions.reserve(sessions_.size());
+        for (const auto& [sessionId, session] : sessions_)
+        {
+            (void)sessionId;
+            sessions.push_back(session);
+        }
+    }
+
+    for (const auto& session : sessions)
+    {
+        session->Stop();
+    }
 }
 
 void SessionManager::RemoveSession(SessionId sessionId)

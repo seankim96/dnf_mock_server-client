@@ -62,6 +62,11 @@ void TcpSession::Start()
         strand_,
         [self]
         {
+            if (self->closed_)
+            {
+                return;
+            }
+
             std::cout << "Session connected id="
                       << self->sessionId_ << '\n';
             self->StartAuthenticationTimeout();
@@ -72,6 +77,17 @@ void TcpSession::Start()
 SessionId TcpSession::Id() const
 {
     return sessionId_;
+}
+
+void TcpSession::Stop()
+{
+    auto self = shared_from_this();
+    boost::asio::dispatch(
+        strand_,
+        [self]
+        {
+            self->CloseOnStrand();
+        });
 }
 
 void TcpSession::StartRead()
@@ -104,7 +120,7 @@ void TcpSession::StartRead()
                                   << " message=" << error.message() << '\n';
                     }
 
-                    self->Close();
+                    self->CloseOnStrand();
                     return;
                 }
 
@@ -167,7 +183,7 @@ void TcpSession::DispatchNextPacket()
         std::cerr << "Packet error sessionId=" << sessionId_
                   << " message=" << exception.what() << '\n';
         requestInProgress_ = false;
-        Close();
+        CloseOnStrand();
     }
 }
 
@@ -206,7 +222,7 @@ bool TcpSession::QueueWrite(std::vector<std::uint8_t> data)
     {
         std::cerr << "TCP pending write limit exceeded sessionId="
                   << sessionId_ << '\n';
-        Close();
+        CloseOnStrand();
         return false;
     }
 
@@ -247,7 +263,7 @@ void TcpSession::StartWrite()
                                   << " message=" << error.message() << '\n';
                     }
 
-                    self->Close();
+                    self->CloseOnStrand();
                     return;
                 }
 
@@ -271,7 +287,7 @@ void TcpSession::StartAuthenticationTimeout()
         {
             std::cerr << "Authentication timeout sessionId="
                       << self->sessionId_ << '\n';
-            self->Close();
+            self->CloseOnStrand();
         });
 }
 
@@ -284,7 +300,7 @@ void TcpSession::StartReadTimeout()
         {
             std::cerr << "Read timeout sessionId="
                       << self->sessionId_ << '\n';
-            self->Close();
+            self->CloseOnStrand();
         });
 }
 
@@ -297,11 +313,11 @@ void TcpSession::StartWriteTimeout()
         {
             std::cerr << "Write timeout sessionId="
                       << self->sessionId_ << '\n';
-            self->Close();
+            self->CloseOnStrand();
         });
 }
 
-void TcpSession::Close()
+void TcpSession::CloseOnStrand()
 {
     if (closed_)
     {

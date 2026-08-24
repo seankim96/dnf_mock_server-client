@@ -3,6 +3,7 @@
 #include "DungeonProtocol.h"
 
 #include <boost/asio/error.hpp>
+#include <boost/asio/dispatch.hpp>
 
 #include <algorithm>
 #include <chrono>
@@ -27,7 +28,8 @@ DungeonTickService::DungeonTickService(
     const SkillCatalog& skillCatalog,
     std::chrono::milliseconds readyTimeout,
     std::chrono::milliseconds udpIdleTimeout)
-    : timer_(ioContext),
+    : strand_(boost::asio::make_strand(ioContext)),
+      timer_(strand_),
       dungeonManager_(dungeonManager),
       udpManager_(udpManager),
       movementProcessor_(dungeonManager, udpManager),
@@ -45,25 +47,46 @@ DungeonTickService::DungeonTickService(
 
 void DungeonTickService::Start()
 {
-    if (running_)
+    bool expected = false;
+    if (!running_.compare_exchange_strong(expected, true))
     {
         return;
     }
 
-    running_ = true;
-    nextTick_ = std::chrono::steady_clock::now() + TICK_INTERVAL;
-    ScheduleNextTick();
+    boost::asio::dispatch(
+        strand_,
+        [this]
+        {
+            if (!running_.load())
+            {
+                return;
+            }
+
+            nextTick_ = std::chrono::steady_clock::now() + TICK_INTERVAL;
+            ScheduleNextTick();
+        });
 }
 
 void DungeonTickService::Stop()
 {
-    running_ = false;
-    timer_.cancel();
+    if (!running_.exchange(false))
+    {
+        return;
+    }
+
+    boost::asio::dispatch(
+        strand_,
+        [this]
+        {
+            timer_.cancel();
+            waitingSince_.clear();
+            finishedSince_.clear();
+        });
 }
 
 bool DungeonTickService::IsRunning() const
 {
-    return running_;
+    return running_.load();
 }
 
 std::uint64_t DungeonTickService::TickCount() const
@@ -79,7 +102,7 @@ DungeonTickStats DungeonTickService::Stats() const
 
 void DungeonTickService::ScheduleNextTick()
 {
-    if (!running_)
+    if (!running_.load())
     {
         return;
     }
@@ -122,7 +145,8 @@ void DungeonTickService::AdvanceDeadline()
 void DungeonTickService::HandleTick(
     const boost::system::error_code& error)
 {
-    if (!running_ || error == boost::asio::error::operation_aborted)
+    if (!running_.load() ||
+        error == boost::asio::error::operation_aborted)
     {
         return;
     }

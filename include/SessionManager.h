@@ -33,6 +33,7 @@ public:
 
     SessionId StartSession(boost::asio::ip::tcp::socket socket);
     void RemoveSession(SessionId sessionId);
+    void Stop();
 
     std::size_t ActiveSessionCount() const;
 
@@ -47,5 +48,6 @@ private:
 
     mutable std::mutex mutex_;
     std::unordered_map<SessionId, std::shared_ptr<TcpSession>> sessions_;
+    bool stopping_ = false;
 };
 } // namespace dnf

@@ -16,6 +16,14 @@ CreateDungeonResult DungeonManager::CreateDungeon(
     PartyId partyId,
     DungeonTemplateId templateId)
 {
+    {
+        std::lock_guard lock(mutex_);
+        if (stopping_)
+        {
+            return {CreateDungeonStatus::ServerStopping, nullptr};
+        }
+    }
+
     const auto party = partyManager_.GetParty(partyId);
     if (!party.has_value())
     {
@@ -29,6 +37,11 @@ CreateDungeonResult DungeonManager::CreateDungeon(
     }
 
     std::lock_guard lock(mutex_);
+
+    if (stopping_)
+    {
+        return {CreateDungeonStatus::ServerStopping, nullptr};
+    }
 
     if (partyDungeons_.contains(partyId))
     {
@@ -147,6 +160,19 @@ bool DungeonManager::FinishDungeon(DungeonId dungeonId)
     partyDungeons_.erase(dungeonIt->second->Party());
     dungeons_.erase(dungeonIt);
     return true;
+}
+
+void DungeonManager::Stop()
+{
+    std::lock_guard lock(mutex_);
+    if (stopping_)
+    {
+        return;
+    }
+
+    stopping_ = true;
+    partyDungeons_.clear();
+    dungeons_.clear();
 }
 
 std::vector<DungeonId> DungeonManager::WaitingDungeonIds() const

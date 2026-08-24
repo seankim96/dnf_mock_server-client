@@ -5,9 +5,11 @@
 #include "DungeonLifecycleService.h"
 
 #include <boost/asio/io_context.hpp>
+#include <boost/asio/strand.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/system/error_code.hpp>
 
+#include <atomic>
 #include <chrono>
 #include <cstdint>
 #include <mutex>
@@ -55,6 +57,7 @@ private:
     void AdvanceDeadline();
     void HandleTick(const boost::system::error_code& error);
 
+    boost::asio::strand<boost::asio::io_context::executor_type> strand_;
     boost::asio::steady_timer timer_;
     DungeonManager& dungeonManager_;
     DungeonUdpManager& udpManager_;
@@ -71,7 +74,7 @@ private:
         std::chrono::steady_clock::time_point> finishedSince_;
 
     std::chrono::steady_clock::time_point nextTick_;
-    bool running_ = false;
+    std::atomic<bool> running_{false};
     mutable std::mutex statsMutex_;
     DungeonTickStats stats_;
 };

@@ -17,7 +17,8 @@ enum class CreateDungeonStatus
     Success,
     PartyNotFound,
     DungeonTemplateNotFound,
-    PartyAlreadyInDungeon
+    PartyAlreadyInDungeon,
+    ServerStopping
 };
 
 struct CreateDungeonResult
@@ -48,6 +49,7 @@ public:
     bool StartDungeon(DungeonId dungeonId);
     bool CancelDungeon(DungeonId dungeonId);
     bool FinishDungeon(DungeonId dungeonId);
+    void Stop();
     std::vector<DungeonId> WaitingDungeonIds() const;
     std::vector<DungeonId> RunningDungeonIds() const;
     std::vector<DungeonId> FinishedDungeonIds() const;
@@ -62,5 +64,6 @@ private:
     DungeonId nextDungeonId_ = 1;
     std::unordered_map<DungeonId, std::shared_ptr<DungeonInstance>> dungeons_;
     std::unordered_map<PartyId, DungeonId> partyDungeons_;
+    bool stopping_ = false;
 };
 } // namespace dnf
