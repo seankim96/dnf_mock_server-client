@@ -1,17 +1,12 @@
 using DnfMockClient;
+using Xunit;
 
-internal static class DungeonInputControllerSmokeTests
+namespace DnfMockClient.Tests;
+
+public sealed class DungeonInputControllerTests
 {
-    public static void Run()
-    {
-        SendsMovementAtTheConfiguredCadence();
-        NormalizesDiagonalMovement();
-        AllowsOnlyOneMovementSendAtATime();
-        UsesTheLatestDirectionForAttackEdges();
-        RejectsInvalidDeltaTime();
-    }
-
-    private static void SendsMovementAtTheConfiguredCadence()
+    [Fact]
+    public void SendsMovementAtTheConfiguredCadence()
     {
         var controller = new DungeonInputController();
 
@@ -34,7 +29,8 @@ internal static class DungeonInputControllerSmokeTests
             "Movement was not sent when the cadence elapsed.");
     }
 
-    private static void NormalizesDiagonalMovement()
+    [Fact]
+    public void NormalizesDiagonalMovement()
     {
         var controller = new DungeonInputController();
 
@@ -50,7 +46,8 @@ internal static class DungeonInputControllerSmokeTests
             "Diagonal movement was not normalized.");
     }
 
-    private static void AllowsOnlyOneMovementSendAtATime()
+    [Fact]
+    public void AllowsOnlyOneMovementSendAtATime()
     {
         var controller = new DungeonInputController();
 
@@ -78,7 +75,8 @@ internal static class DungeonInputControllerSmokeTests
             "An overdue movement send did not resume after completion.");
     }
 
-    private static void UsesTheLatestDirectionForAttackEdges()
+    [Fact]
+    public void UsesTheLatestDirectionForAttackEdges()
     {
         var controller = new DungeonInputController();
         controller.PressDirection(new DungeonDirection(-1.0f, 0.0f));
@@ -97,7 +95,8 @@ internal static class DungeonInputControllerSmokeTests
             "A new attack edge was not accepted after key release.");
     }
 
-    private static void RejectsInvalidDeltaTime()
+    [Fact]
+    public void RejectsInvalidDeltaTime()
     {
         var controller = new DungeonInputController();
 

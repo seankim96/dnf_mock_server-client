@@ -1,17 +1,13 @@
 using DnfMockClient;
 using DnfMockClient.Protocol;
+using Xunit;
 
-internal static class DungeonSnapshotBufferSmokeTests
+namespace DnfMockClient.Tests;
+
+public sealed class DungeonSnapshotBufferTests
 {
-    public static void Run()
-    {
-        InterpolatesMatchingRemotePlayer();
-        DoesNotInterpolateAcrossRooms();
-        AcceptsTickWrap();
-        ResetClearsState();
-    }
-
-    private static void InterpolatesMatchingRemotePlayer()
+    [Fact]
+    public void InterpolatesMatchingRemotePlayer()
     {
         var buffer = new DungeonSnapshotBuffer(30.0);
         buffer.Push(Snapshot(10, Player(7, 1, 0.0f, 0.0f)));
@@ -24,7 +20,8 @@ internal static class DungeonSnapshotBufferSmokeTests
             "A remote player was not sampled halfway between snapshots.");
     }
 
-    private static void DoesNotInterpolateAcrossRooms()
+    [Fact]
+    public void DoesNotInterpolateAcrossRooms()
     {
         var buffer = new DungeonSnapshotBuffer(30.0);
         buffer.Push(Snapshot(20, Player(7, 1, 10.0f, 10.0f)));
@@ -35,7 +32,8 @@ internal static class DungeonSnapshotBufferSmokeTests
             "A room transition must use the new room position immediately.");
     }
 
-    private static void AcceptsTickWrap()
+    [Fact]
+    public void AcceptsTickWrap()
     {
         var buffer = new DungeonSnapshotBuffer(30.0);
         buffer.Push(Snapshot(uint.MaxValue, Player(7, 1, 0.0f, 0.0f)));
@@ -47,7 +45,8 @@ internal static class DungeonSnapshotBufferSmokeTests
             "Tick wrap did not produce the expected two-tick interpolation.");
     }
 
-    private static void ResetClearsState()
+    [Fact]
+    public void ResetClearsState()
     {
         var buffer = new DungeonSnapshotBuffer(30.0);
         buffer.Push(Snapshot(1, Player(7, 1, 1.0f, 2.0f)));

@@ -1,25 +1,20 @@
 using DnfMockClient.Networking;
+using Xunit;
 
-internal static class ServerTickTrackerSmokeTests
+namespace DnfMockClient.Tests;
+
+public sealed class ServerTickTrackerTests
 {
-    public static void Run()
-    {
-        AcceptsTheFirstTick();
-        RejectsDuplicateAndOlderTicks();
-        AcceptsTicksAcrossWrapAround();
-        RejectsLatePacketsAfterWrapAround();
-        RejectsAnAmbiguousHalfRangeTick();
-        ResetStartsANewSequence();
-    }
-
-    private static void AcceptsTheFirstTick()
+    [Fact]
+    public void AcceptsTheFirstTick()
     {
         var tracker = new ServerTickTracker();
 
         Assert(tracker.TryAccept(0), "The first tick must be accepted.");
     }
 
-    private static void RejectsDuplicateAndOlderTicks()
+    [Fact]
+    public void RejectsDuplicateAndOlderTicks()
     {
         var tracker = new ServerTickTracker();
 
@@ -29,7 +24,8 @@ internal static class ServerTickTrackerSmokeTests
         Assert(tracker.TryAccept(101), "A newer tick was rejected.");
     }
 
-    private static void AcceptsTicksAcrossWrapAround()
+    [Fact]
+    public void AcceptsTicksAcrossWrapAround()
     {
         var tracker = new ServerTickTracker();
 
@@ -41,7 +37,8 @@ internal static class ServerTickTrackerSmokeTests
         Assert(tracker.TryAccept(1), "The post-wrap tick was rejected.");
     }
 
-    private static void RejectsLatePacketsAfterWrapAround()
+    [Fact]
+    public void RejectsLatePacketsAfterWrapAround()
     {
         var tracker = new ServerTickTracker();
 
@@ -52,7 +49,8 @@ internal static class ServerTickTrackerSmokeTests
             "A late pre-wrap tick was accepted.");
     }
 
-    private static void RejectsAnAmbiguousHalfRangeTick()
+    [Fact]
+    public void RejectsAnAmbiguousHalfRangeTick()
     {
         var tracker = new ServerTickTracker();
 
@@ -61,7 +59,8 @@ internal static class ServerTickTrackerSmokeTests
             "A tick exactly half a sequence range away was accepted.");
     }
 
-    private static void ResetStartsANewSequence()
+    [Fact]
+    public void ResetStartsANewSequence()
     {
         var tracker = new ServerTickTracker();
 

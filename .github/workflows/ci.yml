@@ -134,7 +134,7 @@ jobs:
         run: ctest --test-dir build/sanitizer --output-on-failure
 
   client:
-    name: C# client and smoke tests
+    name: C# client and xUnit tests
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -144,18 +144,19 @@ jobs:
           cache: true
           cache-dependency-path: |
             client/DNFMockClient.csproj
-            client/tests/DNFMockClient.SmokeTests.csproj
+            client/tests/DNFMockClient.Tests.csproj
       - name: Restore
         run: |
           dotnet restore client/DNFMockClient.csproj
-          dotnet restore client/tests/DNFMockClient.SmokeTests.csproj
+          dotnet restore client/tests/DNFMockClient.Tests.csproj
       - name: Build client
         run: dotnet build client/DNFMockClient.csproj --no-restore -warnaserror
-      - name: Run smoke tests
+      - name: Run client tests
         run: >-
-          dotnet run
-          --project client/tests/DNFMockClient.SmokeTests.csproj
+          dotnet test
+          client/tests/DNFMockClient.Tests.csproj
           --no-restore
+          -warnaserror
 
   static-analysis:
     name: clang-tidy

@@ -1,15 +1,13 @@
 using DnfMockClient;
 using DnfMockClient.Protocol;
+using Xunit;
 
-internal static class DungeonUdpMailboxSmokeTests
+namespace DnfMockClient.Tests;
+
+public sealed class DungeonUdpMailboxTests
 {
-    public static void Run()
-    {
-        KeepsOnlyTheLatestPendingValues();
-        DrainClearsPendingValues();
-    }
-
-    private static void KeepsOnlyTheLatestPendingValues()
+    [Fact]
+    public void KeepsOnlyTheLatestPendingValues()
     {
         var mailbox = new DungeonUdpMailbox();
         mailbox.PublishSnapshot(Snapshot(10));
@@ -25,7 +23,8 @@ internal static class DungeonUdpMailboxSmokeTests
             "The mailbox did not keep the latest UDP error.");
     }
 
-    private static void DrainClearsPendingValues()
+    [Fact]
+    public void DrainClearsPendingValues()
     {
         var mailbox = new DungeonUdpMailbox();
         mailbox.PublishSnapshot(Snapshot(20));

@@ -2,17 +2,14 @@ using System.IO;
 using DnfMockClient.Protocol;
 using Google.FlatBuffers;
 using AuthSchema = Dnf.Protocol.Auth;
+using Xunit;
 
-internal static class AuthPayloadCodecSmokeTests
+namespace DnfMockClient.Tests;
+
+public sealed class AuthPayloadCodecTests
 {
-    public static void Run()
-    {
-        TestLoginPayloads();
-        TestCharacterListPayloads();
-        TestCharacterSelectionPayloads();
-    }
-
-    private static void TestLoginPayloads()
+    [Fact]
+    public void TestLoginPayloads()
     {
         byte[] requestBytes =
             AuthPayloadCodec.EncodeLoginRequest("account_1", "password");
@@ -46,7 +43,8 @@ internal static class AuthPayloadCodecSmokeTests
             "An unknown auth login result was accepted.");
     }
 
-    private static void TestCharacterListPayloads()
+    [Fact]
+    public void TestCharacterListPayloads()
     {
         byte[] requestBytes = AuthPayloadCodec.EncodeCharacterListRequest();
         Assert(DecodeMessage(requestBytes).PayloadType ==
@@ -77,7 +75,8 @@ internal static class AuthPayloadCodecSmokeTests
             "A failed character list containing data was accepted.");
     }
 
-    private static void TestCharacterSelectionPayloads()
+    [Fact]
+    public void TestCharacterSelectionPayloads()
     {
         byte[] requestBytes =
             AuthPayloadCodec.EncodeCharacterSelectionRequest(7);
