@@ -1,0 +1,20 @@
+{
+  "contentVersion": 1,
+  "channels": [
+    {
+      "id": 1,
+      "name": "Channel 1",
+      "maxPlayers": 100
+    },
+    {
+      "id": 2,
+      "name": "Channel 2",
+      "maxPlayers": 100
+    },
+    {
+      "id": 3,
+      "name": "Channel 3",
+      "maxPlayers": 100
+    }
+  ]
+}

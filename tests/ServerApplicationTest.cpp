@@ -1,13 +1,38 @@
 #include "ServerApplication.h"
 
 #include <cassert>
+#include <filesystem>
 #include <iostream>
 
 namespace
 {
+std::filesystem::path FindProjectDataDirectory()
+{
+    std::filesystem::path candidate = std::filesystem::current_path();
+    for (int level = 0; level < 6; ++level)
+    {
+        if (std::filesystem::is_regular_file(
+                candidate / "data" / "channels.json"))
+        {
+            return candidate / "data";
+        }
+
+        if (!candidate.has_parent_path())
+        {
+            break;
+        }
+        candidate = candidate.parent_path();
+    }
+
+    return "data";
+}
+
 void TestGameDataIsLoaded()
 {
-    dnf::ServerApplication application(0, ":memory:");
+    dnf::ServerApplication application(
+        0,
+        ":memory:",
+        FindProjectDataDirectory().string());
 
     const auto iceSlash = application.Skills().GetSkill(1001);
     assert(iceSlash.has_value());

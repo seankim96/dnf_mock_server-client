@@ -1,0 +1,24 @@
+{
+  "contentVersion": 1,
+  "enemies": [
+    {
+      "id": 2001,
+      "name": "Goblin",
+      "maxHp": 100,
+      "moveSpeed": 120.0,
+      "aiType": "melee",
+      "collision": {
+        "minimum": {
+          "x": -20.0,
+          "y": -15.0,
+          "z": 0.0
+        },
+        "maximum": {
+          "x": 20.0,
+          "y": 15.0,
+          "z": 80.0
+        }
+      }
+    }
+  ]
+}

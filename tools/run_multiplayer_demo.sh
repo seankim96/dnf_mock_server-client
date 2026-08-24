@@ -178,7 +178,8 @@ if lsof -nP -iTCP:"$AUTH_PORT" -sTCP:LISTEN >/dev/null 2>&1 ||
 fi
 
 "$BUILD_DIR/dnf_mock_server" \
-    "$GAME_PORT" "$DATABASE_PATH" >"$GAME_LOG_PATH" 2>&1 &
+    "$GAME_PORT" "$DATABASE_PATH" "$ROOT_DIR/data" \
+    >"$GAME_LOG_PATH" 2>&1 &
 GAME_PID=$!
 
 "$BUILD_DIR/dnf_auth_server" \

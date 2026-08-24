@@ -1,0 +1,36 @@
+{
+  "contentVersion": 1,
+  "skills": [
+    {
+      "id": 1001,
+      "name": "Ice Slash",
+      "cooldownTicks": 90,
+      "manaCost": 20,
+      "startupTicks": 5,
+      "activeTicks": 3,
+      "recoveryTicks": 10,
+      "hitBox": {
+        "forwardRange": 150.0,
+        "backwardRange": 0.0,
+        "halfDepth": 60.0,
+        "height": 120.0
+      },
+      "effects": [
+        {
+          "type": "damage",
+          "target": "enemy",
+          "stat": "none",
+          "value": 1.5,
+          "durationTicks": 0
+        },
+        {
+          "type": "debuff",
+          "target": "enemy",
+          "stat": "moveSpeed",
+          "value": 0.3,
+          "durationTicks": 150
+        }
+      ]
+    }
+  ]
+}

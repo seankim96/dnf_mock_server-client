@@ -65,6 +65,7 @@ add_library(dnf_core
     src/DungeonUdpManager.cpp
     src/DungeonUdpSession.cpp
     src/EnemyCatalog.cpp
+    src/GameDataLoader.cpp
     src/LoginProtocol.cpp
     src/LoginValidator.cpp
     src/Packet.cpp
@@ -252,6 +253,11 @@ add_executable(database_executor_test tests/DatabaseExecutorTest.cpp)
 target_link_libraries(database_executor_test PRIVATE dnf_core)
 
 add_test(NAME database_executor_test COMMAND database_executor_test)
+
+add_executable(game_data_loader_test tests/GameDataLoaderTest.cpp)
+target_link_libraries(game_data_loader_test PRIVATE dnf_core)
+
+add_test(NAME game_data_loader_test COMMAND game_data_loader_test)
 
 add_executable(receive_buffer_test tests/ReceiveBufferTest.cpp)
 target_link_libraries(receive_buffer_test PRIVATE dnf_core)

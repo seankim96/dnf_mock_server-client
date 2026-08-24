@@ -1,0 +1,89 @@
+{
+  "contentVersion": 1,
+  "dungeon": {
+    "id": 1001,
+    "name": "Forest",
+    "recommendedPartySize": 1,
+    "maxPartySize": 4,
+    "rooms": [
+      {
+        "id": 1,
+        "width": 1200.0,
+        "depth": 500.0,
+        "playerSpawn": {
+          "x": 100.0,
+          "y": 250.0,
+          "z": 0.0
+        },
+        "portals": [
+          {
+            "id": 1,
+            "triggerArea": {
+              "minimum": {
+                "x": 1100.0,
+                "y": 200.0,
+                "z": 0.0
+              },
+              "maximum": {
+                "x": 1200.0,
+                "y": 300.0,
+                "z": 200.0
+              }
+            },
+            "targetRoomId": 2,
+            "targetPosition": {
+              "x": 100.0,
+              "y": 300.0,
+              "z": 0.0
+            },
+            "requiresRoomClear": true
+          }
+        ],
+        "obstacles": [
+          {
+            "id": 1,
+            "collision": {
+              "minimum": {
+                "x": 500.0,
+                "y": 100.0,
+                "z": 0.0
+              },
+              "maximum": {
+                "x": 580.0,
+                "y": 180.0,
+                "z": 100.0
+              }
+            },
+            "destructible": true,
+            "maxHp": 100
+          }
+        ],
+        "enemySpawns": [
+          {
+            "id": 1,
+            "enemyTemplateId": 2001,
+            "position": {
+              "x": 800.0,
+              "y": 250.0,
+              "z": 0.0
+            },
+            "wave": 1
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "width": 1500.0,
+        "depth": 600.0,
+        "playerSpawn": {
+          "x": 100.0,
+          "y": 300.0,
+          "z": 0.0
+        },
+        "portals": [],
+        "obstacles": [],
+        "enemySpawns": []
+      }
+    ]
+  }
+}

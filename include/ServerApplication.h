@@ -7,6 +7,7 @@
 #include "DungeonTickService.h"
 #include "DungeonUdpManager.h"
 #include "EnemyCatalog.h"
+#include "GameDataLoader.h"
 #include "PartyManager.h"
 #include "PlayerLoginService.h"
 #include "SessionManager.h"
@@ -29,7 +30,8 @@ class ServerApplication
 public:
     ServerApplication(
         std::uint16_t port,
-        const std::string& databasePath = "dnf_mock_server.db");
+        const std::string& databasePath = "dnf_mock_server.db",
+        const std::string& dataDirectory = "data");
 
     void Run();
 
@@ -40,7 +42,7 @@ public:
     const DungeonUdpManager& DungeonUdpSockets() const;
 
 private:
-    void LoadGameData();
+    void LoadGameData(const std::string& dataDirectory);
 
     boost::asio::io_context ioContext_;
     SqliteDatabase database_;
@@ -55,6 +57,7 @@ private:
     SkillCatalog skillCatalog_;
     EnemyCatalog enemyCatalog_;
     DungeonCatalog dungeonCatalog_;
+    GameDataLoadResult gameData_;
     DungeonManager dungeonManager_;
     DungeonTickService dungeonTickService_;
     SessionManager sessionManager_;

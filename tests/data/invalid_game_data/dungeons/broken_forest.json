@@ -1,0 +1,47 @@
+{
+  "contentVersion": 1,
+  "dungeon": {
+    "id": 1,
+    "name": "Broken Forest",
+    "recommendedPartySize": 1,
+    "maxPartySize": 4,
+    "rooms": [
+      {
+        "id": 1,
+        "width": 100.0,
+        "depth": 100.0,
+        "playerSpawn": {
+          "x": 10.0,
+          "y": 10.0,
+          "z": 0.0
+        },
+        "portals": [
+          {
+            "id": 1,
+            "triggerArea": {
+              "minimum": {
+                "x": 80.0,
+                "y": 40.0,
+                "z": 0.0
+              },
+              "maximum": {
+                "x": 100.0,
+                "y": 60.0,
+                "z": 10.0
+              }
+            },
+            "targetRoomId": 999,
+            "targetPosition": {
+              "x": 10.0,
+              "y": 10.0,
+              "z": 0.0
+            },
+            "requiresRoomClear": true
+          }
+        ],
+        "obstacles": [],
+        "enemySpawns": []
+      }
+    ]
+  }
+}

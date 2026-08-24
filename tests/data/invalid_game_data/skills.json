@@ -1,0 +1,29 @@
+{
+  "contentVersion": 1,
+  "skills": [
+    {
+      "id": 1,
+      "name": "Test Skill",
+      "cooldownTicks": 1,
+      "manaCost": 1,
+      "startupTicks": 1,
+      "activeTicks": 1,
+      "recoveryTicks": 1,
+      "hitBox": {
+        "forwardRange": 1.0,
+        "backwardRange": 0.0,
+        "halfDepth": 1.0,
+        "height": 1.0
+      },
+      "effects": [
+        {
+          "type": "damage",
+          "target": "enemy",
+          "stat": "none",
+          "value": 1.0,
+          "durationTicks": 0
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "contentVersion": 1,
+  "enemies": [
+    {
+      "id": 1,
+      "name": "Test Enemy",
+      "maxHp": 1,
+      "moveSpeed": 1.0,
+      "aiType": "melee",
+      "collision": {
+        "minimum": {
+          "x": -1.0,
+          "y": -1.0,
+          "z": 0.0
+        },
+        "maximum": {
+          "x": 1.0,
+          "y": 1.0,
+          "z": 2.0
+        }
+      }
+    }
+  ]
+}

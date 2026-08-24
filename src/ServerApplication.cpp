@@ -16,7 +16,8 @@ constexpr std::size_t DATABASE_THREAD_COUNT = 2;
 
 ServerApplication::ServerApplication(
     std::uint16_t port,
-    const std::string& databasePath)
+    const std::string& databasePath,
+    const std::string& dataDirectory)
     : database_(databasePath),
       playerRepository_(database_),
       authTicketStore_(database_),
@@ -43,93 +44,17 @@ ServerApplication::ServerApplication(
           playerLoginService_),
       tcpServer_(ioContext_, port, sessionManager_)
 {
-    channelManager_.AddChannel(1, "Channel 1", 100);
-    channelManager_.AddChannel(2, "Channel 2", 100);
-    channelManager_.AddChannel(3, "Channel 3", 100);
-
-    LoadGameData();
+    LoadGameData(dataDirectory);
 }
 
-void ServerApplication::LoadGameData()
+void ServerApplication::LoadGameData(const std::string& dataDirectory)
 {
-    SkillTemplate iceSlash;
-    iceSlash.id = 1001;
-    iceSlash.name = "Ice Slash";
-    iceSlash.cooldownTicks = 90;
-    iceSlash.manaCost = 20;
-    iceSlash.startupTicks = 5;
-    iceSlash.activeTicks = 3;
-    iceSlash.recoveryTicks = 10;
-    iceSlash.hitBox = {150.0f, 0.0f, 60.0f, 120.0f};
-    iceSlash.effects = {
-        {SkillEffectType::Damage,
-         SkillTargetType::Enemy,
-         SkillStat::None,
-         1.5f,
-         0},
-        {SkillEffectType::Debuff,
-         SkillTargetType::Enemy,
-         SkillStat::MoveSpeed,
-         0.3f,
-         150}};
-
-    if (!skillCatalog_.AddSkill(iceSlash))
-    {
-        throw std::runtime_error("Failed to load skill catalog");
-    }
-
-    EnemyTemplate goblin;
-    goblin.id = 2001;
-    goblin.name = "Goblin";
-    goblin.maxHp = 100;
-    goblin.moveSpeed = 120.0f;
-    goblin.aiType = EnemyAiType::Melee;
-    goblin.collision = {
-        {-20.0f, -15.0f, 0.0f},
-        {20.0f, 15.0f, 80.0f}};
-
-    if (!enemyCatalog_.AddEnemy(goblin))
-    {
-        throw std::runtime_error("Failed to load enemy catalog");
-    }
-
-    RoomTemplate firstRoom{
-        1, 1200.0f, 500.0f, {100.0f, 250.0f, 0.0f}};
-    RoomTemplate secondRoom{
-        2, 1500.0f, 600.0f, {100.0f, 300.0f, 0.0f}};
-
-    PortalTemplate portal;
-    portal.id = 1;
-    portal.triggerArea = {
-        {1100.0f, 200.0f, 0.0f},
-        {1200.0f, 300.0f, 200.0f}};
-    portal.targetRoomId = secondRoom.id;
-    portal.targetPosition = secondRoom.playerSpawn;
-    firstRoom.portals.push_back(portal);
-
-    ObstacleTemplate crate;
-    crate.id = 1;
-    crate.collision = {
-        {500.0f, 100.0f, 0.0f},
-        {580.0f, 180.0f, 100.0f}};
-    crate.destructible = true;
-    crate.maxHp = 100;
-    firstRoom.obstacles.push_back(crate);
-
-    EnemySpawnTemplate enemySpawn;
-    enemySpawn.id = 1;
-    enemySpawn.enemyTemplateId = goblin.id;
-    enemySpawn.position = {800.0f, 250.0f, 0.0f};
-    enemySpawn.wave = 1;
-    firstRoom.enemySpawns.push_back(enemySpawn);
-
-    if (!dungeonCatalog_.AddDungeon(
-            1001,
-            "Forest",
-            {firstRoom, secondRoom}))
-    {
-        throw std::runtime_error("Failed to load dungeon catalog");
-    }
+    GameDataLoader loader(
+        channelManager_,
+        skillCatalog_,
+        enemyCatalog_,
+        dungeonCatalog_);
+    gameData_ = loader.Load(dataDirectory);
 }
 
 void ServerApplication::Run()
@@ -150,9 +75,11 @@ void ServerApplication::Run()
     }
 
     std::cout << "Game data ready"
-              << " skill=1001"
-              << " enemy=2001"
-              << " dungeon=1001" << '\n';
+              << " version=" << gameData_.contentVersion
+              << " channels=" << gameData_.channelCount
+              << " skills=" << gameData_.skillCount
+              << " enemies=" << gameData_.enemyCount
+              << " dungeons=" << gameData_.dungeonCount << '\n';
 
     std::vector<std::thread> ioThreads;
     ioThreads.reserve(IO_THREAD_COUNT);

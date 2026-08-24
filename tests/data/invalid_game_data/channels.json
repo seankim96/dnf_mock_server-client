@@ -1,0 +1,10 @@
+{
+  "contentVersion": 1,
+  "channels": [
+    {
+      "id": 1,
+      "name": "Test Channel",
+      "maxPlayers": 4
+    }
+  ]
+}

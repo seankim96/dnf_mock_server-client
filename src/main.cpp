@@ -10,6 +10,13 @@ int main(int argc, char* argv[])
 {
     try
     {
+        if (argc > 4)
+        {
+            throw std::runtime_error(
+                "Usage: dnf_mock_server [port] [database-path] "
+                "[data-directory]");
+        }
+
         unsigned long portValue = 7777;
 
         if (argc >= 2)
@@ -25,8 +32,12 @@ int main(int argc, char* argv[])
         const auto port = static_cast<std::uint16_t>(portValue);
         const std::string databasePath =
             argc >= 3 ? argv[2] : "dnf_mock_server.db";
+        const std::string dataDirectory = argc >= 4 ? argv[3] : "data";
 
-        dnf::ServerApplication application(port, databasePath);
+        dnf::ServerApplication application(
+            port,
+            databasePath,
+            dataDirectory);
         application.Run();
     }
     catch (const std::exception& error)
