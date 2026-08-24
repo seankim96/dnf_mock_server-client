@@ -6,6 +6,9 @@ endif()
 
 project(DNFMockServer LANGUAGES CXX)
 
+include(cmake/ProjectOptions.cmake)
+dnf_configure_project_options()
+
 find_package(Boost 1.82 REQUIRED COMPONENTS system)
 find_package(flatbuffers CONFIG REQUIRED)
 find_package(OpenSSL REQUIRED)
@@ -14,6 +17,8 @@ find_package(Threads REQUIRED)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(DNF_FLATBUFFER_SCHEMAS
     ${CMAKE_CURRENT_SOURCE_DIR}/schemas/AuthMessage.fbs
@@ -89,6 +94,7 @@ add_library(dnf_core
 )
 target_include_directories(dnf_core PUBLIC include)
 target_link_libraries(dnf_core PUBLIC
+    dnf_project_options
     Boost::system
     OpenSSL::Crypto
     OpenSSL::SSL

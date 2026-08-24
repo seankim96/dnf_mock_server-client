@@ -83,7 +83,7 @@ bool CanStoreAccountId(AccountId accountId)
                std::numeric_limits<std::int64_t>::max());
 }
 
-Account ReadAccountRow(sqlite3* database, sqlite3_stmt* statement)
+Account ReadAccountRow(sqlite3_stmt* statement)
 {
     const std::int64_t accountId = sqlite3_column_int64(statement, 0);
     const unsigned char* loginId = sqlite3_column_text(statement, 1);
@@ -123,7 +123,7 @@ std::optional<Account> ReadSingleAccount(
         throw DatabaseError(sqlite3_errmsg(database));
     }
 
-    return ReadAccountRow(database, statement.Get());
+    return ReadAccountRow(statement.Get());
 }
 } // namespace
 

@@ -1,0 +1,257 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  server-linux:
+    name: Linux ${{ matrix.compiler }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - compiler: GCC
+            cc: gcc
+            cxx: g++
+          - compiler: Clang
+            cc: clang
+            cxx: clang++
+    env:
+      CC: ${{ matrix.cc }}
+      CXX: ${{ matrix.cxx }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes \
+            ninja-build \
+            libboost-system-dev \
+            libflatbuffers-dev \
+            flatbuffers-compiler \
+            libssl-dev \
+            libsqlite3-dev
+      - name: Configure
+        run: >-
+          cmake -S . -B build/ci -G Ninja
+          -DCMAKE_BUILD_TYPE=Debug
+          -DDNF_WARNINGS_AS_ERRORS=ON
+      - name: Build
+        run: cmake --build build/ci --parallel 4
+      - name: Test
+        run: ctest --test-dir build/ci --output-on-failure
+
+  server-macos:
+    name: macOS AppleClang
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: brew install boost flatbuffers openssl@3 sqlite ninja
+      - name: Configure
+        run: >-
+          cmake -S . -B build/ci -G Ninja
+          -DCMAKE_BUILD_TYPE=Debug
+          -DDNF_WARNINGS_AS_ERRORS=ON
+          -DCMAKE_PREFIX_PATH="$(brew --prefix openssl@3);$(brew --prefix sqlite)"
+      - name: Build
+        run: cmake --build build/ci --parallel 4
+      - name: Test
+        run: ctest --test-dir build/ci --output-on-failure
+
+  server-windows:
+    name: Windows MSVC
+    runs-on: windows-2022
+    env:
+      VCPKG_DEFAULT_TRIPLET: x64-windows
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        shell: pwsh
+        run: >-
+          vcpkg install
+          boost-system:x64-windows
+          flatbuffers:x64-windows
+          openssl:x64-windows
+          sqlite3:x64-windows
+      - name: Configure
+        shell: pwsh
+        run: >-
+          cmake -S . -B build/ci -A x64
+          -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake
+          -DVCPKG_TARGET_TRIPLET=x64-windows
+          -DDNF_WARNINGS_AS_ERRORS=ON
+      - name: Build
+        run: cmake --build build/ci --config Debug --parallel 4
+      - name: Test
+        run: ctest --test-dir build/ci -C Debug --output-on-failure
+
+  sanitizer:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: ASan + UBSan
+            cmake_flags: -DDNF_ENABLE_ASAN=ON -DDNF_ENABLE_UBSAN=ON
+          - name: TSan
+            cmake_flags: -DDNF_ENABLE_TSAN=ON
+    env:
+      CC: clang
+      CXX: clang++
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes \
+            ninja-build \
+            libboost-system-dev \
+            libflatbuffers-dev \
+            flatbuffers-compiler \
+            libssl-dev \
+            libsqlite3-dev
+      - name: Configure
+        run: >-
+          cmake -S . -B build/sanitizer -G Ninja
+          -DCMAKE_BUILD_TYPE=Debug
+          -DDNF_WARNINGS_AS_ERRORS=ON
+          ${{ matrix.cmake_flags }}
+      - name: Build
+        run: cmake --build build/sanitizer --parallel 4
+      - name: Test
+        run: ctest --test-dir build/sanitizer --output-on-failure
+
+  client:
+    name: C# client and smoke tests
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+          cache: true
+          cache-dependency-path: |
+            client/DNFMockClient.csproj
+            client/tests/DNFMockClient.SmokeTests.csproj
+      - name: Restore
+        run: |
+          dotnet restore client/DNFMockClient.csproj
+          dotnet restore client/tests/DNFMockClient.SmokeTests.csproj
+      - name: Build client
+        run: dotnet build client/DNFMockClient.csproj --no-restore -warnaserror
+      - name: Run smoke tests
+        run: >-
+          dotnet run
+          --project client/tests/DNFMockClient.SmokeTests.csproj
+          --no-restore
+
+  static-analysis:
+    name: clang-tidy
+    runs-on: ubuntu-24.04
+    env:
+      CC: clang
+      CXX: clang++
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes \
+            clang-tidy \
+            ninja-build \
+            libboost-system-dev \
+            libflatbuffers-dev \
+            flatbuffers-compiler \
+            libssl-dev \
+            libsqlite3-dev
+      - name: Configure
+        run: >-
+          cmake -S . -B build/tidy -G Ninja
+          -DCMAKE_BUILD_TYPE=Debug
+          -DDNF_ENABLE_CLANG_TIDY=ON
+      - name: Analyze project targets
+        run: cmake --build build/tidy --parallel 4
+
+  coverage:
+    name: C++ coverage
+    runs-on: ubuntu-24.04
+    env:
+      CC: gcc
+      CXX: g++
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes \
+            gcovr \
+            ninja-build \
+            libboost-system-dev \
+            libflatbuffers-dev \
+            flatbuffers-compiler \
+            libssl-dev \
+            libsqlite3-dev
+      - name: Configure
+        run: >-
+          cmake -S . -B build/coverage -G Ninja
+          -DCMAKE_BUILD_TYPE=Debug
+          -DDNF_ENABLE_COVERAGE=ON
+      - name: Build
+        run: cmake --build build/coverage --parallel 4
+      - name: Test
+        run: ctest --test-dir build/coverage --output-on-failure
+      - name: Generate report
+        run: >-
+          gcovr
+          --root .
+          --filter 'src/'
+          --filter 'include/'
+          --exclude 'build/'
+          --xml-pretty coverage.xml
+          --html-details coverage.html
+          --print-summary
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cpp-coverage
+          path: |
+            coverage.xml
+            coverage.html
+            coverage.*.html
+
+  flatbuffers-drift:
+    name: FlatBuffers generated code drift
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: google/flatbuffers
+          ref: v25.2.10
+          path: .flatbuffers-source
+      - name: Build flatc 25.2.10
+        run: |
+          cmake \
+            -S .flatbuffers-source \
+            -B .flatbuffers-build \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DFLATBUFFERS_BUILD_TESTS=OFF
+          cmake --build .flatbuffers-build --target flatc --parallel 4
+      - name: Regenerate C# protocol
+        env:
+          FLATC_COMMAND: ${{ github.workspace }}/.flatbuffers-build/flatc
+        run: ./client/tools/generate_flatbuffers.sh
+      - name: Verify generated files are current
+        run: git diff --exit-code -- client/scripts/Generated

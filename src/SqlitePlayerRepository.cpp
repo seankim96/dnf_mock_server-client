@@ -156,7 +156,6 @@ std::int64_t ToDatabasePlayerId(PlayerId playerId)
 }
 
 std::uint32_t ReadUint32(
-    sqlite3* database,
     sqlite3_stmt* statement,
     int column)
 {
@@ -171,7 +170,6 @@ std::uint32_t ReadUint32(
 }
 
 PlayerProfile ReadProfileRow(
-    sqlite3* database,
     sqlite3_stmt* statement)
 {
     const std::int64_t playerId = sqlite3_column_int64(statement, 0);
@@ -185,8 +183,8 @@ PlayerProfile ReadProfileRow(
     PlayerProfile profile;
     profile.playerId = static_cast<PlayerId>(playerId);
     profile.name = reinterpret_cast<const char*>(nameText);
-    profile.level = ReadUint32(database, statement, 2);
-    profile.skillPoints = ReadUint32(database, statement, 3);
+    profile.level = ReadUint32(statement, 2);
+    profile.skillPoints = ReadUint32(statement, 3);
     return profile;
 }
 
@@ -221,9 +219,9 @@ std::vector<OwnedSkill> LoadSkills(
         }
 
         const std::uint32_t skillId =
-            ReadUint32(database, statement.Get(), 0);
+            ReadUint32(statement.Get(), 0);
         const std::uint32_t skillLevel =
-            ReadUint32(database, statement.Get(), 1);
+            ReadUint32(statement.Get(), 1);
         skills.push_back({skillId, skillLevel});
     }
 }
@@ -274,7 +272,7 @@ std::optional<PlayerProfile> SqlitePlayerRepository::FindPlayer(
         throw DatabaseError(sqlite3_errmsg(database));
     }
 
-    PlayerProfile profile = ReadProfileRow(database, statement.Get());
+    PlayerProfile profile = ReadProfileRow(statement.Get());
     ValidateLoadedProfile(profile, database);
     return profile;
 }
@@ -306,7 +304,7 @@ std::optional<PlayerProfile> SqlitePlayerRepository::FindPlayerByName(
         throw DatabaseError(sqlite3_errmsg(database));
     }
 
-    PlayerProfile profile = ReadProfileRow(database, statement.Get());
+    PlayerProfile profile = ReadProfileRow(statement.Get());
     ValidateLoadedProfile(profile, database);
     return profile;
 }
