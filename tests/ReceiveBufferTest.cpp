@@ -73,6 +73,55 @@ void TestCombinedReceive()
     assert(buffer.TryPop(packet) == false);
 }
 
+void TestManyPacketsKeepUnreadBytesInOrder()
+{
+    constexpr std::uint32_t PACKET_COUNT = 700;
+    std::vector<std::uint8_t> received;
+
+    for (std::uint32_t requestId = 1;
+         requestId <= PACKET_COUNT;
+         ++requestId)
+    {
+        const auto packetBytes = MakeTestPacket(
+            dnf::ChannelListRequest,
+            requestId,
+            {static_cast<std::uint8_t>(requestId & 0xFF)});
+        received.insert(
+            received.end(),
+            packetBytes.begin(),
+            packetBytes.end());
+    }
+
+    dnf::ReceiveBuffer buffer;
+    buffer.Append(received);
+
+    for (std::uint32_t requestId = 1;
+         requestId <= PACKET_COUNT / 2;
+         ++requestId)
+    {
+        dnf::Packet packet;
+        assert(buffer.TryPop(packet));
+        assert(packet.header.requestId == requestId);
+    }
+
+    const auto finalPacket = MakeTestPacket(
+        dnf::ChannelListRequest,
+        PACKET_COUNT + 1,
+        {0xAB});
+    buffer.Append(finalPacket);
+
+    for (std::uint32_t requestId = PACKET_COUNT / 2 + 1;
+         requestId <= PACKET_COUNT + 1;
+         ++requestId)
+    {
+        dnf::Packet packet;
+        assert(buffer.TryPop(packet));
+        assert(packet.header.requestId == requestId);
+    }
+
+    assert(buffer.Size() == 0);
+}
+
 void TestInvalidPacketSize()
 {
     // packetSize가 7이므로 8바이트 헤더보다 작다.
@@ -101,6 +150,7 @@ int main()
 {
     TestSplitReceive();
     TestCombinedReceive();
+    TestManyPacketsKeepUnreadBytesInOrder();
     TestInvalidPacketSize();
 
     std::cout << "All receive buffer tests passed.\n";

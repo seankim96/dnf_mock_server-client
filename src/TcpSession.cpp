@@ -114,10 +114,7 @@ void TcpSession::StartRead()
 
 void TcpSession::HandleRead(std::size_t receivedSize)
 {
-    const std::vector<std::uint8_t> data(
-        receivedBytes_.begin(),
-        receivedBytes_.begin() + receivedSize);
-    receiveBuffer_.Append(data);
+    receiveBuffer_.Append(std::span(receivedBytes_.data(), receivedSize));
     DispatchNextPacket();
 }
 
