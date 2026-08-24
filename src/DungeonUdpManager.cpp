@@ -257,6 +257,20 @@ std::size_t DungeonUdpManager::PendingAttackCount(
     return sessionIt->second->PendingAttackCount();
 }
 
+std::optional<DungeonUdpSessionStats> DungeonUdpManager::FindStats(
+    DungeonId dungeonId) const
+{
+    std::lock_guard lock(mutex_);
+
+    const auto sessionIt = sessions_.find(dungeonId);
+    if (sessionIt == sessions_.end())
+    {
+        return std::nullopt;
+    }
+
+    return sessionIt->second->Stats();
+}
+
 bool DungeonUdpManager::Release(DungeonId dungeonId)
 {
     std::shared_ptr<DungeonUdpSession> session;

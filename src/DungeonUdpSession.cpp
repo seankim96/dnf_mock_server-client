@@ -16,6 +16,21 @@ namespace dnf
 {
 using boost::asio::ip::udp;
 
+namespace
+{
+constexpr std::uint32_t SEQUENCE_HALF_RANGE =
+    std::uint32_t{1} << 31;
+
+bool IsNewerSequence(
+    std::uint32_t candidate,
+    std::uint32_t previous)
+{
+    // unsigned 뺄셈의 wrap을 이용하고, 반 바퀴 미만만 앞선 값으로 본다.
+    const std::uint32_t distance = candidate - previous;
+    return distance != 0 && distance < SEQUENCE_HALF_RANGE;
+}
+} // namespace
+
 DungeonUdpSession::DungeonUdpSession(
     DungeonId dungeonId,
     udp::socket socket,
@@ -43,17 +58,23 @@ void DungeonUdpSession::Start()
 
 void DungeonUdpSession::Stop()
 {
+    if (stopped_.exchange(true))
+    {
+        return;
+    }
+
+    {
+        std::lock_guard lock(snapshotMutex_);
+        pendingSnapshot_.reset();
+        snapshotPumpScheduled_ = false;
+        snapshotStats_.snapshotPending = false;
+    }
+
     const auto self = shared_from_this();
     boost::asio::dispatch(
         strand_,
         [self]
         {
-            if (self->stopped_)
-            {
-                return;
-            }
-
-            self->stopped_ = true;
             boost::system::error_code error;
             self->socket_.close(error);
         });
@@ -162,20 +183,62 @@ std::vector<SessionId> DungeonUdpSession::RemoveInactiveEndpoints(
 
 bool DungeonUdpSession::SendSnapshot(std::vector<std::uint8_t> bytes)
 {
-    if (bytes.empty() || bytes.size() > MAX_DUNGEON_DATAGRAM_SIZE)
+    if (bytes.empty())
+    {
+        return false;
+    }
+
+    if (bytes.size() > MAX_DUNGEON_DATAGRAM_SIZE)
+    {
+        std::lock_guard lock(snapshotMutex_);
+        ++snapshotStats_.oversizedSnapshotCount;
+        return false;
+    }
+
+    if (stopped_.load())
     {
         return false;
     }
 
     const auto sharedBytes =
         std::make_shared<const std::vector<std::uint8_t>>(std::move(bytes));
-    const auto self = shared_from_this();
+    bool schedulePump = false;
 
+    {
+        std::lock_guard lock(snapshotMutex_);
+
+        if (stopped_.load())
+        {
+            return false;
+        }
+
+        ++snapshotStats_.acceptedSnapshotCount;
+        if (pendingSnapshot_ != nullptr)
+        {
+            ++snapshotStats_.replacedSnapshotCount;
+        }
+
+        pendingSnapshot_ = sharedBytes;
+        snapshotStats_.snapshotPending = true;
+
+        if (!snapshotPumpScheduled_)
+        {
+            snapshotPumpScheduled_ = true;
+            schedulePump = true;
+        }
+    }
+
+    if (!schedulePump)
+    {
+        return true;
+    }
+
+    const auto self = shared_from_this();
     boost::asio::dispatch(
         strand_,
-        [self, sharedBytes]
+        [self]
         {
-            self->SendSnapshotOnStrand(sharedBytes);
+            self->PumpSnapshotOnStrand();
         });
 
     return true;
@@ -222,9 +285,15 @@ std::size_t DungeonUdpSession::PendingAttackCount() const
     return pendingAttacks_.size();
 }
 
+DungeonUdpSessionStats DungeonUdpSession::Stats() const
+{
+    std::lock_guard lock(snapshotMutex_);
+    return snapshotStats_;
+}
+
 void DungeonUdpSession::StartReceive()
 {
-    if (stopped_)
+    if (stopped_.load())
     {
         return;
     }
@@ -247,7 +316,7 @@ void DungeonUdpSession::HandleReceive(
     const boost::system::error_code& error,
     std::size_t receivedSize)
 {
-    if (stopped_ || error == boost::asio::error::operation_aborted)
+    if (stopped_.load() || error == boost::asio::error::operation_aborted)
     {
         return;
     }
@@ -338,7 +407,7 @@ void DungeonUdpSession::SendHelloAck(
     DungeonId requestedDungeonId,
     UdpHelloResult result)
 {
-    if (stopped_)
+    if (stopped_.load())
     {
         return;
     }
@@ -412,7 +481,7 @@ void DungeonUdpSession::HandlePlayerMovement(
 
     const auto sequenceIt = lastMovementSequences_.find(sessionId);
     if (sequenceIt != lastMovementSequences_.end() &&
-        movement.sequence <= sequenceIt->second)
+        !IsNewerSequence(movement.sequence, sequenceIt->second))
     {
         return;
     }
@@ -450,7 +519,7 @@ void DungeonUdpSession::HandlePlayerAttack(
 
     const auto sequenceIt = lastAttackSequences_.find(sessionId);
     if (sequenceIt != lastAttackSequences_.end() &&
-        attack.sequence <= sequenceIt->second)
+        !IsNewerSequence(attack.sequence, sequenceIt->second))
     {
         return;
     }
@@ -459,43 +528,96 @@ void DungeonUdpSession::HandlePlayerAttack(
     pendingAttacks_.push_back({sessionId, attack});
 }
 
-void DungeonUdpSession::SendSnapshotOnStrand(
-    std::shared_ptr<const std::vector<std::uint8_t>> bytes)
+void DungeonUdpSession::PumpSnapshotOnStrand()
 {
-    if (stopped_)
+    if (stopped_.load())
     {
+        std::lock_guard lock(snapshotMutex_);
+        pendingSnapshot_.reset();
+        snapshotPumpScheduled_ = false;
+        snapshotStats_.snapshotPending = false;
+        snapshotStats_.snapshotSendInProgress = false;
         return;
     }
 
-    std::vector<udp::endpoint> destinations;
+    {
+        std::lock_guard lock(snapshotMutex_);
+        activeSnapshot_ = std::move(pendingSnapshot_);
+        snapshotStats_.snapshotPending = false;
+
+        if (activeSnapshot_ == nullptr)
+        {
+            snapshotPumpScheduled_ = false;
+            snapshotStats_.snapshotSendInProgress = false;
+            return;
+        }
+
+        snapshotStats_.snapshotSendInProgress = true;
+    }
+
+    snapshotDestinations_.clear();
+    nextSnapshotDestination_ = 0;
 
     {
         std::lock_guard lock(stateMutex_);
-        destinations.reserve(endpoints_.size());
+        snapshotDestinations_.reserve(endpoints_.size());
 
         for (const auto& entry : endpoints_)
         {
-            destinations.push_back(entry.second);
+            snapshotDestinations_.push_back(entry.second);
         }
     }
 
-    const auto self = shared_from_this();
+    SendSnapshotToNextEndpoint();
+}
 
-    for (const udp::endpoint& destination : destinations)
+void DungeonUdpSession::SendSnapshotToNextEndpoint()
+{
+    if (stopped_.load() ||
+        nextSnapshotDestination_ >= snapshotDestinations_.size())
     {
-        const auto sharedDestination =
-            std::make_shared<const udp::endpoint>(destination);
-
-        socket_.async_send_to(
-            boost::asio::buffer(*bytes),
-            *sharedDestination,
-            boost::asio::bind_executor(
-                strand_,
-                [self, bytes, sharedDestination](
-                    const boost::system::error_code&,
-                    std::size_t)
-                {
-                }));
+        FinishSnapshotOnStrand();
+        return;
     }
+
+    const auto self = shared_from_this();
+    socket_.async_send_to(
+        boost::asio::buffer(*activeSnapshot_),
+        snapshotDestinations_[nextSnapshotDestination_],
+        boost::asio::bind_executor(
+            strand_,
+            [self](
+                const boost::system::error_code& error,
+                std::size_t)
+            {
+                {
+                    std::lock_guard lock(self->snapshotMutex_);
+                    if (error)
+                    {
+                        ++self->snapshotStats_.snapshotSendErrorCount;
+                    }
+                    else
+                    {
+                        ++self->snapshotStats_.sentSnapshotDatagramCount;
+                    }
+                }
+
+                ++self->nextSnapshotDestination_;
+                self->SendSnapshotToNextEndpoint();
+            }));
+}
+
+void DungeonUdpSession::FinishSnapshotOnStrand()
+{
+    activeSnapshot_.reset();
+    snapshotDestinations_.clear();
+    nextSnapshotDestination_ = 0;
+
+    {
+        std::lock_guard lock(snapshotMutex_);
+        snapshotStats_.snapshotSendInProgress = false;
+    }
+
+    PumpSnapshotOnStrand();
 }
 } // namespace dnf

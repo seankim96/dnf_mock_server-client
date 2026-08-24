@@ -4,6 +4,7 @@
 
 #include <boost/asio/error.hpp>
 
+#include <algorithm>
 #include <chrono>
 #include <stdexcept>
 #include <unordered_set>
@@ -50,6 +51,7 @@ void DungeonTickService::Start()
     }
 
     running_ = true;
+    nextTick_ = std::chrono::steady_clock::now() + TICK_INTERVAL;
     ScheduleNextTick();
 }
 
@@ -66,7 +68,13 @@ bool DungeonTickService::IsRunning() const
 
 std::uint64_t DungeonTickService::TickCount() const
 {
-    return tickCount_;
+    return Stats().processedTickCount;
+}
+
+DungeonTickStats DungeonTickService::Stats() const
+{
+    std::lock_guard lock(statsMutex_);
+    return stats_;
 }
 
 void DungeonTickService::ScheduleNextTick()
@@ -76,12 +84,39 @@ void DungeonTickService::ScheduleNextTick()
         return;
     }
 
-    timer_.expires_after(TICK_INTERVAL);
+    timer_.expires_at(nextTick_);
     timer_.async_wait(
         [this](const boost::system::error_code& error)
         {
             HandleTick(error);
         });
+}
+
+void DungeonTickService::AdvanceDeadline()
+{
+    nextTick_ += TICK_INTERVAL;
+
+    const auto now = std::chrono::steady_clock::now();
+    if (nextTick_ > now)
+    {
+        return;
+    }
+
+    const auto overdueTickCount =
+        static_cast<std::uint64_t>((now - nextTick_) / TICK_INTERVAL) + 1;
+    if (overdueTickCount <= MAX_DUNGEON_CATCH_UP_TICKS)
+    {
+        return;
+    }
+
+    const std::uint64_t skippedTickCount =
+        overdueTickCount - MAX_DUNGEON_CATCH_UP_TICKS;
+
+    // 오래된 deadline은 버리고 설정된 개수만 즉시 따라잡는다.
+    nextTick_ += TICK_INTERVAL * skippedTickCount;
+
+    std::lock_guard lock(statsMutex_);
+    stats_.missedTickCount += skippedTickCount;
 }
 
 void DungeonTickService::HandleTick(
@@ -98,9 +133,23 @@ void DungeonTickService::HandleTick(
         return;
     }
 
-    ++tickCount_;
+    const auto processingStartedAt = std::chrono::steady_clock::now();
+    const auto lateness = processingStartedAt > nextTick_
+        ? std::chrono::duration_cast<std::chrono::nanoseconds>(
+              processingStartedAt - nextTick_)
+        : std::chrono::nanoseconds::zero();
+
+    std::uint64_t tickCount = 0;
+    {
+        std::lock_guard lock(statsMutex_);
+        ++stats_.processedTickCount;
+        stats_.lastLateness = lateness;
+        stats_.maxLateness = std::max(stats_.maxLateness, lateness);
+        tickCount = stats_.processedTickCount;
+    }
+
     udpManager_.SetServerTick(
-        static_cast<std::uint32_t>(tickCount_));
+        static_cast<std::uint32_t>(tickCount));
 
     const auto now = std::chrono::steady_clock::now();
     const std::vector<DungeonId> waitingDungeonIds =
@@ -170,7 +219,7 @@ void DungeonTickService::HandleTick(
                     dungeonId,
                     EncodeDungeonSnapshot(
                         *dungeon,
-                        static_cast<std::uint32_t>(tickCount_)));
+                        static_cast<std::uint32_t>(tickCount)));
             }
         }
     }
@@ -192,7 +241,7 @@ void DungeonTickService::HandleTick(
             dungeonId,
             EncodeDungeonSnapshot(
                 *dungeon,
-                static_cast<std::uint32_t>(tickCount_)));
+                static_cast<std::uint32_t>(tickCount)));
 
         if (now - finishedIt->second >= FINISHED_BROADCAST_DURATION)
         {
@@ -201,6 +250,17 @@ void DungeonTickService::HandleTick(
         }
     }
 
+    const auto processingTime =
+        std::chrono::duration_cast<std::chrono::nanoseconds>(
+            std::chrono::steady_clock::now() - processingStartedAt);
+    {
+        std::lock_guard lock(statsMutex_);
+        stats_.lastProcessingTime = processingTime;
+        stats_.maxProcessingTime =
+            std::max(stats_.maxProcessingTime, processingTime);
+    }
+
+    AdvanceDeadline();
     ScheduleNextTick();
 }
 } // namespace dnf

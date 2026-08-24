@@ -10,13 +10,25 @@
 
 #include <chrono>
 #include <cstdint>
+#include <mutex>
 #include <unordered_map>
 
 namespace dnf
 {
 constexpr int DUNGEON_TICKS_PER_SECOND = 30;
+constexpr std::uint64_t MAX_DUNGEON_CATCH_UP_TICKS = 2;
 constexpr auto DEFAULT_DUNGEON_READY_TIMEOUT = std::chrono::seconds(10);
 constexpr auto DEFAULT_UDP_IDLE_TIMEOUT = std::chrono::seconds(5);
+
+struct DungeonTickStats
+{
+    std::uint64_t processedTickCount = 0;
+    std::uint64_t missedTickCount = 0;
+    std::chrono::nanoseconds lastLateness{0};
+    std::chrono::nanoseconds maxLateness{0};
+    std::chrono::nanoseconds lastProcessingTime{0};
+    std::chrono::nanoseconds maxProcessingTime{0};
+};
 
 class DungeonTickService
 {
@@ -36,9 +48,11 @@ public:
 
     bool IsRunning() const;
     std::uint64_t TickCount() const;
+    DungeonTickStats Stats() const;
 
 private:
     void ScheduleNextTick();
+    void AdvanceDeadline();
     void HandleTick(const boost::system::error_code& error);
 
     boost::asio::steady_timer timer_;
@@ -56,7 +70,9 @@ private:
         DungeonId,
         std::chrono::steady_clock::time_point> finishedSince_;
 
+    std::chrono::steady_clock::time_point nextTick_;
     bool running_ = false;
-    std::uint64_t tickCount_ = 0;
+    mutable std::mutex statsMutex_;
+    DungeonTickStats stats_;
 };
 } // namespace dnf

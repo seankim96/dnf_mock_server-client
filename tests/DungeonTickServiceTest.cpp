@@ -5,11 +5,13 @@
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/address_v4.hpp>
 #include <boost/asio/ip/udp.hpp>
+#include <boost/asio/post.hpp>
 #include <boost/asio/steady_timer.hpp>
 
 #include <cassert>
 #include <chrono>
 #include <iostream>
+#include <thread>
 
 namespace
 {
@@ -49,6 +51,57 @@ void TestTickTimerRunsAndStops()
 
     assert(!tickService.IsRunning());
     assert(tickService.TickCount() >= 2);
+
+    const dnf::DungeonTickStats stats = tickService.Stats();
+    assert(stats.processedTickCount == tickService.TickCount());
+    assert(stats.maxLateness >= stats.lastLateness);
+    assert(stats.maxProcessingTime >= stats.lastProcessingTime);
+    assert(stats.maxProcessingTime > std::chrono::nanoseconds::zero());
+}
+
+void TestLongIoStallLimitsCatchUpTicks()
+{
+    boost::asio::io_context ioContext;
+    dnf::DungeonUdpManager udpManager(ioContext);
+    dnf::PartyManager partyManager;
+    dnf::EnemyCatalog enemyCatalog;
+    dnf::SkillCatalog skillCatalog;
+    dnf::DungeonCatalog dungeonCatalog(enemyCatalog);
+    dnf::DungeonManager dungeonManager(
+        partyManager,
+        dungeonCatalog,
+        enemyCatalog);
+
+    dnf::DungeonTickService tickService(
+        ioContext,
+        dungeonManager,
+        udpManager,
+        skillCatalog);
+
+    tickService.Start();
+
+    boost::asio::post(
+        ioContext,
+        []
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(220));
+        });
+
+    boost::asio::steady_timer stopTimer(
+        ioContext,
+        std::chrono::milliseconds(285));
+    stopTimer.async_wait(
+        [&tickService](const boost::system::error_code&)
+        {
+            tickService.Stop();
+        });
+
+    ioContext.run();
+
+    const dnf::DungeonTickStats stats = tickService.Stats();
+    assert(stats.missedTickCount > 0);
+    assert(stats.maxLateness >= std::chrono::milliseconds(150));
+    assert(stats.processedTickCount <= 6);
 }
 
 void TestDungeonStartsAfterAllUdpHelloMessages()
@@ -201,6 +254,7 @@ void TestWaitingDungeonTimesOut()
 int main()
 {
     TestTickTimerRunsAndStops();
+    TestLongIoStallLimitsCatchUpTicks();
     TestDungeonStartsAfterAllUdpHelloMessages();
     TestWaitingDungeonTimesOut();
 

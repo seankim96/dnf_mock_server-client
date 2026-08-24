@@ -51,6 +51,8 @@ public:
         DungeonId dungeonId,
         AuthenticatedPlayerAttack& output);
     std::size_t PendingAttackCount(DungeonId dungeonId) const;
+    std::optional<DungeonUdpSessionStats> FindStats(
+        DungeonId dungeonId) const;
     bool Release(DungeonId dungeonId);
     std::size_t AllocationCount() const;
 

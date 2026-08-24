@@ -14,6 +14,7 @@
 #include <array>
 #include <chrono>
 #include <iostream>
+#include <limits>
 #include <thread>
 #include <vector>
 
@@ -24,6 +25,25 @@ bool WaitUntil(Predicate predicate)
 {
     for (int attempt = 0; attempt < 100; ++attempt)
     {
+        if (predicate())
+        {
+            return true;
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    }
+
+    return false;
+}
+
+template <typename Predicate>
+bool PollOneUntil(
+    boost::asio::io_context& ioContext,
+    Predicate predicate)
+{
+    for (int attempt = 0; attempt < 100; ++attempt)
+    {
+        ioContext.poll_one();
         if (predicate())
         {
             return true;
@@ -134,14 +154,14 @@ void TestUdpHelloRegistersEndpoint()
 
     dnf::PlayerMovementMessage movement;
     movement.dungeonId = 5001;
-    movement.sequence = 1;
+    movement.sequence = std::numeric_limits<std::uint32_t>::max();
     movement.moveX = 1.0f;
     const auto firstMovement = dnf::EncodePlayerMovement(movement);
 
-    movement.sequence = 2;
+    movement.sequence = 0;
     const auto secondMovement = dnf::EncodePlayerMovement(movement);
 
-    movement.sequence = 3;
+    movement.sequence = 1;
     const auto foreignEndpointMovement =
         dnf::EncodePlayerMovement(movement);
 
@@ -256,6 +276,16 @@ void TestUdpHelloRegistersEndpoint()
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
 
+    boost::system::error_code staleWrappedMovementError;
+    firstClient.send_to(
+        boost::asio::buffer(firstMovement),
+        serverEndpoint,
+        0,
+        staleWrappedMovementError);
+    std::this_thread::sleep_for(std::chrono::milliseconds(30));
+    const std::size_t pendingCountAfterWrappedMovement =
+        manager.PendingMovementCount(5001);
+
     boost::system::error_code replaySendError;
     secondClient.send_to(
         boost::asio::buffer(validHello),
@@ -329,6 +359,7 @@ void TestUdpHelloRegistersEndpoint()
     const std::vector<std::uint8_t> receivedSnapshot(
         receiveBuffer.begin(),
         receiveBuffer.begin() + snapshotSize);
+    const auto snapshotStats = manager.FindStats(5001);
 
     assert(!preAuthenticationMovementError);
     assert(!firstSendError);
@@ -336,6 +367,7 @@ void TestUdpHelloRegistersEndpoint()
     assert(!firstMovementError);
     assert(!duplicateMovementError);
     assert(!secondMovementError);
+    assert(!staleWrappedMovementError);
     assert(!replaySendError);
     assert(!foreignMovementError);
     assert(preAuthenticationMovementRejected);
@@ -347,16 +379,22 @@ void TestUdpHelloRegistersEndpoint()
     assert(endpointAfterReplay == registeredEndpoint);
     assert(allParticipantsAuthenticated);
     assert(pendingCountAfterForeignInput == 2);
+    assert(pendingCountAfterWrappedMovement == 2);
     assert(poppedFirst);
     assert(poppedSecond);
     assert(!poppedUnexpected);
     assert(receivedFirstMovement.sessionId == 100);
-    assert(receivedFirstMovement.movement.sequence == 1);
+    assert(receivedFirstMovement.movement.sequence ==
+           std::numeric_limits<std::uint32_t>::max());
     assert(receivedSecondMovement.sessionId == 100);
-    assert(receivedSecondMovement.movement.sequence == 2);
+    assert(receivedSecondMovement.movement.sequence == 0);
     assert(!snapshotReceiveError);
     assert(snapshotSender.port() == port.value());
     assert(receivedSnapshot == snapshotBytes);
+    assert(snapshotStats.has_value());
+    assert(snapshotStats->acceptedSnapshotCount == 1);
+    assert(snapshotStats->sentSnapshotDatagramCount == 1);
+    assert(snapshotStats->oversizedSnapshotCount == 1);
 
     std::this_thread::sleep_for(std::chrono::milliseconds(120));
     const auto heartbeat = dnf::EncodeUdpHeartbeat({5001, 100});
@@ -422,12 +460,12 @@ void TestAuthenticatedAttackIsQueued()
 
     dnf::PlayerAttackMessage firstAttack;
     firstAttack.dungeonId = 6001;
-    firstAttack.sequence = 1;
+    firstAttack.sequence = std::numeric_limits<std::uint32_t>::max();
     firstAttack.skillId = 1001;
     firstAttack.directionX = 1.0f;
 
     auto secondAttack = firstAttack;
-    secondAttack.sequence = 2;
+    secondAttack.sequence = 0;
 
     const auto firstAttackBytes = dnf::EncodePlayerAttack(firstAttack);
     const auto secondAttackBytes = dnf::EncodePlayerAttack(secondAttack);
@@ -460,6 +498,10 @@ void TestAuthenticatedAttackIsQueued()
             return manager.PendingAttackCount(6001) == 2;
         }));
 
+    client.send_to(boost::asio::buffer(firstAttackBytes), serverEndpoint);
+    std::this_thread::sleep_for(std::chrono::milliseconds(30));
+    assert(manager.PendingAttackCount(6001) == 2);
+
     dnf::AuthenticatedPlayerAttack receivedFirst;
     dnf::AuthenticatedPlayerAttack receivedSecond;
     dnf::AuthenticatedPlayerAttack unexpected;
@@ -471,13 +513,93 @@ void TestAuthenticatedAttackIsQueued()
     assert(manager.PendingAttackCount(9999) == 0);
 
     assert(receivedFirst.sessionId == 200);
-    assert(receivedFirst.attack.sequence == 1);
+    assert(receivedFirst.attack.sequence ==
+           std::numeric_limits<std::uint32_t>::max());
     assert(receivedFirst.attack.skillId == 1001);
     assert(receivedSecond.sessionId == 200);
-    assert(receivedSecond.attack.sequence == 2);
+    assert(receivedSecond.attack.sequence == 0);
 
     manager.Release(6001);
     serverThread.join();
+}
+
+void TestLatestSnapshotReplacesPendingSnapshot()
+{
+    using boost::asio::ip::udp;
+
+    boost::asio::io_context serverIoContext;
+    dnf::DungeonUdpManager manager(serverIoContext);
+
+    const auto port = manager.Allocate(7001, {300});
+    const auto token = manager.FindToken(7001, 300);
+    assert(port.has_value());
+    assert(token.has_value());
+
+    boost::asio::io_context clientIoContext;
+    udp::socket client(clientIoContext, udp::endpoint(udp::v4(), 0));
+    const udp::endpoint serverEndpoint(
+        boost::asio::ip::address_v4::loopback(),
+        port.value());
+
+    serverIoContext.poll();
+
+    const auto hello = dnf::EncodeUdpHello(
+        {7001, 300, token.value()});
+    client.send_to(boost::asio::buffer(hello), serverEndpoint);
+
+    assert(PollOneUntil(
+        serverIoContext,
+        [&manager]
+        {
+            return manager.FindEndpoint(7001, 300).has_value();
+        }));
+    AssertHelloAck(
+        client,
+        port.value(),
+        7001,
+        Dnf::Protocol::UdpHelloAckResult_Success,
+        0);
+
+    const std::vector<std::uint8_t> firstSnapshot = {1};
+    const std::vector<std::uint8_t> replacedSnapshot = {2};
+    const std::vector<std::uint8_t> latestSnapshot = {3};
+
+    assert(manager.BroadcastSnapshot(7001, firstSnapshot));
+    assert(PollOneUntil(
+        serverIoContext,
+        [&manager]
+        {
+            const auto stats = manager.FindStats(7001);
+            return stats.has_value() && stats->snapshotSendInProgress;
+        }));
+
+    assert(manager.BroadcastSnapshot(7001, replacedSnapshot));
+    assert(manager.BroadcastSnapshot(7001, latestSnapshot));
+
+    const auto pendingStats = manager.FindStats(7001);
+    assert(pendingStats.has_value());
+    assert(pendingStats->acceptedSnapshotCount == 3);
+    assert(pendingStats->replacedSnapshotCount == 1);
+    assert(pendingStats->snapshotPending);
+    assert(pendingStats->snapshotSendInProgress);
+
+    assert(PollOneUntil(
+        serverIoContext,
+        [&manager]
+        {
+            const auto stats = manager.FindStats(7001);
+            return stats.has_value() &&
+                   stats->sentSnapshotDatagramCount == 2 &&
+                   !stats->snapshotPending &&
+                   !stats->snapshotSendInProgress;
+        }));
+
+    udp::endpoint sender;
+    assert(ReceiveDatagram(client, sender) == firstSnapshot);
+    assert(ReceiveDatagram(client, sender) == latestSnapshot);
+
+    assert(manager.Release(7001));
+    serverIoContext.poll();
 }
 } // namespace
 
@@ -485,6 +607,7 @@ int main()
 {
     TestUdpHelloRegistersEndpoint();
     TestAuthenticatedAttackIsQueued();
+    TestLatestSnapshotReplacesPendingSnapshot();
 
     std::cout << "All dungeon UDP session tests passed.\n";
     return 0;
