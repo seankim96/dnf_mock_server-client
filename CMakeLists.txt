@@ -44,6 +44,7 @@ add_library(dnf_core
     src/AuthTlsServer.cpp
     src/AuthTlsSession.cpp
     src/ChannelManager.cpp
+    src/ChannelPartyRequestHandler.cpp
     src/ChannelProtocol.cpp
     src/CharacterListService.cpp
     src/CharacterSelectionService.cpp
@@ -53,6 +54,7 @@ add_library(dnf_core
     src/DungeonCatalog.cpp
     src/DungeonCatalogProtocol.cpp
     src/DungeonConnectionProtocol.cpp
+    src/DungeonDataRequestHandler.cpp
     src/DungeonStaticDataProtocol.cpp
     src/DungeonMovementProcessor.cpp
     src/DungeonInstance.cpp

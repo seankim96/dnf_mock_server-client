@@ -1,6 +1,7 @@
 #pragma once
 
-#include "ChannelManager.h"
+#include "ChannelPartyRequestHandler.h"
+#include "DungeonDataRequestHandler.h"
 #include "Packet.h"
 #include "SessionAuthState.h"
 #include "SessionId.h"
@@ -13,6 +14,7 @@
 
 namespace dnf
 {
+class ChannelManager;
 class DungeonManager;
 class DungeonUdpManager;
 class PartyManager;
@@ -49,33 +51,18 @@ private:
     void HandleLoginRequestAsync(
         Packet request,
         ResponseHandler responseHandler) const;
-    std::vector<std::uint8_t> HandleChannelListRequest(
-        const Packet& request) const;
-    std::vector<std::uint8_t> HandleJoinChannelRequest(
-        const Packet& request) const;
     std::vector<std::uint8_t> HandleEnterDungeonRequest(
         const Packet& request) const;
     std::vector<std::uint8_t> HandleDungeonConnectionInfoRequest(
         const Packet& request) const;
-    std::vector<std::uint8_t> HandleCreatePartyRequest(
-        const Packet& request) const;
-    std::vector<std::uint8_t> HandleJoinPartyRequest(
-        const Packet& request) const;
-    std::vector<std::uint8_t> HandleLeavePartyRequest(
-        const Packet& request) const;
-    std::vector<std::uint8_t> HandlePartySnapshotRequest(
-        const Packet& request) const;
-    std::vector<std::uint8_t> HandleDungeonCatalogRequest(
-        const Packet& request) const;
-    std::vector<std::uint8_t> HandleDungeonStaticDataRequest(
-        const Packet& request) const;
 
-    ChannelManager& channelManager_;
     PartyManager& partyManager_;
     DungeonManager& dungeonManager_;
     DungeonUdpManager& dungeonUdpManager_;
     PlayerLoginService& playerLoginService_;
     std::shared_ptr<SessionAuthState> authState_;
     SessionId sessionId_;
+    ChannelPartyRequestHandler channelPartyRequestHandler_;
+    DungeonDataRequestHandler dungeonDataRequestHandler_;
 };
 } // namespace dnf
