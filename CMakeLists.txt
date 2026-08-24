@@ -122,6 +122,22 @@ target_link_libraries(dnf_admin PRIVATE dnf_core)
 
 enable_testing()
 
+# The current CTest executables use standard assert() for their checks.
+# Release configurations normally define NDEBUG, which would otherwise turn
+# those checks into no-ops.  Targets declared below this point are tests only.
+if(MSVC)
+    add_compile_options(/UNDEBUG)
+else()
+    add_compile_options(-UNDEBUG)
+endif()
+
+add_executable(test_assertions_enabled_test tests/TestAssertionsEnabledTest.cpp)
+target_link_libraries(test_assertions_enabled_test PRIVATE dnf_core)
+add_test(
+    NAME test_assertions_enabled_test
+    COMMAND test_assertions_enabled_test
+)
+
 add_test(NAME admin_help_test COMMAND dnf_admin --help)
 set_tests_properties(
     admin_help_test
