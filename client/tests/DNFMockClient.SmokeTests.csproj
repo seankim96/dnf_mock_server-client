@@ -13,6 +13,7 @@
     <Compile Include="../scripts/CertificateFingerprint.cs" Link="CertificateFingerprint.cs" />
     <Compile Include="../scripts/DungeonUdpService.cs" Link="DungeonUdpService.cs" />
     <Compile Include="../scripts/ServerTickTracker.cs" Link="ServerTickTracker.cs" />
+    <Compile Include="../scripts/DungeonSnapshotBuffer.cs" Link="DungeonSnapshotBuffer.cs" />
     <Compile Include="../scripts/Protocol/TcpPacket.cs" Link="Protocol/TcpPacket.cs" />
     <Compile Include="../scripts/Protocol/TcpPacketCodec.cs" Link="Protocol/TcpPacketCodec.cs" />
     <Compile Include="../scripts/Protocol/TcpReceiveBuffer.cs" Link="Protocol/TcpReceiveBuffer.cs" />

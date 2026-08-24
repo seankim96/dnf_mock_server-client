@@ -5,7 +5,7 @@ namespace DnfMockClient;
 
 public partial class DungeonWorldView : Control
 {
-    private DungeonSnapshotData? _snapshot;
+    private readonly DungeonSnapshotBuffer _snapshots = new(30.0);
     private DungeonStaticData? _staticData;
     private ulong _localSessionId;
 
@@ -17,7 +17,7 @@ public partial class DungeonWorldView : Control
 
     public void SetSnapshot(DungeonSnapshotData snapshot)
     {
-        _snapshot = snapshot;
+        _snapshots.Push(snapshot);
         QueueRedraw();
     }
 
@@ -30,8 +30,16 @@ public partial class DungeonWorldView : Control
     public void ClearStaticData()
     {
         _staticData = null;
-        _snapshot = null;
+        _snapshots.Reset();
         QueueRedraw();
+    }
+
+    public override void _Process(double delta)
+    {
+        if (_snapshots.Advance(delta))
+        {
+            QueueRedraw();
+        }
     }
 
     public override void _Draw()
@@ -44,13 +52,14 @@ public partial class DungeonWorldView : Control
             return;
         }
 
-        if (_snapshot is null)
+        DungeonSnapshotData? snapshot = _snapshots.Current;
+        if (snapshot is null)
         {
             DrawCenteredText("UDP 스냅샷을 기다리는 중...");
             return;
         }
 
-        uint roomId = FindCurrentRoomId(_snapshot);
+        uint roomId = FindCurrentRoomId(snapshot);
         RoomStaticData? room = FindRoom(roomId);
         if (room is null)
         {
@@ -68,14 +77,19 @@ public partial class DungeonWorldView : Control
         DrawGrid(arena);
         DrawStaticGeometry(room, roomSize, arena);
 
-        foreach (EnemySnapshotData enemy in _snapshot.Enemies)
+        foreach (EnemySnapshotData enemy in snapshot.Enemies)
         {
             if (enemy.RoomId != roomId || !enemy.Alive)
             {
                 continue;
             }
 
-            Vector2 position = ToScreen(enemy.X, enemy.Y, roomSize, arena);
+            SnapshotPosition sampled = _snapshots.SampleEnemy(enemy);
+            Vector2 position = ToScreen(
+                sampled.X,
+                sampled.Y,
+                roomSize,
+                arena);
             var body = new Rect2(position - new Vector2(13.0f, 18.0f),
                 new Vector2(26.0f, 36.0f));
             DrawRect(body, new Color("dc5b64"), true);
@@ -94,15 +108,22 @@ public partial class DungeonWorldView : Control
                 new Color("ff5964"), true);
         }
 
-        foreach (PlayerSnapshotData player in _snapshot.Players)
+        foreach (PlayerSnapshotData player in snapshot.Players)
         {
             if (player.RoomId != roomId)
             {
                 continue;
             }
 
-            Vector2 position = ToScreen(player.X, player.Y, roomSize, arena);
             bool isLocal = player.SessionId == _localSessionId;
+            SnapshotPosition sampled = isLocal
+                ? new SnapshotPosition(player.X, player.Y, player.Z)
+                : _snapshots.SamplePlayer(player);
+            Vector2 position = ToScreen(
+                sampled.X,
+                sampled.Y,
+                roomSize,
+                arena);
             Color color = !player.Alive
                 ? new Color("6b7280")
                 : isLocal
