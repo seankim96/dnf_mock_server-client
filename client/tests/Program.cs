@@ -23,6 +23,8 @@ TestCertificateFingerprint();
 AuthPayloadCodecSmokeTests.Run();
 ServerTickTrackerSmokeTests.Run();
 DungeonSnapshotBufferSmokeTests.Run();
+DungeonInputControllerSmokeTests.Run();
+DungeonUdpMailboxSmokeTests.Run();
 TestDungeonProtocol();
 await TestTcpConnectionAsync();
 await TestAuthTlsConnectionAsync();

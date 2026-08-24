@@ -16,7 +16,8 @@ public partial class Main : Control
 
     private readonly TcpConnectionService _connection = new();
     private readonly DungeonUdpService _udpService = new();
-    private readonly object _snapshotLock = new();
+    private readonly DungeonInputController _dungeonInput = new();
+    private readonly DungeonUdpMailbox _udpMailbox = new();
 
     private AuthenticationPanel _authenticationPanel = null!;
     private Control _channelPanel = null!;
@@ -56,17 +57,11 @@ public partial class Main : Control
     private bool _loggedIn;
     private bool _joinedChannel;
     private bool _inParty;
-    private bool _movementSendInProgress;
-    private bool _attackPressed;
     private bool _receivedFirstSnapshot;
     private bool _dungeonFinished;
-    private double _movementSendTime;
-    private Vector2 _lastDirection = Vector2.Right;
     private ulong _localSessionId;
     private ulong _partyLeaderSessionId;
     private string _gameServerHost = string.Empty;
-    private DungeonSnapshotData? _pendingSnapshot;
-    private string? _pendingUdpError;
 
     public override void _Ready()
     {
@@ -102,32 +97,12 @@ public partial class Main : Control
         direction.Y = Input.IsKeyPressed(Key.W) ? direction.Y - 1.0f : direction.Y;
         direction.Y = Input.IsKeyPressed(Key.S) ? direction.Y + 1.0f : direction.Y;
 
-        if (direction.LengthSquared() > 1.0f)
-        {
-            direction = direction.Normalized();
-        }
-
-        if (direction != Vector2.Zero)
-        {
-            _lastDirection = direction;
-        }
-
-        _movementSendTime += delta;
-        if (_movementSendTime >= 0.05 && !_movementSendInProgress)
-        {
-            _movementSendTime = 0.0;
-            _ = SendMovementAsync(
-                direction,
-                Input.IsKeyPressed(Key.Space));
-        }
-
-        bool attackPressed = Input.IsKeyPressed(Key.J);
-        if (attackPressed && !_attackPressed)
-        {
-            _ = SendAttackAsync();
-        }
-
-        _attackPressed = attackPressed;
+        DungeonInputCommands commands = _dungeonInput.Advance(
+            delta,
+            new DungeonDirection(direction.X, direction.Y),
+            Input.IsKeyPressed(Key.Space),
+            Input.IsKeyPressed(Key.J));
+        SendDungeonInput(commands);
     }
 
     public override void _Input(InputEvent inputEvent)
@@ -139,28 +114,32 @@ public partial class Main : Control
             return;
         }
 
-        Vector2 tapDirection = keyEvent.Keycode switch
+        DungeonDirection tapDirection = keyEvent.Keycode switch
         {
-            Key.A => Vector2.Left,
-            Key.D => Vector2.Right,
-            Key.W => Vector2.Up,
-            Key.S => Vector2.Down,
-            _ => Vector2.Zero
+            Key.A => new DungeonDirection(-1.0f, 0.0f),
+            Key.D => new DungeonDirection(1.0f, 0.0f),
+            Key.W => new DungeonDirection(0.0f, -1.0f),
+            Key.S => new DungeonDirection(0.0f, 1.0f),
+            _ => default
         };
 
-        if (tapDirection != Vector2.Zero)
+        if (tapDirection != default)
         {
-            _lastDirection = tapDirection;
-            if (!_movementSendInProgress)
+            DungeonMovementCommand? movement =
+                _dungeonInput.PressDirection(tapDirection);
+            if (movement is { } movementCommand)
             {
-                _ = SendMovementAsync(tapDirection, false);
+                _ = SendMovementAsync(movementCommand);
             }
         }
 
-        if (keyEvent.Keycode == Key.J && !_attackPressed)
+        if (keyEvent.Keycode == Key.J)
         {
-            _attackPressed = true;
-            _ = SendAttackAsync();
+            DungeonAttackCommand? attack = _dungeonInput.PressAttack();
+            if (attack is { } attackCommand)
+            {
+                _ = SendAttackAsync(attackCommand);
+            }
         }
     }
 
@@ -897,36 +876,21 @@ public partial class Main : Control
 
     private void OnSnapshotReceived(DungeonSnapshotData snapshot)
     {
-        lock (_snapshotLock)
-        {
-            _pendingSnapshot = snapshot;
-        }
-
+        _udpMailbox.PublishSnapshot(snapshot);
         Callable.From(ApplyPendingUdpData).CallDeferred();
     }
 
     private void OnUdpError(Exception exception)
     {
-        lock (_snapshotLock)
-        {
-            _pendingUdpError = exception.Message;
-        }
-
+        _udpMailbox.PublishError(exception.Message);
         Callable.From(ApplyPendingUdpData).CallDeferred();
     }
 
     private void ApplyPendingUdpData()
     {
-        DungeonSnapshotData? snapshot;
-        string? error;
-
-        lock (_snapshotLock)
-        {
-            snapshot = _pendingSnapshot;
-            error = _pendingUdpError;
-            _pendingSnapshot = null;
-            _pendingUdpError = null;
-        }
+        PendingDungeonUdpData pending = _udpMailbox.Drain();
+        DungeonSnapshotData? snapshot = pending.Snapshot;
+        string? error = pending.Error;
 
         if (error is not null)
         {
@@ -1003,16 +967,27 @@ public partial class Main : Control
         }
     }
 
-    private async Task SendMovementAsync(Vector2 direction, bool jump)
+    private void SendDungeonInput(DungeonInputCommands commands)
     {
-        _movementSendInProgress = true;
+        if (commands.Movement is { } movement)
+        {
+            _ = SendMovementAsync(movement);
+        }
 
+        if (commands.Attack is { } attack)
+        {
+            _ = SendAttackAsync(attack);
+        }
+    }
+
+    private async Task SendMovementAsync(DungeonMovementCommand command)
+    {
         try
         {
             await _udpService.SendMovementAsync(
-                direction.X,
-                direction.Y,
-                jump);
+                command.DirectionX,
+                command.DirectionY,
+                command.Jump);
         }
         catch (Exception exception) when (IsExpectedOperationError(exception))
         {
@@ -1020,18 +995,18 @@ public partial class Main : Control
         }
         finally
         {
-            _movementSendInProgress = false;
+            _dungeonInput.CompleteMovementSend();
         }
     }
 
-    private async Task SendAttackAsync()
+    private async Task SendAttackAsync(DungeonAttackCommand command)
     {
         try
         {
             await _udpService.SendAttackAsync(
-                1001,
-                _lastDirection.X,
-                _lastDirection.Y);
+                command.SkillId,
+                command.DirectionX,
+                command.DirectionY);
         }
         catch (Exception exception) when (IsExpectedOperationError(exception))
         {
