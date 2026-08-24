@@ -2,3 +2,18 @@
 *.db-shm
 *.db-wal
 .demo/
+
+# CMake build output
+/build/
+/build-*/
+/CMakeFiles/
+/CMakeCache.txt
+/cmake_install.cmake
+/CTestTestfile.cmake
+/Makefile
+/compile_commands.json
+
+# Local editor and operating-system files
+.DS_Store
+.idea/
+.vscode/
