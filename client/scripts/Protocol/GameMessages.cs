@@ -7,7 +7,8 @@ public enum LoginResult : byte
     Success = 0,
     InvalidTicket = 1,
     PlayerNotFound = 2,
-    StorageError = 3
+    StorageError = 3,
+    ServiceBusy = 4
 }
 
 public sealed class LoginResponseData

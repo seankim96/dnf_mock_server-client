@@ -16,6 +16,7 @@ enum class CharacterSelectionStatus
 {
     Success,
     InvalidSelection,
+    ServiceBusy,
     ServiceError
 };
 

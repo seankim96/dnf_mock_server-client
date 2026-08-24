@@ -15,6 +15,7 @@ public enum LoginResult : byte
   InvalidTicket = 1,
   PlayerNotFound = 2,
   StorageError = 3,
+  ServiceBusy = 4,
 };
 
 public enum JoinChannelResult : byte

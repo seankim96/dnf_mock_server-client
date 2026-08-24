@@ -45,6 +45,14 @@ AuthTlsSession::AuthTlsSession(
         throw std::invalid_argument(
             "Auth TLS session options are invalid");
     }
+
+    boost::system::error_code endpointError;
+    const boost::asio::ip::tcp::endpoint remoteEndpoint =
+        stream_.next_layer().remote_endpoint(endpointError);
+    dispatcher_.SetClientAddress(
+        endpointError
+        ? "unknown"
+        : remoteEndpoint.address().to_string());
 }
 
 void AuthTlsSession::Start()

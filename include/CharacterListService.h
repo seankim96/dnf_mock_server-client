@@ -25,6 +25,7 @@ enum class CharacterListStatus
 {
     Success,
     AccountNotFound,
+    ServiceBusy,
     ServiceError
 };
 

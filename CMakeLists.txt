@@ -67,6 +67,7 @@ add_library(dnf_core
     src/EnemyCatalog.cpp
     src/GameDataLoader.cpp
     src/LoginProtocol.cpp
+    src/LoginAttemptLimiter.cpp
     src/LoginValidator.cpp
     src/Packet.cpp
     src/PacketDispatcher.cpp
@@ -253,6 +254,39 @@ add_executable(database_executor_test tests/DatabaseExecutorTest.cpp)
 target_link_libraries(database_executor_test PRIVATE dnf_core)
 
 add_test(NAME database_executor_test COMMAND database_executor_test)
+
+add_executable(
+    database_executor_backpressure_test
+    tests/DatabaseExecutorBackpressureTest.cpp
+)
+target_link_libraries(database_executor_backpressure_test PRIVATE dnf_core)
+
+add_test(
+    NAME database_executor_backpressure_test
+    COMMAND database_executor_backpressure_test
+)
+
+add_executable(
+    login_attempt_limiter_test
+    tests/LoginAttemptLimiterTest.cpp
+)
+target_link_libraries(login_attempt_limiter_test PRIVATE dnf_core)
+
+add_test(
+    NAME login_attempt_limiter_test
+    COMMAND login_attempt_limiter_test
+)
+
+add_executable(
+    async_service_backpressure_test
+    tests/AsyncServiceBackpressureTest.cpp
+)
+target_link_libraries(async_service_backpressure_test PRIVATE dnf_core)
+
+add_test(
+    NAME async_service_backpressure_test
+    COMMAND async_service_backpressure_test
+)
 
 add_executable(game_data_loader_test tests/GameDataLoaderTest.cpp)
 target_link_libraries(game_data_loader_test PRIVATE dnf_core)

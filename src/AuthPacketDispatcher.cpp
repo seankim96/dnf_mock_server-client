@@ -50,6 +50,12 @@ protocol::LoginResult ToProtocolResult(
     case AccountAuthenticationStatus::InvalidCredentials:
         return protocol::LoginResult_InvalidCredentials;
 
+    case AccountAuthenticationStatus::RateLimited:
+        return protocol::LoginResult_RateLimited;
+
+    case AccountAuthenticationStatus::ServiceBusy:
+        return protocol::LoginResult_ServiceBusy;
+
     case AccountAuthenticationStatus::ServiceError:
         return protocol::LoginResult_ServiceError;
     }
@@ -68,6 +74,9 @@ protocol::CharacterListResult ToProtocolResult(
     case CharacterListStatus::AccountNotFound:
         return protocol::CharacterListResult_AccountNotFound;
 
+    case CharacterListStatus::ServiceBusy:
+        return protocol::CharacterListResult_ServiceBusy;
+
     case CharacterListStatus::ServiceError:
         return protocol::CharacterListResult_ServiceError;
     }
@@ -85,6 +94,9 @@ protocol::CharacterSelectionResult ToProtocolResult(
 
     case CharacterSelectionStatus::InvalidSelection:
         return protocol::CharacterSelectionResult_InvalidSelection;
+
+    case CharacterSelectionStatus::ServiceBusy:
+        return protocol::CharacterSelectionResult_ServiceBusy;
 
     case CharacterSelectionStatus::ServiceError:
         return protocol::CharacterSelectionResult_ServiceError;
@@ -244,6 +256,14 @@ AuthPacketDispatcher::AuthenticatedAccount() const
     return sessionState_->AuthenticatedAccount();
 }
 
+void AuthPacketDispatcher::SetClientAddress(
+    std::string clientAddress)
+{
+    clientAddress_ = clientAddress.empty()
+        ? "unknown"
+        : std::move(clientAddress);
+}
+
 void AuthPacketDispatcher::HandleLoginRequestAsync(
     Packet request,
     ResponseHandler responseHandler) const
@@ -270,6 +290,7 @@ void AuthPacketDispatcher::HandleLoginRequestAsync(
         const std::uint32_t requestId = request.header.requestId;
 
         authenticationService_.Authenticate(
+            clientAddress_,
             std::move(loginId),
             std::move(password),
             [requestId,

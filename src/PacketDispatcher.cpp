@@ -35,6 +35,9 @@ LoginResult ToLoginResult(PlayerLoginStatus status)
     case PlayerLoginStatus::PlayerNotFound:
         return LoginPlayerNotFound;
 
+    case PlayerLoginStatus::ServiceBusy:
+        return LoginServiceBusy;
+
     case PlayerLoginStatus::StorageError:
         return LoginStorageError;
     }

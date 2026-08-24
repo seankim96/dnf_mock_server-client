@@ -14,6 +14,8 @@ public enum LoginResult : byte
   Success = 0,
   InvalidCredentials = 1,
   ServiceError = 2,
+  RateLimited = 3,
+  ServiceBusy = 4,
 };
 
 public enum CharacterListResult : byte
@@ -22,6 +24,7 @@ public enum CharacterListResult : byte
   NotAuthenticated = 1,
   AccountNotFound = 2,
   ServiceError = 3,
+  ServiceBusy = 4,
 };
 
 public enum CharacterSelectionResult : byte
@@ -30,6 +33,7 @@ public enum CharacterSelectionResult : byte
   NotAuthenticated = 1,
   InvalidSelection = 2,
   ServiceError = 3,
+  ServiceBusy = 4,
 };
 
 public enum AuthPayload : byte

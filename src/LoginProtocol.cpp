@@ -14,7 +14,7 @@ namespace tcp = Dnf::Protocol::Tcp;
 bool IsValidResult(LoginResult result)
 {
     return result >= LoginSuccess &&
-           result <= LoginStorageError;
+           result <= LoginServiceBusy;
 }
 
 bool IsValidResponse(LoginResult result, SessionId sessionId)

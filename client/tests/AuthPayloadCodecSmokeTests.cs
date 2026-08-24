@@ -42,7 +42,7 @@ internal static class AuthPayloadCodecSmokeTests
             "An auth login request was accepted as a response.");
         AssertThrows<InvalidDataException>(
             () => AuthPayloadCodec.DecodeLoginResponse(
-                LoginResponseBytes((AuthSchema.LoginResult)3)),
+                LoginResponseBytes((AuthSchema.LoginResult)byte.MaxValue)),
             "An unknown auth login result was accepted.");
     }
 

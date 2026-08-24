@@ -145,6 +145,7 @@ void AuthServerApplication::StopOnIoContext()
     boost::system::error_code ignoredError;
     shutdownSignals_.cancel(ignoredError);
     tlsServer_.Stop();
+    databaseExecutor_.DrainAndStop();
     ioContext_.stop();
 }
 

@@ -56,8 +56,9 @@ void CharacterSelectionService::SelectCharacter(
 
     boost::asio::io_context* ioContext = &ioContext_;
     AuthTicketIssuer* ticketIssuer = &ticketIssuer_;
+    CompletionHandler rejectedCompletion = completionHandler;
 
-    databaseExecutor_.Post(
+    const bool queued = databaseExecutor_.TryPost(
         [ioContext,
          ticketIssuer,
          authenticatedAccountId,
@@ -85,5 +86,13 @@ void CharacterSelectionService::SelectCharacter(
                 std::move(completionHandler),
                 std::move(result));
         });
+
+    if (!queued)
+    {
+        PostCompletion(
+            ioContext_,
+            std::move(rejectedCompletion),
+            {CharacterSelectionStatus::ServiceBusy, std::nullopt});
+    }
 }
 } // namespace dnf

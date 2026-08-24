@@ -2,6 +2,9 @@
 
 #include <boost/asio/post.hpp>
 
+#include <openssl/crypto.h>
+
+#include <memory>
 #include <stdexcept>
 #include <utility>
 
@@ -9,6 +12,17 @@ namespace dnf
 {
 namespace
 {
+struct PlayerLoginWork
+{
+    ~PlayerLoginWork()
+    {
+        OPENSSL_cleanse(ticket.data(), ticket.size());
+    }
+
+    std::string ticket;
+    PlayerLoginService::CompletionHandler completionHandler;
+};
+
 void PostCompletion(
     boost::asio::io_context& ioContext,
     PlayerLoginService::CompletionHandler completionHandler,
@@ -49,25 +63,28 @@ void PlayerLoginService::Login(
     boost::asio::io_context* ioContext = &ioContext_;
     AuthTicketVerifier* ticketVerifier = &ticketVerifier_;
     PlayerRepository* playerRepository = &playerRepository_;
+    auto work = std::make_shared<PlayerLoginWork>();
+    work->ticket = std::move(ticket);
+    work->completionHandler = std::move(completionHandler);
 
-    databaseExecutor_.Post(
+    const bool queued = databaseExecutor_.TryPost(
         [ioContext,
          ticketVerifier,
          playerRepository,
-         ticket = std::move(ticket),
-         completionHandler = std::move(completionHandler)]() mutable
+         work]() mutable
         {
             PlayerLoginResult result;
 
             try
             {
-                result.authContext = ticketVerifier->Verify(ticket);
+                result.authContext =
+                    ticketVerifier->Verify(work->ticket);
                 if (!result.authContext.has_value())
                 {
                     result.status = PlayerLoginStatus::InvalidTicket;
                     PostCompletion(
                         *ioContext,
-                        std::move(completionHandler),
+                        std::move(work->completionHandler),
                         std::move(result));
                     return;
                 }
@@ -87,8 +104,18 @@ void PlayerLoginService::Login(
 
             PostCompletion(
                 *ioContext,
-                std::move(completionHandler),
+                std::move(work->completionHandler),
                 std::move(result));
         });
+
+    if (!queued)
+    {
+        PostCompletion(
+            ioContext_,
+            std::move(work->completionHandler),
+            {PlayerLoginStatus::ServiceBusy,
+             std::nullopt,
+             std::nullopt});
+    }
 }
 } // namespace dnf

@@ -40,6 +40,7 @@ public:
         Packet request,
         ResponseHandler responseHandler) const;
 
+    void SetClientAddress(std::string clientAddress);
     std::optional<AccountId> AuthenticatedAccount() const;
 
 private:
@@ -57,6 +58,7 @@ private:
     CharacterListService& characterListService_;
     CharacterSelectionService& characterSelectionService_;
     GameServerAddress gameServerAddress_;
+    std::string clientAddress_ = "unknown";
     std::shared_ptr<AuthServerSessionState> sessionState_;
     std::shared_ptr<std::atomic_bool> loginInProgress_;
 };

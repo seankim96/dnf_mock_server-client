@@ -5,6 +5,7 @@
 #include <openssl/crypto.h>
 
 #include <stdexcept>
+#include <memory>
 #include <utility>
 
 namespace dnf
@@ -14,21 +15,16 @@ namespace
 constexpr char DUMMY_PASSWORD[] =
     "account-authentication-timing-placeholder";
 
-class PasswordCleanup
+struct AuthenticationWork
 {
-public:
-    explicit PasswordCleanup(std::string& password)
-        : password_(password)
+    ~AuthenticationWork()
     {
+        OPENSSL_cleanse(password.data(), password.size());
     }
 
-    ~PasswordCleanup()
-    {
-        OPENSSL_cleanse(password_.data(), password_.size());
-    }
-
-private:
-    std::string& password_;
+    std::string loginId;
+    std::string password;
+    AccountAuthenticationService::CompletionHandler completionHandler;
 };
 
 void PostCompletion(
@@ -56,11 +52,13 @@ AccountAuthenticationService::AccountAuthenticationService(
     boost::asio::io_context& ioContext,
     DatabaseExecutor& databaseExecutor,
     AccountRepository& accountRepository,
-    PasswordHasher& passwordHasher)
+    PasswordHasher& passwordHasher,
+    LoginAttemptLimiterOptions limiterOptions)
     : ioContext_(ioContext),
       databaseExecutor_(databaseExecutor),
       accountRepository_(accountRepository),
-      passwordHasher_(passwordHasher)
+      passwordHasher_(passwordHasher),
+      loginAttemptLimiter_(std::move(limiterOptions))
 {
     const std::optional<std::string> dummyHash =
         passwordHasher_.Hash(DUMMY_PASSWORD);
@@ -74,6 +72,19 @@ AccountAuthenticationService::AccountAuthenticationService(
 }
 
 void AccountAuthenticationService::Authenticate(
+    std::string loginId,
+    std::string password,
+    CompletionHandler completionHandler)
+{
+    Authenticate(
+        "unknown",
+        std::move(loginId),
+        std::move(password),
+        std::move(completionHandler));
+}
+
+void AccountAuthenticationService::Authenticate(
+    std::string clientAddress,
     std::string loginId,
     std::string password,
     CompletionHandler completionHandler)
@@ -96,32 +107,56 @@ void AccountAuthenticationService::Authenticate(
         return;
     }
 
+    LoginAdmission admission = loginAttemptLimiter_.TryAcquire(
+        clientAddress,
+        loginId);
+    if (admission.status != LoginAdmissionStatus::Accepted)
+    {
+        OPENSSL_cleanse(password.data(), password.size());
+        const AccountAuthenticationStatus status =
+            admission.status == LoginAdmissionStatus::RateLimited
+            ? AccountAuthenticationStatus::RateLimited
+            : AccountAuthenticationStatus::ServiceBusy;
+        PostCompletion(
+            ioContext_,
+            std::move(completionHandler),
+            {status, std::nullopt});
+        return;
+    }
+
+    auto work = std::make_shared<AuthenticationWork>();
+    work->loginId = std::move(loginId);
+    work->password = std::move(password);
+    work->completionHandler = std::move(completionHandler);
+
     boost::asio::io_context* ioContext = &ioContext_;
     AccountRepository* accountRepository = &accountRepository_;
     PasswordHasher* passwordHasher = &passwordHasher_;
-    const std::string dummyHash = dummyEncodedPasswordHash_;
+    const std::string* dummyHash = &dummyEncodedPasswordHash_;
 
-    databaseExecutor_.Post(
+    const bool queued = databaseExecutor_.TryPost(
         [ioContext,
          accountRepository,
          passwordHasher,
          dummyHash,
-         loginId = std::move(loginId),
-         password = std::move(password),
-         completionHandler = std::move(completionHandler)]() mutable
+         work,
+         permit = std::move(admission.permit)]() mutable
         {
-            PasswordCleanup passwordCleanup(password);
+            (void)permit;
             AccountAuthenticationResult result;
 
             try
             {
                 const std::optional<Account> account =
-                    accountRepository->FindAccountByLoginId(loginId);
+                    accountRepository->FindAccountByLoginId(
+                        work->loginId);
                 const std::string& encodedHash = account.has_value()
                     ? account->encodedPasswordHash
-                    : dummyHash;
+                    : *dummyHash;
                 const bool passwordMatches =
-                    passwordHasher->Verify(password, encodedHash);
+                    passwordHasher->Verify(
+                        work->password,
+                        encodedHash);
 
                 if (account.has_value() && passwordMatches)
                 {
@@ -144,8 +179,23 @@ void AccountAuthenticationService::Authenticate(
 
             PostCompletion(
                 *ioContext,
-                std::move(completionHandler),
+                std::move(work->completionHandler),
                 std::move(result));
         });
+
+    if (!queued)
+    {
+        PostCompletion(
+            ioContext_,
+            std::move(work->completionHandler),
+            {AccountAuthenticationStatus::ServiceBusy,
+             std::nullopt});
+    }
+}
+
+LoginAttemptLimiterStats
+AccountAuthenticationService::LimiterStats() const
+{
+    return loginAttemptLimiter_.Stats();
 }
 } // namespace dnf

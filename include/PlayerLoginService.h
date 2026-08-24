@@ -18,6 +18,7 @@ enum class PlayerLoginStatus
     Success,
     InvalidTicket,
     PlayerNotFound,
+    ServiceBusy,
     StorageError
 };
 

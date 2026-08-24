@@ -14,7 +14,8 @@ enum LoginResult : std::uint8_t
     LoginSuccess = 0,
     InvalidAuthTicket = 1,
     LoginPlayerNotFound = 2,
-    LoginStorageError = 3
+    LoginStorageError = 3,
+    LoginServiceBusy = 4
 };
 
 struct LoginResponseData

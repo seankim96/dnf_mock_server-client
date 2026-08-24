@@ -62,8 +62,9 @@ void CharacterListService::LoadCharacters(
     AccountPlayerRepository* accountPlayerRepository =
         &accountPlayerRepository_;
     PlayerRepository* playerRepository = &playerRepository_;
+    CompletionHandler rejectedCompletion = completionHandler;
 
-    databaseExecutor_.Post(
+    const bool queued = databaseExecutor_.TryPost(
         [ioContext,
          accountRepository,
          accountPlayerRepository,
@@ -120,5 +121,13 @@ void CharacterListService::LoadCharacters(
                 std::move(completionHandler),
                 std::move(result));
         });
+
+    if (!queued)
+    {
+        PostCompletion(
+            ioContext_,
+            std::move(rejectedCompletion),
+            {CharacterListStatus::ServiceBusy, {}});
+    }
 }
 } // namespace dnf

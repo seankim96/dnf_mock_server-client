@@ -75,7 +75,7 @@ void TestInvalidLoginResponse()
     try
     {
         dnf::EncodeLoginResponsePayload(
-            static_cast<dnf::LoginResult>(4),
+            static_cast<dnf::LoginResult>(5),
             0);
     }
     catch (const std::invalid_argument&)

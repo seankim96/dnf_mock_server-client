@@ -6,7 +6,9 @@ public enum AuthLoginResult : byte
 {
     Success = 0,
     InvalidCredentials = 1,
-    ServiceError = 2
+    ServiceError = 2,
+    RateLimited = 3,
+    ServiceBusy = 4
 }
 
 public enum AuthCharacterListResult : byte
@@ -14,7 +16,8 @@ public enum AuthCharacterListResult : byte
     Success = 0,
     NotAuthenticated = 1,
     AccountNotFound = 2,
-    ServiceError = 3
+    ServiceError = 3,
+    ServiceBusy = 4
 }
 
 public sealed class AuthCharacterSummary
@@ -50,7 +53,8 @@ public enum AuthCharacterSelectionResult : byte
     Success = 0,
     NotAuthenticated = 1,
     InvalidSelection = 2,
-    ServiceError = 3
+    ServiceError = 3,
+    ServiceBusy = 4
 }
 
 public sealed class AuthCharacterSelectionResponse
