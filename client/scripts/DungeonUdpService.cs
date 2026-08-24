@@ -13,6 +13,7 @@ public sealed class DungeonUdpService : IDisposable
     private const int MaxDatagramSize = 1200;
 
     private readonly SemaphoreSlim _sendLock = new(1, 1);
+    private readonly ServerTickTracker _snapshotTickTracker = new();
     private UdpClient? _client;
     private CancellationTokenSource? _sessionCancellation;
     private Task? _receiveTask;
@@ -142,6 +143,7 @@ public sealed class DungeonUdpService : IDisposable
         _helloAckCompletion = null;
         _dungeonId = 0;
         _sessionId = 0;
+        _snapshotTickTracker.Reset();
     }
 
     public void Dispose()
@@ -183,7 +185,8 @@ public sealed class DungeonUdpService : IDisposable
                         received.Buffer,
                         out DungeonSnapshotData? snapshot) &&
                     snapshot is not null &&
-                    snapshot.DungeonId == _dungeonId)
+                    snapshot.DungeonId == _dungeonId &&
+                    _snapshotTickTracker.TryAccept(snapshot.ServerTick))
                 {
                     SnapshotReceived?.Invoke(snapshot);
                 }

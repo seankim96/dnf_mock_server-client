@@ -21,6 +21,7 @@ TestTcpFlatBufferSchema();
 TestAuthFlatBufferSchema();
 TestCertificateFingerprint();
 AuthPayloadCodecSmokeTests.Run();
+ServerTickTrackerSmokeTests.Run();
 TestDungeonProtocol();
 await TestTcpConnectionAsync();
 await TestAuthTlsConnectionAsync();
