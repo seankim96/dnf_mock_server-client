@@ -659,6 +659,10 @@ add_executable(server_application_test tests/ServerApplicationTest.cpp)
 target_link_libraries(server_application_test PRIVATE dnf_core)
 
 add_test(NAME server_application_test COMMAND server_application_test)
+set_tests_properties(
+    server_application_test
+    PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
 
 add_executable(
     dungeon_admission_protocol_test
