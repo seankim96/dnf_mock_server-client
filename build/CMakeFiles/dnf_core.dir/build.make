@@ -72,10 +72,38 @@ include CMakeFiles/dnf_core.dir/flags.make
 CMakeFiles/dnf_core.dir/codegen:
 .PHONY : CMakeFiles/dnf_core.dir/codegen
 
+CMakeFiles/dnf_core.dir/src/ChannelManager.cpp.o: CMakeFiles/dnf_core.dir/flags.make
+CMakeFiles/dnf_core.dir/src/ChannelManager.cpp.o: /Users/sean/Documents/ChatGPT/DNF_Mock_Server/src/ChannelManager.cpp
+CMakeFiles/dnf_core.dir/src/ChannelManager.cpp.o: CMakeFiles/dnf_core.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/sean/Documents/ChatGPT/DNF_Mock_Server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/dnf_core.dir/src/ChannelManager.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/dnf_core.dir/src/ChannelManager.cpp.o -MF CMakeFiles/dnf_core.dir/src/ChannelManager.cpp.o.d -o CMakeFiles/dnf_core.dir/src/ChannelManager.cpp.o -c /Users/sean/Documents/ChatGPT/DNF_Mock_Server/src/ChannelManager.cpp
+
+CMakeFiles/dnf_core.dir/src/ChannelManager.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/dnf_core.dir/src/ChannelManager.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/sean/Documents/ChatGPT/DNF_Mock_Server/src/ChannelManager.cpp > CMakeFiles/dnf_core.dir/src/ChannelManager.cpp.i
+
+CMakeFiles/dnf_core.dir/src/ChannelManager.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/dnf_core.dir/src/ChannelManager.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/sean/Documents/ChatGPT/DNF_Mock_Server/src/ChannelManager.cpp -o CMakeFiles/dnf_core.dir/src/ChannelManager.cpp.s
+
+CMakeFiles/dnf_core.dir/src/ChannelProtocol.cpp.o: CMakeFiles/dnf_core.dir/flags.make
+CMakeFiles/dnf_core.dir/src/ChannelProtocol.cpp.o: /Users/sean/Documents/ChatGPT/DNF_Mock_Server/src/ChannelProtocol.cpp
+CMakeFiles/dnf_core.dir/src/ChannelProtocol.cpp.o: CMakeFiles/dnf_core.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/sean/Documents/ChatGPT/DNF_Mock_Server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/dnf_core.dir/src/ChannelProtocol.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/dnf_core.dir/src/ChannelProtocol.cpp.o -MF CMakeFiles/dnf_core.dir/src/ChannelProtocol.cpp.o.d -o CMakeFiles/dnf_core.dir/src/ChannelProtocol.cpp.o -c /Users/sean/Documents/ChatGPT/DNF_Mock_Server/src/ChannelProtocol.cpp
+
+CMakeFiles/dnf_core.dir/src/ChannelProtocol.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/dnf_core.dir/src/ChannelProtocol.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/sean/Documents/ChatGPT/DNF_Mock_Server/src/ChannelProtocol.cpp > CMakeFiles/dnf_core.dir/src/ChannelProtocol.cpp.i
+
+CMakeFiles/dnf_core.dir/src/ChannelProtocol.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/dnf_core.dir/src/ChannelProtocol.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/sean/Documents/ChatGPT/DNF_Mock_Server/src/ChannelProtocol.cpp -o CMakeFiles/dnf_core.dir/src/ChannelProtocol.cpp.s
+
 CMakeFiles/dnf_core.dir/src/LoginValidator.cpp.o: CMakeFiles/dnf_core.dir/flags.make
 CMakeFiles/dnf_core.dir/src/LoginValidator.cpp.o: /Users/sean/Documents/ChatGPT/DNF_Mock_Server/src/LoginValidator.cpp
 CMakeFiles/dnf_core.dir/src/LoginValidator.cpp.o: CMakeFiles/dnf_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/sean/Documents/ChatGPT/DNF_Mock_Server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/dnf_core.dir/src/LoginValidator.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/sean/Documents/ChatGPT/DNF_Mock_Server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/dnf_core.dir/src/LoginValidator.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/dnf_core.dir/src/LoginValidator.cpp.o -MF CMakeFiles/dnf_core.dir/src/LoginValidator.cpp.o.d -o CMakeFiles/dnf_core.dir/src/LoginValidator.cpp.o -c /Users/sean/Documents/ChatGPT/DNF_Mock_Server/src/LoginValidator.cpp
 
 CMakeFiles/dnf_core.dir/src/LoginValidator.cpp.i: cmake_force
@@ -89,7 +117,7 @@ CMakeFiles/dnf_core.dir/src/LoginValidator.cpp.s: cmake_force
 CMakeFiles/dnf_core.dir/src/Packet.cpp.o: CMakeFiles/dnf_core.dir/flags.make
 CMakeFiles/dnf_core.dir/src/Packet.cpp.o: /Users/sean/Documents/ChatGPT/DNF_Mock_Server/src/Packet.cpp
 CMakeFiles/dnf_core.dir/src/Packet.cpp.o: CMakeFiles/dnf_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/sean/Documents/ChatGPT/DNF_Mock_Server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/dnf_core.dir/src/Packet.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/sean/Documents/ChatGPT/DNF_Mock_Server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/dnf_core.dir/src/Packet.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/dnf_core.dir/src/Packet.cpp.o -MF CMakeFiles/dnf_core.dir/src/Packet.cpp.o.d -o CMakeFiles/dnf_core.dir/src/Packet.cpp.o -c /Users/sean/Documents/ChatGPT/DNF_Mock_Server/src/Packet.cpp
 
 CMakeFiles/dnf_core.dir/src/Packet.cpp.i: cmake_force
@@ -103,7 +131,7 @@ CMakeFiles/dnf_core.dir/src/Packet.cpp.s: cmake_force
 CMakeFiles/dnf_core.dir/src/PacketDispatcher.cpp.o: CMakeFiles/dnf_core.dir/flags.make
 CMakeFiles/dnf_core.dir/src/PacketDispatcher.cpp.o: /Users/sean/Documents/ChatGPT/DNF_Mock_Server/src/PacketDispatcher.cpp
 CMakeFiles/dnf_core.dir/src/PacketDispatcher.cpp.o: CMakeFiles/dnf_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/sean/Documents/ChatGPT/DNF_Mock_Server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/dnf_core.dir/src/PacketDispatcher.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/sean/Documents/ChatGPT/DNF_Mock_Server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/dnf_core.dir/src/PacketDispatcher.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/dnf_core.dir/src/PacketDispatcher.cpp.o -MF CMakeFiles/dnf_core.dir/src/PacketDispatcher.cpp.o.d -o CMakeFiles/dnf_core.dir/src/PacketDispatcher.cpp.o -c /Users/sean/Documents/ChatGPT/DNF_Mock_Server/src/PacketDispatcher.cpp
 
 CMakeFiles/dnf_core.dir/src/PacketDispatcher.cpp.i: cmake_force
@@ -117,7 +145,7 @@ CMakeFiles/dnf_core.dir/src/PacketDispatcher.cpp.s: cmake_force
 CMakeFiles/dnf_core.dir/src/ReceiveBuffer.cpp.o: CMakeFiles/dnf_core.dir/flags.make
 CMakeFiles/dnf_core.dir/src/ReceiveBuffer.cpp.o: /Users/sean/Documents/ChatGPT/DNF_Mock_Server/src/ReceiveBuffer.cpp
 CMakeFiles/dnf_core.dir/src/ReceiveBuffer.cpp.o: CMakeFiles/dnf_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/sean/Documents/ChatGPT/DNF_Mock_Server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/dnf_core.dir/src/ReceiveBuffer.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/sean/Documents/ChatGPT/DNF_Mock_Server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/dnf_core.dir/src/ReceiveBuffer.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/dnf_core.dir/src/ReceiveBuffer.cpp.o -MF CMakeFiles/dnf_core.dir/src/ReceiveBuffer.cpp.o.d -o CMakeFiles/dnf_core.dir/src/ReceiveBuffer.cpp.o -c /Users/sean/Documents/ChatGPT/DNF_Mock_Server/src/ReceiveBuffer.cpp
 
 CMakeFiles/dnf_core.dir/src/ReceiveBuffer.cpp.i: cmake_force
@@ -131,7 +159,7 @@ CMakeFiles/dnf_core.dir/src/ReceiveBuffer.cpp.s: cmake_force
 CMakeFiles/dnf_core.dir/src/ServerApplication.cpp.o: CMakeFiles/dnf_core.dir/flags.make
 CMakeFiles/dnf_core.dir/src/ServerApplication.cpp.o: /Users/sean/Documents/ChatGPT/DNF_Mock_Server/src/ServerApplication.cpp
 CMakeFiles/dnf_core.dir/src/ServerApplication.cpp.o: CMakeFiles/dnf_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/sean/Documents/ChatGPT/DNF_Mock_Server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/dnf_core.dir/src/ServerApplication.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/sean/Documents/ChatGPT/DNF_Mock_Server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/dnf_core.dir/src/ServerApplication.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/dnf_core.dir/src/ServerApplication.cpp.o -MF CMakeFiles/dnf_core.dir/src/ServerApplication.cpp.o.d -o CMakeFiles/dnf_core.dir/src/ServerApplication.cpp.o -c /Users/sean/Documents/ChatGPT/DNF_Mock_Server/src/ServerApplication.cpp
 
 CMakeFiles/dnf_core.dir/src/ServerApplication.cpp.i: cmake_force
@@ -145,7 +173,7 @@ CMakeFiles/dnf_core.dir/src/ServerApplication.cpp.s: cmake_force
 CMakeFiles/dnf_core.dir/src/SessionManager.cpp.o: CMakeFiles/dnf_core.dir/flags.make
 CMakeFiles/dnf_core.dir/src/SessionManager.cpp.o: /Users/sean/Documents/ChatGPT/DNF_Mock_Server/src/SessionManager.cpp
 CMakeFiles/dnf_core.dir/src/SessionManager.cpp.o: CMakeFiles/dnf_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/sean/Documents/ChatGPT/DNF_Mock_Server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/dnf_core.dir/src/SessionManager.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/sean/Documents/ChatGPT/DNF_Mock_Server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building CXX object CMakeFiles/dnf_core.dir/src/SessionManager.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/dnf_core.dir/src/SessionManager.cpp.o -MF CMakeFiles/dnf_core.dir/src/SessionManager.cpp.o.d -o CMakeFiles/dnf_core.dir/src/SessionManager.cpp.o -c /Users/sean/Documents/ChatGPT/DNF_Mock_Server/src/SessionManager.cpp
 
 CMakeFiles/dnf_core.dir/src/SessionManager.cpp.i: cmake_force
@@ -159,7 +187,7 @@ CMakeFiles/dnf_core.dir/src/SessionManager.cpp.s: cmake_force
 CMakeFiles/dnf_core.dir/src/TcpServer.cpp.o: CMakeFiles/dnf_core.dir/flags.make
 CMakeFiles/dnf_core.dir/src/TcpServer.cpp.o: /Users/sean/Documents/ChatGPT/DNF_Mock_Server/src/TcpServer.cpp
 CMakeFiles/dnf_core.dir/src/TcpServer.cpp.o: CMakeFiles/dnf_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/sean/Documents/ChatGPT/DNF_Mock_Server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/dnf_core.dir/src/TcpServer.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/sean/Documents/ChatGPT/DNF_Mock_Server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/dnf_core.dir/src/TcpServer.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/dnf_core.dir/src/TcpServer.cpp.o -MF CMakeFiles/dnf_core.dir/src/TcpServer.cpp.o.d -o CMakeFiles/dnf_core.dir/src/TcpServer.cpp.o -c /Users/sean/Documents/ChatGPT/DNF_Mock_Server/src/TcpServer.cpp
 
 CMakeFiles/dnf_core.dir/src/TcpServer.cpp.i: cmake_force
@@ -173,7 +201,7 @@ CMakeFiles/dnf_core.dir/src/TcpServer.cpp.s: cmake_force
 CMakeFiles/dnf_core.dir/src/TcpSession.cpp.o: CMakeFiles/dnf_core.dir/flags.make
 CMakeFiles/dnf_core.dir/src/TcpSession.cpp.o: /Users/sean/Documents/ChatGPT/DNF_Mock_Server/src/TcpSession.cpp
 CMakeFiles/dnf_core.dir/src/TcpSession.cpp.o: CMakeFiles/dnf_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/sean/Documents/ChatGPT/DNF_Mock_Server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building CXX object CMakeFiles/dnf_core.dir/src/TcpSession.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/sean/Documents/ChatGPT/DNF_Mock_Server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Building CXX object CMakeFiles/dnf_core.dir/src/TcpSession.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/dnf_core.dir/src/TcpSession.cpp.o -MF CMakeFiles/dnf_core.dir/src/TcpSession.cpp.o.d -o CMakeFiles/dnf_core.dir/src/TcpSession.cpp.o -c /Users/sean/Documents/ChatGPT/DNF_Mock_Server/src/TcpSession.cpp
 
 CMakeFiles/dnf_core.dir/src/TcpSession.cpp.i: cmake_force
@@ -186,6 +214,8 @@ CMakeFiles/dnf_core.dir/src/TcpSession.cpp.s: cmake_force
 
 # Object files for target dnf_core
 dnf_core_OBJECTS = \
+"CMakeFiles/dnf_core.dir/src/ChannelManager.cpp.o" \
+"CMakeFiles/dnf_core.dir/src/ChannelProtocol.cpp.o" \
 "CMakeFiles/dnf_core.dir/src/LoginValidator.cpp.o" \
 "CMakeFiles/dnf_core.dir/src/Packet.cpp.o" \
 "CMakeFiles/dnf_core.dir/src/PacketDispatcher.cpp.o" \
@@ -198,6 +228,8 @@ dnf_core_OBJECTS = \
 # External object files for target dnf_core
 dnf_core_EXTERNAL_OBJECTS =
 
+libdnf_core.a: CMakeFiles/dnf_core.dir/src/ChannelManager.cpp.o
+libdnf_core.a: CMakeFiles/dnf_core.dir/src/ChannelProtocol.cpp.o
 libdnf_core.a: CMakeFiles/dnf_core.dir/src/LoginValidator.cpp.o
 libdnf_core.a: CMakeFiles/dnf_core.dir/src/Packet.cpp.o
 libdnf_core.a: CMakeFiles/dnf_core.dir/src/PacketDispatcher.cpp.o
@@ -208,7 +240,7 @@ libdnf_core.a: CMakeFiles/dnf_core.dir/src/TcpServer.cpp.o
 libdnf_core.a: CMakeFiles/dnf_core.dir/src/TcpSession.cpp.o
 libdnf_core.a: CMakeFiles/dnf_core.dir/build.make
 libdnf_core.a: CMakeFiles/dnf_core.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/sean/Documents/ChatGPT/DNF_Mock_Server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Linking CXX static library libdnf_core.a"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/sean/Documents/ChatGPT/DNF_Mock_Server/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Linking CXX static library libdnf_core.a"
 	$(CMAKE_COMMAND) -P CMakeFiles/dnf_core.dir/cmake_clean_target.cmake
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/dnf_core.dir/link.txt --verbose=$(VERBOSE)
 

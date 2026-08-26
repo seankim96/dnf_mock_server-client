@@ -10,6 +10,12 @@ set(CMAKE_MAKEFILE_DEPENDS
   "/Users/sean/Documents/ChatGPT/DNF_Mock_Server/CMakeLists.txt"
   "CMakeFiles/4.4.2/CMakeCXXCompiler.cmake"
   "CMakeFiles/4.4.2/CMakeSystem.cmake"
+  "/opt/homebrew/lib/cmake/Boost-1.92.0/BoostConfig.cmake"
+  "/opt/homebrew/lib/cmake/Boost-1.92.0/BoostConfigVersion.cmake"
+  "/opt/homebrew/lib/cmake/boost_headers-1.92.0/boost_headers-config-version.cmake"
+  "/opt/homebrew/lib/cmake/boost_headers-1.92.0/boost_headers-config.cmake"
+  "/opt/homebrew/lib/cmake/boost_system-1.92.0/boost_system-config-version.cmake"
+  "/opt/homebrew/lib/cmake/boost_system-1.92.0/boost_system-config.cmake"
   "/opt/homebrew/share/cmake/Modules/CMakeCXXInformation.cmake"
   "/opt/homebrew/share/cmake/Modules/CMakeCommonLanguageInclude.cmake"
   "/opt/homebrew/share/cmake/Modules/CMakeGenericSystem.cmake"
@@ -62,4 +68,5 @@ set(CMAKE_DEPEND_INFO_FILES
   "CMakeFiles/receive_buffer_test.dir/DependInfo.cmake"
   "CMakeFiles/packet_dispatcher_test.dir/DependInfo.cmake"
   "CMakeFiles/login_validator_test.dir/DependInfo.cmake"
+  "CMakeFiles/channel_manager_test.dir/DependInfo.cmake"
   )

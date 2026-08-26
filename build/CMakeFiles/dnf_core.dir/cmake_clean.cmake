@@ -1,4 +1,8 @@
 file(REMOVE_RECURSE
+  "CMakeFiles/dnf_core.dir/src/ChannelManager.cpp.o"
+  "CMakeFiles/dnf_core.dir/src/ChannelManager.cpp.o.d"
+  "CMakeFiles/dnf_core.dir/src/ChannelProtocol.cpp.o"
+  "CMakeFiles/dnf_core.dir/src/ChannelProtocol.cpp.o.d"
   "CMakeFiles/dnf_core.dir/src/LoginValidator.cpp.o"
   "CMakeFiles/dnf_core.dir/src/LoginValidator.cpp.o.d"
   "CMakeFiles/dnf_core.dir/src/Packet.cpp.o"

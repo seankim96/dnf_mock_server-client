@@ -4,6 +4,7 @@
 /Users/sean/Documents/ChatGPT/DNF_Mock_Server/build/CMakeFiles/receive_buffer_test.dir
 /Users/sean/Documents/ChatGPT/DNF_Mock_Server/build/CMakeFiles/packet_dispatcher_test.dir
 /Users/sean/Documents/ChatGPT/DNF_Mock_Server/build/CMakeFiles/login_validator_test.dir
+/Users/sean/Documents/ChatGPT/DNF_Mock_Server/build/CMakeFiles/channel_manager_test.dir
 /Users/sean/Documents/ChatGPT/DNF_Mock_Server/build/CMakeFiles/test.dir
 /Users/sean/Documents/ChatGPT/DNF_Mock_Server/build/CMakeFiles/edit_cache.dir
 /Users/sean/Documents/ChatGPT/DNF_Mock_Server/build/CMakeFiles/rebuild_cache.dir

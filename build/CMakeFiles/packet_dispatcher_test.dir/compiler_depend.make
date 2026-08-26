@@ -984,12 +984,17 @@ CMakeFiles/packet_dispatcher_test.dir/tests/PacketDispatcherTest.cpp.o: /Users/s
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/xlocale/_time.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/xlocale/_wchar.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/xlocale/_wctype.h \
+  /Users/sean/Documents/ChatGPT/DNF_Mock_Server/include/ChannelManager.h \
+  /Users/sean/Documents/ChatGPT/DNF_Mock_Server/include/ChannelProtocol.h \
   /Users/sean/Documents/ChatGPT/DNF_Mock_Server/include/Packet.h \
   /Users/sean/Documents/ChatGPT/DNF_Mock_Server/include/PacketDispatcher.h \
-  /Users/sean/Documents/ChatGPT/DNF_Mock_Server/include/ReceiveBuffer.h
+  /Users/sean/Documents/ChatGPT/DNF_Mock_Server/include/ReceiveBuffer.h \
+  /Users/sean/Documents/ChatGPT/DNF_Mock_Server/include/SessionId.h
 
 
 /Users/sean/Documents/ChatGPT/DNF_Mock_Server/include/Packet.h:
+
+/Users/sean/Documents/ChatGPT/DNF_Mock_Server/include/ChannelManager.h:
 
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/xlocale/_string.h:
 
@@ -1713,6 +1718,8 @@ CMakeFiles/packet_dispatcher_test.dir/tests/PacketDispatcherTest.cpp.o: /Users/s
 
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__iterator/move_iterator.h:
 
+/Users/sean/Documents/ChatGPT/DNF_Mock_Server/include/ChannelProtocol.h:
+
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__verbose_abort:
 
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__iterator/mergeable.h:
@@ -1936,6 +1943,8 @@ CMakeFiles/packet_dispatcher_test.dir/tests/PacketDispatcherTest.cpp.o: /Users/s
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__atomic/is_always_lock_free.h:
 
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__bit_reference:
+
+/Users/sean/Documents/ChatGPT/DNF_Mock_Server/include/SessionId.h:
 
 /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__format/container_adaptor.h:
 

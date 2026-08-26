@@ -8,6 +8,8 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
+  "/Users/sean/Documents/ChatGPT/DNF_Mock_Server/src/ChannelManager.cpp" "CMakeFiles/dnf_core.dir/src/ChannelManager.cpp.o" "gcc" "CMakeFiles/dnf_core.dir/src/ChannelManager.cpp.o.d"
+  "/Users/sean/Documents/ChatGPT/DNF_Mock_Server/src/ChannelProtocol.cpp" "CMakeFiles/dnf_core.dir/src/ChannelProtocol.cpp.o" "gcc" "CMakeFiles/dnf_core.dir/src/ChannelProtocol.cpp.o.d"
   "/Users/sean/Documents/ChatGPT/DNF_Mock_Server/src/LoginValidator.cpp" "CMakeFiles/dnf_core.dir/src/LoginValidator.cpp.o" "gcc" "CMakeFiles/dnf_core.dir/src/LoginValidator.cpp.o.d"
   "/Users/sean/Documents/ChatGPT/DNF_Mock_Server/src/Packet.cpp" "CMakeFiles/dnf_core.dir/src/Packet.cpp.o" "gcc" "CMakeFiles/dnf_core.dir/src/Packet.cpp.o.d"
   "/Users/sean/Documents/ChatGPT/DNF_Mock_Server/src/PacketDispatcher.cpp" "CMakeFiles/dnf_core.dir/src/PacketDispatcher.cpp.o" "gcc" "CMakeFiles/dnf_core.dir/src/PacketDispatcher.cpp.o.d"

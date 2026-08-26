@@ -204,6 +204,67 @@ login_validator_test/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/login_validator_test.dir/build.make CMakeFiles/login_validator_test.dir/build
 .PHONY : login_validator_test/fast
 
+#=============================================================================
+# Target rules for targets named channel_manager_test
+
+# Build rule for target.
+channel_manager_test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 channel_manager_test
+.PHONY : channel_manager_test
+
+# fast build rule for target.
+channel_manager_test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/channel_manager_test.dir/build.make CMakeFiles/channel_manager_test.dir/build
+.PHONY : channel_manager_test/fast
+
+src/ChannelManager.o: src/ChannelManager.cpp.o
+.PHONY : src/ChannelManager.o
+
+# target to build an object file
+src/ChannelManager.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/ChannelManager.cpp.o
+.PHONY : src/ChannelManager.cpp.o
+
+src/ChannelManager.i: src/ChannelManager.cpp.i
+.PHONY : src/ChannelManager.i
+
+# target to preprocess a source file
+src/ChannelManager.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/ChannelManager.cpp.i
+.PHONY : src/ChannelManager.cpp.i
+
+src/ChannelManager.s: src/ChannelManager.cpp.s
+.PHONY : src/ChannelManager.s
+
+# target to generate assembly for a file
+src/ChannelManager.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/ChannelManager.cpp.s
+.PHONY : src/ChannelManager.cpp.s
+
+src/ChannelProtocol.o: src/ChannelProtocol.cpp.o
+.PHONY : src/ChannelProtocol.o
+
+# target to build an object file
+src/ChannelProtocol.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/ChannelProtocol.cpp.o
+.PHONY : src/ChannelProtocol.cpp.o
+
+src/ChannelProtocol.i: src/ChannelProtocol.cpp.i
+.PHONY : src/ChannelProtocol.i
+
+# target to preprocess a source file
+src/ChannelProtocol.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/ChannelProtocol.cpp.i
+.PHONY : src/ChannelProtocol.cpp.i
+
+src/ChannelProtocol.s: src/ChannelProtocol.cpp.s
+.PHONY : src/ChannelProtocol.s
+
+# target to generate assembly for a file
+src/ChannelProtocol.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_core.dir/build.make CMakeFiles/dnf_core.dir/src/ChannelProtocol.cpp.s
+.PHONY : src/ChannelProtocol.cpp.s
+
 src/LoginValidator.o: src/LoginValidator.cpp.o
 .PHONY : src/LoginValidator.o
 
@@ -468,6 +529,30 @@ src/mock_client_main.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/dnf_mock_client.dir/build.make CMakeFiles/dnf_mock_client.dir/src/mock_client_main.cpp.s
 .PHONY : src/mock_client_main.cpp.s
 
+tests/ChannelManagerTest.o: tests/ChannelManagerTest.cpp.o
+.PHONY : tests/ChannelManagerTest.o
+
+# target to build an object file
+tests/ChannelManagerTest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/channel_manager_test.dir/build.make CMakeFiles/channel_manager_test.dir/tests/ChannelManagerTest.cpp.o
+.PHONY : tests/ChannelManagerTest.cpp.o
+
+tests/ChannelManagerTest.i: tests/ChannelManagerTest.cpp.i
+.PHONY : tests/ChannelManagerTest.i
+
+# target to preprocess a source file
+tests/ChannelManagerTest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/channel_manager_test.dir/build.make CMakeFiles/channel_manager_test.dir/tests/ChannelManagerTest.cpp.i
+.PHONY : tests/ChannelManagerTest.cpp.i
+
+tests/ChannelManagerTest.s: tests/ChannelManagerTest.cpp.s
+.PHONY : tests/ChannelManagerTest.s
+
+# target to generate assembly for a file
+tests/ChannelManagerTest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/channel_manager_test.dir/build.make CMakeFiles/channel_manager_test.dir/tests/ChannelManagerTest.cpp.s
+.PHONY : tests/ChannelManagerTest.cpp.s
+
 tests/LoginValidatorTest.o: tests/LoginValidatorTest.cpp.o
 .PHONY : tests/LoginValidatorTest.o
 
@@ -549,12 +634,19 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... test"
+	@echo "... channel_manager_test"
 	@echo "... dnf_core"
 	@echo "... dnf_mock_client"
 	@echo "... dnf_mock_server"
 	@echo "... login_validator_test"
 	@echo "... packet_dispatcher_test"
 	@echo "... receive_buffer_test"
+	@echo "... src/ChannelManager.o"
+	@echo "... src/ChannelManager.i"
+	@echo "... src/ChannelManager.s"
+	@echo "... src/ChannelProtocol.o"
+	@echo "... src/ChannelProtocol.i"
+	@echo "... src/ChannelProtocol.s"
 	@echo "... src/LoginValidator.o"
 	@echo "... src/LoginValidator.i"
 	@echo "... src/LoginValidator.s"
@@ -588,6 +680,9 @@ help:
 	@echo "... src/mock_client_main.o"
 	@echo "... src/mock_client_main.i"
 	@echo "... src/mock_client_main.s"
+	@echo "... tests/ChannelManagerTest.o"
+	@echo "... tests/ChannelManagerTest.i"
+	@echo "... tests/ChannelManagerTest.s"
 	@echo "... tests/LoginValidatorTest.o"
 	@echo "... tests/LoginValidatorTest.i"
 	@echo "... tests/LoginValidatorTest.s"
