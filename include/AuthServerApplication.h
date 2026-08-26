@@ -15,6 +15,7 @@
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/signal_set.hpp>
+#include <boost/asio/strand.hpp>
 
 #include <cstdint>
 #include <string>
@@ -42,7 +43,10 @@ private:
     void StopOnIoContext();
 
     boost::asio::io_context ioContext_;
+    boost::asio::strand<boost::asio::io_context::executor_type>
+        lifecycleStrand_;
     boost::asio::signal_set shutdownSignals_;
+    bool shutdownStarted_{false};
     SqliteDatabase database_;
     SqliteAccountRepository accountRepository_;
     SqlitePlayerRepository playerRepository_;

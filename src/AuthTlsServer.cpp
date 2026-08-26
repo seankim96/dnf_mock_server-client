@@ -4,6 +4,7 @@
 
 #include <openssl/ssl.h>
 
+#include <boost/asio/dispatch.hpp>
 #include <boost/system/error_code.hpp>
 
 #include <exception>
@@ -27,7 +28,8 @@ AuthTlsServer::AuthTlsServer(
     GameServerAddress gameServerAddress,
     NetworkSessionOptions sessionOptions)
     : configuredPort_(port),
-      acceptor_(ioContext),
+      strand_(boost::asio::make_strand(ioContext)),
+      acceptor_(strand_),
       tlsContext_(boost::asio::ssl::context::tls_server),
       authenticationService_(authenticationService),
       characterListService_(characterListService),
@@ -86,6 +88,11 @@ void AuthTlsServer::ConfigureTls(
 
 void AuthTlsServer::Start()
 {
+    if (stopped_.load())
+    {
+        throw std::runtime_error("Auth TLS server has been stopped");
+    }
+
     if (acceptor_.is_open())
     {
         throw std::runtime_error("Auth TLS server is already started");
@@ -100,11 +107,13 @@ void AuthTlsServer::Start()
         acceptor_.bind(endpoint);
         acceptor_.listen(
             boost::asio::socket_base::max_listen_connections);
+        boundPort_.store(acceptor_.local_endpoint().port());
         StartAccept();
     }
     catch (...)
     {
-        Stop();
+        stopped_.store(true);
+        CloseAcceptor();
         throw;
     }
 }
@@ -140,14 +149,30 @@ void AuthTlsServer::StartAccept()
                           << error.message() << '\n';
             }
 
-            if (acceptor_.is_open())
+            if (!stopped_.load() && acceptor_.is_open())
             {
                 StartAccept();
             }
         });
 }
 
-void AuthTlsServer::Stop()
+void AuthTlsServer::Stop(std::function<void()> onStopped)
+{
+    stopped_.store(true);
+
+    boost::asio::dispatch(
+        strand_,
+        [this, onStopped = std::move(onStopped)]() mutable
+        {
+            CloseAcceptor();
+            if (onStopped)
+            {
+                onStopped();
+            }
+        });
+}
+
+void AuthTlsServer::CloseAcceptor()
 {
     boost::system::error_code ignoredError;
     acceptor_.cancel(ignoredError);
@@ -156,13 +181,7 @@ void AuthTlsServer::Stop()
 
 std::uint16_t AuthTlsServer::Port() const
 {
-    if (!acceptor_.is_open())
-    {
-        return configuredPort_;
-    }
-
-    boost::system::error_code error;
-    const tcp::endpoint endpoint = acceptor_.local_endpoint(error);
-    return error ? configuredPort_ : endpoint.port();
+    const std::uint16_t boundPort = boundPort_.load();
+    return boundPort == 0 ? configuredPort_ : boundPort;
 }
 } // namespace dnf

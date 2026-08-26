@@ -6,8 +6,11 @@
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/ssl/context.hpp>
+#include <boost/asio/strand.hpp>
 
+#include <atomic>
 #include <cstdint>
+#include <functional>
 #include <string>
 
 namespace dnf
@@ -31,7 +34,7 @@ public:
         NetworkSessionOptions sessionOptions = {});
 
     void Start();
-    void Stop();
+    void Stop(std::function<void()> onStopped = {});
     std::uint16_t Port() const;
 
 private:
@@ -39,8 +42,12 @@ private:
         const std::string& certificateChainPath,
         const std::string& privateKeyPath);
     void StartAccept();
+    void CloseAcceptor();
 
     std::uint16_t configuredPort_;
+    std::atomic<std::uint16_t> boundPort_{0};
+    std::atomic<bool> stopped_{false};
+    boost::asio::strand<boost::asio::io_context::executor_type> strand_;
     boost::asio::ip::tcp::acceptor acceptor_;
     boost::asio::ssl::context tlsContext_;
     AccountAuthenticationService& authenticationService_;

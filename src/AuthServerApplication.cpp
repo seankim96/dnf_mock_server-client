@@ -25,7 +25,8 @@ AuthServerApplication::AuthServerApplication(
     const std::string& certificateChainPath,
     const std::string& privateKeyPath,
     GameServerAddress gameServerAddress)
-    : shutdownSignals_(ioContext_, SIGINT, SIGTERM),
+    : lifecycleStrand_(boost::asio::make_strand(ioContext_)),
+      shutdownSignals_(lifecycleStrand_, SIGINT, SIGTERM),
       database_(databasePath),
       accountRepository_(database_),
       playerRepository_(database_),
@@ -133,7 +134,7 @@ void AuthServerApplication::Run()
 void AuthServerApplication::Stop()
 {
     boost::asio::post(
-        ioContext_,
+        lifecycleStrand_,
         [this]
         {
             StopOnIoContext();
@@ -142,11 +143,20 @@ void AuthServerApplication::Stop()
 
 void AuthServerApplication::StopOnIoContext()
 {
+    if (shutdownStarted_)
+    {
+        return;
+    }
+    shutdownStarted_ = true;
+
     boost::system::error_code ignoredError;
     shutdownSignals_.cancel(ignoredError);
-    tlsServer_.Stop();
-    databaseExecutor_.DrainAndStop();
-    ioContext_.stop();
+    tlsServer_.Stop(
+        [this]
+        {
+            databaseExecutor_.DrainAndStop();
+            ioContext_.stop();
+        });
 }
 
 std::uint16_t AuthServerApplication::Port() const
