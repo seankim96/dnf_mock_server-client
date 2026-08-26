@@ -1,0 +1,58 @@
+name: Set up pinned FlatBuffers
+description: Build and cache the FlatBuffers C++ package used by server CI
+
+inputs:
+  version:
+    description: FlatBuffers git tag
+    required: false
+    default: v25.2.10
+
+outputs:
+  prefix:
+    description: CMake installation prefix
+    value: ${{ steps.paths.outputs.prefix }}
+
+runs:
+  using: composite
+  steps:
+    - name: Resolve paths
+      id: paths
+      shell: bash
+      run: |
+        echo "prefix=$RUNNER_TEMP/flatbuffers-${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+
+    - name: Restore FlatBuffers
+      id: cache
+      uses: actions/cache@v5
+      with:
+        path: ${{ steps.paths.outputs.prefix }}
+        key: >-
+          flatbuffers-${{ runner.os }}-${{ runner.arch }}-${{ inputs.version }}
+
+    - name: Check out FlatBuffers
+      if: steps.cache.outputs.cache-hit != 'true'
+      uses: actions/checkout@v5
+      with:
+        repository: google/flatbuffers
+        ref: ${{ inputs.version }}
+        path: .flatbuffers-source
+
+    - name: Build and install FlatBuffers
+      if: steps.cache.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        cmake \
+          -S .flatbuffers-source \
+          -B "$RUNNER_TEMP/flatbuffers-build" \
+          -G Ninja \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_INSTALL_PREFIX="${{ steps.paths.outputs.prefix }}" \
+          -DFLATBUFFERS_BUILD_TESTS=OFF
+        cmake \
+          --build "$RUNNER_TEMP/flatbuffers-build" \
+          --target install \
+          --parallel 4
+
+    - name: Add flatc to PATH
+      shell: bash
+      run: echo "${{ steps.paths.outputs.prefix }}/bin" >> "$GITHUB_PATH"

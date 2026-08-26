@@ -30,22 +30,24 @@ jobs:
       CC: ${{ matrix.cc }}
       CXX: ${{ matrix.cxx }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install --yes \
             ninja-build \
             libboost-system-dev \
-            libflatbuffers-dev \
-            flatbuffers-compiler \
             libssl-dev \
             libsqlite3-dev
+      - name: Install FlatBuffers 25.2.10
+        id: flatbuffers
+        uses: ./.github/actions/setup-flatbuffers
       - name: Configure
         run: >-
           cmake -S . -B build/ci -G Ninja
           -DCMAKE_BUILD_TYPE=Debug
           -DDNF_WARNINGS_AS_ERRORS=ON
+          -DCMAKE_PREFIX_PATH="${{ steps.flatbuffers.outputs.prefix }}"
       - name: Build
         run: cmake --build build/ci --parallel 4
       - name: Test
@@ -55,7 +57,7 @@ jobs:
     name: macOS AppleClang
     runs-on: macos-14
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install dependencies
         run: brew install boost flatbuffers openssl@3 sqlite ninja
       - name: Configure
@@ -63,7 +65,7 @@ jobs:
           cmake -S . -B build/ci -G Ninja
           -DCMAKE_BUILD_TYPE=Debug
           -DDNF_WARNINGS_AS_ERRORS=ON
-          -DCMAKE_PREFIX_PATH="$(brew --prefix openssl@3);$(brew --prefix sqlite)"
+          -DCMAKE_PREFIX_PATH="$(brew --prefix boost);$(brew --prefix flatbuffers);$(brew --prefix openssl@3);$(brew --prefix sqlite)"
       - name: Build
         run: cmake --build build/ci --parallel 4
       - name: Test
@@ -75,7 +77,7 @@ jobs:
     env:
       VCPKG_DEFAULT_TRIPLET: x64-windows
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install dependencies
         shell: pwsh
         run: >-
@@ -111,22 +113,24 @@ jobs:
       CC: clang
       CXX: clang++
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install --yes \
             ninja-build \
             libboost-system-dev \
-            libflatbuffers-dev \
-            flatbuffers-compiler \
             libssl-dev \
             libsqlite3-dev
+      - name: Install FlatBuffers 25.2.10
+        id: flatbuffers
+        uses: ./.github/actions/setup-flatbuffers
       - name: Configure
         run: >-
           cmake -S . -B build/sanitizer -G Ninja
           -DCMAKE_BUILD_TYPE=Debug
           -DDNF_WARNINGS_AS_ERRORS=ON
+          -DCMAKE_PREFIX_PATH="${{ steps.flatbuffers.outputs.prefix }}"
           ${{ matrix.cmake_flags }}
       - name: Build
         run: cmake --build build/sanitizer --parallel 4
@@ -137,8 +141,8 @@ jobs:
     name: C# client and xUnit tests
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 8.0.x
           cache: true
@@ -165,7 +169,7 @@ jobs:
       CC: clang
       CXX: clang++
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install dependencies
         run: |
           sudo apt-get update
@@ -173,15 +177,17 @@ jobs:
             clang-tidy \
             ninja-build \
             libboost-system-dev \
-            libflatbuffers-dev \
-            flatbuffers-compiler \
             libssl-dev \
             libsqlite3-dev
+      - name: Install FlatBuffers 25.2.10
+        id: flatbuffers
+        uses: ./.github/actions/setup-flatbuffers
       - name: Configure
         run: >-
           cmake -S . -B build/tidy -G Ninja
           -DCMAKE_BUILD_TYPE=Debug
           -DDNF_ENABLE_CLANG_TIDY=ON
+          -DCMAKE_PREFIX_PATH="${{ steps.flatbuffers.outputs.prefix }}"
       - name: Analyze project targets
         run: cmake --build build/tidy --parallel 4
 
@@ -192,7 +198,7 @@ jobs:
       CC: gcc
       CXX: g++
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install dependencies
         run: |
           sudo apt-get update
@@ -200,15 +206,17 @@ jobs:
             gcovr \
             ninja-build \
             libboost-system-dev \
-            libflatbuffers-dev \
-            flatbuffers-compiler \
             libssl-dev \
             libsqlite3-dev
+      - name: Install FlatBuffers 25.2.10
+        id: flatbuffers
+        uses: ./.github/actions/setup-flatbuffers
       - name: Configure
         run: >-
           cmake -S . -B build/coverage -G Ninja
           -DCMAKE_BUILD_TYPE=Debug
           -DDNF_ENABLE_COVERAGE=ON
+          -DCMAKE_PREFIX_PATH="${{ steps.flatbuffers.outputs.prefix }}"
       - name: Build
         run: cmake --build build/coverage --parallel 4
       - name: Test
@@ -223,7 +231,7 @@ jobs:
           --xml-pretty coverage.xml
           --html-details coverage.html
           --print-summary
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: cpp-coverage
           path: |
@@ -235,8 +243,8 @@ jobs:
     name: FlatBuffers generated code drift
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
+      - uses: actions/checkout@v5
         with:
           repository: google/flatbuffers
           ref: v25.2.10
