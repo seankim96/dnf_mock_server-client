@@ -359,6 +359,15 @@ void TestUdpHelloRegistersEndpoint()
     const std::vector<std::uint8_t> receivedSnapshot(
         receiveBuffer.begin(),
         receiveBuffer.begin() + snapshotSize);
+
+    assert(WaitUntil(
+        [&manager]
+        {
+            const auto stats = manager.FindStats(5001);
+            return stats.has_value() &&
+                   stats->sentSnapshotDatagramCount == 1;
+        }));
+
     const auto snapshotStats = manager.FindStats(5001);
 
     assert(!preAuthenticationMovementError);
