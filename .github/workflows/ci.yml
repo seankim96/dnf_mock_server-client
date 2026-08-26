@@ -228,7 +228,8 @@ jobs:
           --filter 'src/'
           --filter 'include/'
           --exclude 'build/'
-          --xml-pretty coverage.xml
+          --xml coverage.xml
+          --xml-pretty
           --html-details coverage.html
           --print-summary
       - uses: actions/upload-artifact@v6
