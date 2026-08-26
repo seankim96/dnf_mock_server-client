@@ -44,12 +44,13 @@ Value RequireValue(
 
 const ptree& RequireChild(
     const ptree& tree,
-    const std::string& field,
+    const char* field,
     const std::string& context)
 {
     try
     {
-        return tree.get_child(field);
+        const ptree::path_type childPath(field);
+        return tree.get_child(childPath);
     }
     catch (const boost::property_tree::ptree_error& error)
     {
@@ -284,8 +285,9 @@ void LoadChannels(
     const ptree tree = ReadJsonFile(path);
     AcceptContentVersion(ReadContentVersion(tree, path), path, result);
 
-    const ptree& channels = RequireChild(tree, "channels", path.string());
-    RequireArray(channels, path.string() + ": channels");
+    const std::string pathContext = path.string();
+    const ptree& channels = RequireChild(tree, "channels", pathContext);
+    RequireArray(channels, pathContext + ": channels");
 
     std::size_t index = 0;
     for (const auto& [unused, node] : channels)
@@ -344,8 +346,9 @@ void LoadSkills(
     const ptree tree = ReadJsonFile(path);
     AcceptContentVersion(ReadContentVersion(tree, path), path, result);
 
-    const ptree& skills = RequireChild(tree, "skills", path.string());
-    RequireArray(skills, path.string() + ": skills");
+    const std::string pathContext = path.string();
+    const ptree& skills = RequireChild(tree, "skills", pathContext);
+    RequireArray(skills, pathContext + ": skills");
 
     std::size_t index = 0;
     for (const auto& [unused, node] : skills)
@@ -416,8 +419,9 @@ void LoadEnemies(
     const ptree tree = ReadJsonFile(path);
     AcceptContentVersion(ReadContentVersion(tree, path), path, result);
 
-    const ptree& enemies = RequireChild(tree, "enemies", path.string());
-    RequireArray(enemies, path.string() + ": enemies");
+    const std::string pathContext = path.string();
+    const ptree& enemies = RequireChild(tree, "enemies", pathContext);
+    RequireArray(enemies, pathContext + ": enemies");
 
     std::size_t index = 0;
     for (const auto& [unused, node] : enemies)
@@ -610,9 +614,10 @@ void LoadDungeon(
     const ptree tree = ReadJsonFile(path);
     AcceptContentVersion(ReadContentVersion(tree, path), path, result);
 
+    const std::string pathContext = path.string();
     const ptree& dungeonNode =
-        RequireChild(tree, "dungeon", path.string());
-    const std::string context = path.string() + ": dungeon";
+        RequireChild(tree, "dungeon", pathContext);
+    const std::string context = pathContext + ": dungeon";
 
     DungeonTemplate dungeon;
     dungeon.id =
